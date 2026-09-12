@@ -135,6 +135,14 @@ const StorageService = {
             }
         }
 
+        // بررسی مهلت ثبت‌نام برای صبح همدلی (پایان مهلت: ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰)
+        if (formData && formData.eventId === 'sobh-hamdeli') {
+            const deadline = 1789203600000; // 2026-09-12T12:30:00+03:30 (۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰)
+            if (Date.now() > deadline) {
+                throw new Error("مهلت ثبت‌نام و انصراف در رویداد صبح همدلی در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است.");
+            }
+        }
+
         const timestamp = new Date().toISOString();
         const jalaliDate = this.toJalaliString(timestamp);
         const pCode = String(formData.personnelCode).trim();

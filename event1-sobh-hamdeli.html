@@ -145,6 +145,7 @@
             نکات مهم حضور در برنامه:
           </div>
           <ul class="notes-list">
+            <li>مهلت ثبت‌نام و انصراف تا تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ می‌باشد.</li>
             <li>لطفاً با لباس و کفش مناسب جهت پیاده‌روی و نرمش صبحگاهی حضور به‌هم رسانید.</li>
             <li>جهت برنامه‌ریزی هرچه بهتر پذیرایی و امور هماهنگی، خواهشمند است تمایل یا عدم تمایل خود به حضور را از طریق فرم زیر ثبت فرمایید.</li>
           </ul>
@@ -159,6 +160,17 @@
             در حال دریافت آخرین وضعیت ثبت‌نام شما از دیتابیس...
           </div>
 
+          <!-- پیام پایان مهلت ثبت‌نام (در صورت انقضا و عدم ثبت‌نام قبلی) -->
+          <div id="statusDeadlineExpired" style="display: none; background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 12px; padding: 22px 18px; text-align: center;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: #dbeafe; color: #1d4ed8; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h3 style="font-size: 1.15rem; font-weight: 800; color: #1e40af; margin-bottom: 8px;">مهلت ثبت‌نام به پایان رسیده است</h3>
+            <p style="font-size: 0.9rem; color: #1e3a8a; line-height: 1.7; margin: 0;">
+              همکار گرامی، مهلت اعلام حضور و ثبت‌نام در رویداد «صبح همدلی» در تاریخ <strong>۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰</strong> به پایان رسیده است و در حال حاضر امکان ثبت‌نام جدید وجود ندارد.
+            </p>
+          </div>
+
           <!-- حالت ۱: هنوز تصمیمی اعلام نشده -->
           <div id="statusNotDecided" style="display: none;">
             <div class="form-header">
@@ -166,7 +178,7 @@
               <p>همکار محترم <strong id="userPromptName">-</strong>، لطفاً تمایل یا عدم تمایل خود به حضور در این برنامه را مشخص فرمایید:</p>
             </div>
 
-            <div class="form-actions">
+            <div class="form-actions" id="notDecidedActions">
               <button type="button" class="btn btn-attend" id="btnAttend">
                 <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                 مایل به شرکت در این برنامه هستم
@@ -193,12 +205,16 @@
             <p style="font-size: 0.88rem; color: #166534; line-height: 1.7; margin: 14px 0 6px 0;">
               اطلاعات شما با موفقیت در فهرست شرکت‌کنندگان قطعی این رویداد ثبت شده است. مشتاق دیدار شما هستیم!
             </p>
-            <div style="margin-top: 16px; border-top: 1px solid #bbf7d0; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div id="cancelAttendanceSection" style="margin-top: 16px; border-top: 1px solid #bbf7d0; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
               <span style="font-size: 0.84rem; color: #166534;">چنانچه مایل به انصراف از حضور در برنامه هستید:</span>
               <button type="button" class="btn btn-decline" id="btnCancelAttendance" style="padding: 9px 18px; font-size: 0.86rem;">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
                 انصراف از شرکت در رویداد
               </button>
+            </div>
+            <div id="cancelExpiredNotice" style="display: none; margin-top: 16px; border-top: 1px solid #bbf7d0; padding-top: 12px; font-size: 0.84rem; color: #1e40af; line-height: 1.6;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 5px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              مهلت انصراف از این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است و امکان لغو حضور یا تغییر وضعیت وجود ندارد.
             </div>
           </div>
 
@@ -216,12 +232,16 @@
             <p style="font-size: 0.88rem; color: #991b1b; line-height: 1.7; margin: 14px 0 6px 0;">
               عدم حضور شما در این رویداد در سامانه ثبت گردیده است. امیدواریم در رویدادهای آینده میزبان شما باشیم.
             </p>
-            <div style="margin-top: 16px; border-top: 1px solid #fecaca; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div id="reAttendSection" style="margin-top: 16px; border-top: 1px solid #fecaca; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
               <span style="font-size: 0.84rem; color: #991b1b;">در صورت تغییر برنامه و تمایل به حضور مجدد:</span>
               <button type="button" class="btn btn-attend" id="btnReAttend" style="padding: 9px 18px; font-size: 0.86rem;">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                 تغییر نظر: مایل به شرکت هستم
               </button>
+            </div>
+            <div id="reAttendExpiredNotice" style="display: none; margin-top: 16px; border-top: 1px solid #fecaca; padding-top: 12px; font-size: 0.84rem; color: #991b1b; line-height: 1.6;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 5px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.
             </div>
           </div>
 
@@ -279,6 +299,49 @@
     const EVENT_TITLE = "صبح همدلی";
     const SESSION_KEY = "entekhab_user_session_" + EVENT_ID;
 
+    // مهلت ثبت‌نام و انصراف: ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ (2026-09-12T12:30:00+03:30)
+    const REGISTRATION_DEADLINE_MS = 1789203600000;
+
+    // تابع بررسی انقضای مهلت ثبت‌نام یا انصراف
+    function isRegistrationExpired() {
+      // ۱. بررسی بر اساس میلی‌ثانیه زمان UTC
+      if (Date.now() > REGISTRATION_DEADLINE_MS) return true;
+
+      // ۲. بررسی تکمیلی بر اساس تقویم جلالی رسمی
+      try {
+        const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'Asia/Tehran'
+        });
+        const parts = formatter.formatToParts(new Date());
+        const getPart = type => parseInt(parts.find(p => p.type === type)?.value || '0', 10);
+        const pYear = getPart('year');
+        const pMonth = getPart('month');
+        const pDay = getPart('day');
+        const pHour = getPart('hour');
+        const pMin = getPart('minute');
+        
+        if (pYear > 1405) return true;
+        if (pYear === 1405) {
+          if (pMonth > 6) return true;
+          if (pMonth === 6) {
+            if (pDay > 21) return true;
+            if (pDay === 21) {
+              if (pHour > 12) return true;
+              if (pHour === 12 && pMin >= 30) return true;
+            }
+          }
+        }
+      } catch (e) {}
+
+      return false;
+    }
+
     let currentUser = null;
 
     // بررسی لاگین بودن کاربر
@@ -315,35 +378,75 @@
       const notDecided = document.getElementById('statusNotDecided');
       const attendingCard = document.getElementById('statusAttendingCard');
       const declinedCard = document.getElementById('statusDeclinedCard');
+      const deadlineExpired = document.getElementById('statusDeadlineExpired');
+      const cancelSection = document.getElementById('cancelAttendanceSection');
+      const cancelExpiredNotice = document.getElementById('cancelExpiredNotice');
+      const reAttendSection = document.getElementById('reAttendSection');
+      const reAttendExpiredNotice = document.getElementById('reAttendExpiredNotice');
 
       loading.style.display = 'block';
       notDecided.style.display = 'none';
       attendingCard.style.display = 'none';
       declinedCard.style.display = 'none';
+      if (deadlineExpired) deadlineExpired.style.display = 'none';
+
+      const isExpired = isRegistrationExpired();
 
       try {
         const record = await StorageService.getUserRegistration(EVENT_ID, currentUser.personnelCode);
         loading.style.display = 'none';
 
         if (!record) {
-          notDecided.style.display = 'block';
+          if (isExpired) {
+            if (deadlineExpired) deadlineExpired.style.display = 'block';
+            notDecided.style.display = 'none';
+          } else {
+            notDecided.style.display = 'block';
+          }
         } else if (record.status === 'attending') {
           document.getElementById('attendingTimeText').textContent = record.jalaliDate || record.timestamp;
           attendingCard.style.display = 'block';
+
+          if (isExpired) {
+            if (cancelSection) cancelSection.style.display = 'none';
+            if (cancelExpiredNotice) cancelExpiredNotice.style.display = 'block';
+          } else {
+            if (cancelSection) cancelSection.style.display = 'flex';
+            if (cancelExpiredNotice) cancelExpiredNotice.style.display = 'none';
+          }
         } else {
           document.getElementById('declinedTimeText').textContent = record.jalaliDate || record.timestamp;
           declinedCard.style.display = 'block';
+
+          if (isExpired) {
+            if (reAttendSection) reAttendSection.style.display = 'none';
+            if (reAttendExpiredNotice) reAttendExpiredNotice.style.display = 'block';
+          } else {
+            if (reAttendSection) reAttendSection.style.display = 'flex';
+            if (reAttendExpiredNotice) reAttendExpiredNotice.style.display = 'none';
+          }
         }
       } catch (err) {
         console.error("خطا در بارگذاری وضعیت:", err);
         loading.style.display = 'none';
-        notDecided.style.display = 'block';
+        if (isExpired) {
+          if (deadlineExpired) deadlineExpired.style.display = 'block';
+        } else {
+          notDecided.style.display = 'block';
+        }
       }
     }
 
     // ثبت یا به‌روزرسانی تصمیم حضور/انصراف
     async function submitAttendance(status, customText) {
       if (!currentUser) return;
+
+      // جلوگیری از ثبت یا انصراف پس از پایان مهلت
+      if (isRegistrationExpired()) {
+        alert("مهلت ثبت‌نام و انصراف در رویداد صبح همدلی در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است و در حال حاضر امکان انجام این عملیات وجود ندارد.");
+        await loadUserStatus();
+        return;
+      }
 
       const btnAttend = document.getElementById('btnAttend');
       const btnDecline = document.getElementById('btnDecline');
@@ -397,7 +500,7 @@
 
       } catch (e) {
         console.error(e);
-        alert("خطا در برقراری ارتباط با دیتابیس. لطفاً مجدداً تلاش فرمایید.");
+        alert(e.message || "خطا در برقراری ارتباط با دیتابیس. لطفاً مجدداً تلاش فرمایید.");
       } finally {
         if (btnAttend) btnAttend.disabled = false;
         if (btnDecline) btnDecline.disabled = false;
@@ -458,11 +561,31 @@
     });
 
     // دکمه‌های اعلام حضور / عدم حضور اولیه
-    document.getElementById('btnAttend').addEventListener('click', () => submitAttendance('attending'));
-    document.getElementById('btnDecline').addEventListener('click', () => submitAttendance('declined', 'عدم حضور'));
+    document.getElementById('btnAttend').addEventListener('click', () => {
+      if (isRegistrationExpired()) {
+        alert("مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است.");
+        loadUserStatus();
+        return;
+      }
+      submitAttendance('attending');
+    });
+
+    document.getElementById('btnDecline').addEventListener('click', () => {
+      if (isRegistrationExpired()) {
+        alert("مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است.");
+        loadUserStatus();
+        return;
+      }
+      submitAttendance('declined', 'عدم حضور');
+    });
 
     // دکمه انصراف از شرکت در رویداد
     document.getElementById('btnCancelAttendance').addEventListener('click', () => {
+      if (isRegistrationExpired()) {
+        alert("مهلت انصراف از این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است و امکان انصراف وجود ندارد.");
+        loadUserStatus();
+        return;
+      }
       if (confirm("همکار گرامی، آیا از انصراف از شرکت در این رویداد اطمینان دارید؟")) {
         submitAttendance('declined', 'انصراف از حضور');
       }
@@ -470,6 +593,11 @@
 
     // دکمه تغییر نظر و حضور مجدد
     document.getElementById('btnReAttend').addEventListener('click', () => {
+      if (isRegistrationExpired()) {
+        alert("مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.");
+        loadUserStatus();
+        return;
+      }
       submitAttendance('attending', 'مایل به شرکت در این برنامه هستم');
     });
 
