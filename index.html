@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>سامانه رویدادهای گروه توسعه سرمایه گذاری انتخاب</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <style>
+    .portal-hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .portal-card {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .portal-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+    }
+    .portal-banner {
+      padding: 24px 20px;
+      color: #ffffff;
+    }
+    .portal-body {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .portal-link-btn {
+      margin-top: 16px;
+      width: 100%;
+    }
+    .admin-access-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      border: 1.5px dashed #cbd5e1;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container container-wide">
+    
+    <!-- هدر و برندینگ -->
+    <header class="brand-header" style="margin-top: 20px;">
+      <div class="brand-logo-container">
+        <img src="assets/images/logo.png" alt="گروه توسعه سرمایه گذاری انتخاب" class="brand-logo">
+      </div>
+      <div>
+        <span class="org-badge">
+          پرتال اختصاصی رویدادهای سازمانی
+        </span>
+      </div>
+      <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--primary); margin-top: 8px;">
+        سامانه ثبت‌نام و اطلاع‌رسانی رویدادهای گروه انتخاب
+      </h1>
+      <p style="font-size: 0.95rem; color: var(--text-secondary); max-width: 600px; margin: 6px auto 0;">
+        جهت ثبت‌نام در هر یک از برنامه‌ها، رویداد مورد نظر خود را انتخاب نمایید:
+      </p>
+    </header>
+
+    <!-- ۳ کارت ایونت‌ها برای دسترسی -->
+    <div class="portal-grid">
+      <!-- ایونت ۱ -->
+      <a href="1/" class="portal-card">
+        <div class="portal-banner banner-sobh">
+          <span class="event-tag">لینک ۱ (کوتاه)</span>
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin-top: 6px;">صبح همدلی</h2>
+          <p style="font-size: 0.88rem; opacity: 0.9;">پیاده روی مدیران گروه انتخاب</p>
+        </div>
+        <div class="portal-body">
+          <div style="font-size: 0.88rem; color: var(--text-secondary);">
+            <p><strong>تاریخ:</strong> یکشنبه ۲۲/۰۶/۱۴۰۵ ساعت ۰۶:۳۰ صبح</p>
+            <p style="margin-top: 4px;"><strong>مکان:</strong> خیابان نشاط، کوچه ۲۰، عمارت ماهور</p>
+          </div>
+          <span class="btn btn-primary portal-link-btn">ورود به فرم ثبت‌نام &larr;</span>
+        </div>
+      </a>
+
+      <!-- ایونت ۲ -->
+      <a href="2/" class="portal-card">
+        <div class="portal-banner banner-kavir">
+          <span class="event-tag">لینک ۲ (کوتاه)</span>
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin-top: 6px;">تور کویر ورزنه</h2>
+          <p style="font-size: 0.88rem; opacity: 0.9;">ایونت علمی تفریحی گروه انتخاب</p>
+        </div>
+        <div class="portal-body">
+          <div style="font-size: 0.88rem; color: var(--text-secondary);">
+            <p><strong>حرکت:</strong> چهارشنبه ۲۵/۰۶/۱۴۰۵ ساعت ۱۴:۰۰</p>
+            <p style="margin-top: 4px;"><strong>مکان:</strong> ساختمان مرکزی (خیابان امام خمینی)</p>
+          </div>
+          <span class="btn btn-primary portal-link-btn" style="background: #b45309;">ورود به فرم ثبت‌نام &larr;</span>
+        </div>
+      </a>
+
+      <!-- ایونت ۳ -->
+      <a href="3/" class="portal-card">
+        <div class="portal-banner banner-rafting">
+          <span class="event-tag">لینک ۳ (کوتاه)</span>
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin-top: 6px;">تور رفتینگ مارکده</h2>
+          <p style="font-size: 0.88rem; opacity: 0.9;">ایونت تفریحی و ورزشی گروه انتخاب</p>
+        </div>
+        <div class="portal-body">
+          <div style="font-size: 0.88rem; color: var(--text-secondary);">
+            <p><strong>حرکت:</strong> پنجشنبه ۰۲/۰۷/۱۴۰۵ ساعت ۰۶:۰۰</p>
+            <p style="margin-top: 4px;"><strong>مکان:</strong> ساختمان مرکزی</p>
+          </div>
+          <span class="btn btn-primary portal-link-btn" style="background: #0284c7;">ورود به فرم ثبت‌نام &larr;</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- بخش دسترسی ادمین -->
+    <div class="admin-access-card">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 46px; height: 46px; border-radius: 12px; background: #e0edff; color: #004b93; display: flex; align-items: center; justify-content: center;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary);">پنل مدیریت و کنترل رویدادها (ویژه ادمین)</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary);">مشاهده آمار ثبت‌نام‌ها، دریافت خروجی اکسل و مدیریت پیامک‌ها</p>
+        </div>
+      </div>
+      <a href="admin/" class="btn btn-primary" style="padding: 10px 22px;">ورود به پنل ادمین &rarr;</a>
+    </div>
+
+    <footer class="page-footer">
+      گروه توسعه سرمایه گذاری انتخاب &copy; ۱۴۰۵
+    </footer>
+  </div>
+
+</body>
+</html>

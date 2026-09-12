@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ثبت‌نام تور کویر ورزنه | ایونت علمی تفریحی گروه توسعه سرمایه گذاری انتخاب</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+</head>
+<body>
+
+  <!-- صفحه فرم ورود پرسنل (قبل از احراز هویت) -->
+  <div id="loginScreen" class="login-container">
+    <div class="brand-header">
+      <div class="brand-logo-container">
+        <img src="assets/images/logo.png" onerror="this.src='images.png'" alt="گروه توسعه سرمایه گذاری انتخاب" class="brand-logo">
+      </div>
+      <div>
+        <span class="org-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          سامانه رسمی ثبت‌نام رویدادهای انتخاب
+        </span>
+      </div>
+    </div>
+
+    <div class="login-card">
+      <div class="login-icon-wrap" style="background: #fef3c7; color: #b45309;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--text-primary); margin-bottom: 6px;">ورود پرسنل و همکاران</h2>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">
+        جهت اعلام وضعیت حضور در «تور کویر ورزنه» وارد شوید:
+      </p>
+
+      <div id="loginError" class="login-error">
+        شماره پرسنلی یا کد ملی وارد شده صحیح نمی‌باشد.
+      </div>
+
+      <form id="loginForm" novalidate>
+        <div class="form-group" style="text-align: right;">
+          <label for="inputPersonnelCode" class="form-label">شماره پرسنلی (نام کاربری):</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="inputPersonnelCode" class="form-input" placeholder="شماره پرسنلی" inputmode="numeric" required autofocus>
+          </div>
+        </div>
+
+        <div class="form-group" style="text-align: right; margin-bottom: 22px;">
+          <label for="inputNationalCode" class="form-label">کد ملی (کلمه عبور):</label>
+          <div class="input-wrapper has-password-toggle">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="inputNationalCode" class="form-input" placeholder="کد ملی ۱۰ رقمی" inputmode="numeric" required>
+            <button type="button" class="btn-toggle-password" id="btnToggleNatPass" aria-label="نمایش / مخفی‌سازی رمز عبور" title="مشاهده رمز عبور">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 13px; background: #b45309;">
+          ورود به صفحه رویداد &larr;
+        </button>
+      </form>
+    </div>
+
+    <footer class="page-footer">
+      گروه توسعه سرمایه گذاری انتخاب &copy; تمامی حقوق محفوظ است.
+    </footer>
+  </div>
+
+  <!-- محتوای اصلی صفحه رویداد (پس از لاگین نمایش داده می‌شود) -->
+  <div class="container" id="mainContainer" style="display: none;">
+    
+    <!-- نوار مشخصات کاربر لاگین شده -->
+    <div class="user-header-bar">
+      <div class="user-info-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #b45309;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>همکار ارجمند: <strong id="loggedInUserName">-</strong> (شماره پرسنلی: <span id="loggedInUserCode">-</span>)</span>
+      </div>
+      <button type="button" class="btn-logout" id="btnLogoutUser" title="خروج از حساب">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        خروج
+      </button>
+    </div>
+
+    <!-- هدر و برندینگ سازمانی -->
+    <header class="brand-header">
+      <div class="brand-logo-container">
+        <img src="assets/images/logo.png" onerror="this.src='images.png'" alt="گروه توسعه سرمایه گذاری انتخاب" class="brand-logo">
+      </div>
+      <div>
+        <span class="org-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          سامانه رسمی اطلاع‌رسانی و ثبت‌نام
+        </span>
+      </div>
+    </header>
+
+    <!-- کارت مشخصات ایونت -->
+    <main class="event-card">
+      <div class="event-banner banner-kavir">
+        <div class="event-banner-pattern"></div>
+        <h1 class="event-title">تور کویر ورزنه</h1>
+        <p class="event-subtitle">ایونت علمی تفریحی گروه توسعه سرمایه گذاری انتخاب</p>
+      </div>
+
+      <!-- پوستر رسمی کویر ورزنه -->
+      <div class="event-poster-wrap">
+        <img src="assets/images/kavir.jpg?v=2" onerror="this.src='عکس کویر.jpg'" alt="پوستر تور کویر ورزنه - گروه انتخاب" class="event-poster">
+      </div>
+
+      <div class="event-content">
+        <!-- جزئیات زمان و مکان -->
+        <div class="details-grid">
+          <div class="detail-item">
+            <div class="detail-icon" style="background: #fef3c7; color: #b45309;">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="detail-text">
+              <h4>زمان حرکت</h4>
+              <p>چهارشنبه ۲۵/۰۶/۱۴۰۵ ساعت ۱۴:۰۰</p>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-icon" style="background: #fef3c7; color: #b45309;">
+              <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+            </div>
+            <div class="detail-text">
+              <h4>زمان بازگشت</h4>
+              <p>پنجشنبه ۲۶/۰۶/۱۴۰۵ ساعت ۱۳:۰۰</p>
+            </div>
+          </div>
+
+          <div class="detail-item" style="grid-column: 1 / -1;">
+            <div class="detail-icon" style="background: #fef3c7; color: #b45309;">
+              <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div class="detail-text">
+              <h4>مکان گردهمایی و سوار شدن</h4>
+              <p>ساختمان مرکزی گروه توسعه سرمایه‌گذاری انتخاب (خیابان امام خمینی)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- باکس نکات مهم -->
+        <div class="notes-box">
+          <div class="notes-box-title" style="color: #b45309;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            ویژگی‌ها و نکات کمپ کویر ورزنه:
+          </div>
+          <ul class="notes-list">
+            <li>زمان ثبت نام تا 1405/06/22 ساعت 13 می باشد.</li>
+            <li>درصورت ثبت نام و عدم حضور هزینه سرانه از حقوق همکار کسر خواهد شد.</li>
+            <li>لطفاً با توجه به محدودیت‌های هماهنگی اقامت و ترابری، در اسرع وقت نظر خود را ثبت نمایید.</li>
+            <li>وسایل شخصی سبک، کلاه و عینک آفتابی، و کفش مناسب کویر همراه داشته باشید.</li>
+          </ul>
+        </div>
+
+        <!-- بخش وضعیت ثبت‌نام و انتخاب حضور -->
+        <div class="registration-form" id="registrationSection">
+          
+          <!-- وضعیت در حال بارگذاری -->
+          <div id="statusLoading" style="text-align: center; padding: 25px 15px; color: var(--text-muted); font-size: 0.9rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-left: 8px;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            در حال دریافت آخرین وضعیت ثبت‌نام شما از دیتابیس...
+          </div>
+
+          <!-- پیام پایان مهلت ثبت‌نام (در صورت انقضا و عدم ثبت‌نام قبلی) -->
+          <div id="statusDeadlineExpired" style="display: none; background: #fffbeb; border: 1.5px solid #fde68a; border-radius: 12px; padding: 22px 18px; text-align: center;">
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: #fef3c7; color: #b45309; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h3 style="font-size: 1.15rem; font-weight: 800; color: #92400e; margin-bottom: 8px;">مهلت ثبت‌نام به پایان رسیده است</h3>
+            <p style="font-size: 0.9rem; color: #78350f; line-height: 1.7; margin: 0;">
+              همکار گرامی، مهلت اعلام حضور و ثبت‌نام در «تور کویر ورزنه» در تاریخ <strong>۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰</strong> به پایان رسیده است و در حال حاضر امکان ثبت‌نام جدید وجود ندارد.
+            </p>
+          </div>
+
+          <!-- حالت ۱: هنوز تصمیمی اعلام نشده -->
+          <div id="statusNotDecided" style="display: none;">
+            <div class="form-header">
+              <h3>اعلام وضعیت حضور در تور کویر</h3>
+              <p>همکار محترم <strong id="userPromptName">-</strong>، لطفاً تمایل یا عدم تمایل خود به حضور در این برنامه را مشخص فرمایید:</p>
+            </div>
+
+            <div class="form-actions" id="notDecidedActions">
+              <button type="button" class="btn btn-attend" id="btnAttend" style="background: #b45309;">
+                <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                مایل به شرکت در این برنامه هستم
+              </button>
+
+              <button type="button" class="btn btn-decline" id="btnDecline">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                تمایلی به حضور ندارم
+              </button>
+            </div>
+          </div>
+
+          <!-- حالت ۲: ثبت‌نام شده (حاضر) + دکمه انصراف -->
+          <div id="statusAttendingCard" class="status-card status-card-attending" style="display: none;">
+            <div class="status-card-header">
+              <div class="status-icon-bubble status-icon-green">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <div class="status-card-title">وضعیت شما: مایل به شرکت در این برنامه هستید</div>
+                <div class="status-card-time">زمان ثبت: <span id="attendingTimeText">-</span></div>
+              </div>
+            </div>
+            <p style="font-size: 0.88rem; color: #166534; line-height: 1.7; margin: 14px 0 6px 0;">
+              اطلاعات شما با موفقیت در فهرست مسافرین تور کویر ورزنه ثبت گردید. تمهیدات سفر و اسکان برای شما در نظر گرفته شده است.
+            </p>
+            
+            <div id="cancelAttendanceSection" style="margin-top: 16px; border-top: 1px solid #bbf7d0; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <span style="font-size: 0.84rem; color: #166534;">چنانچه مایل به انصراف از حضور در تور هستید:</span>
+              <button type="button" class="btn btn-decline" id="btnCancelAttendance" style="padding: 9px 18px; font-size: 0.86rem;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                انصراف از شرکت در رویداد
+              </button>
+            </div>
+
+            <div id="cancelExpiredNotice" style="display: none; margin-top: 16px; border-top: 1px solid #bbf7d0; padding-top: 12px; font-size: 0.84rem; color: #92400e; line-height: 1.6;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 5px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              مهلت انصراف از این رویداد در تاریخ ۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰ به پایان رسیده است و امکان لغو حضور یا تغییر وضعیت وجود ندارد.
+            </div>
+          </div>
+
+          <!-- حالت ۳: انصراف داده یا عدم حضور + دکمه تغییر نظر -->
+          <div id="statusDeclinedCard" class="status-card status-card-declined" style="display: none;">
+            <div class="status-card-header">
+              <div class="status-icon-bubble status-icon-red">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              </div>
+              <div>
+                <div class="status-card-title">وضعیت شما: عدم حضور / انصراف داده‌اید</div>
+                <div class="status-card-time">زمان ثبت: <span id="declinedTimeText">-</span></div>
+              </div>
+            </div>
+            <p style="font-size: 0.88rem; color: #991b1b; line-height: 1.7; margin: 14px 0 6px 0;">
+              عدم حضور شما در این رویداد در سامانه ثبت گردیده است. امیدواریم در برنامه‌های آینده همراه ما باشید.
+            </p>
+
+            <div id="reAttendSection" style="margin-top: 16px; border-top: 1px solid #fecaca; padding-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <span style="font-size: 0.84rem; color: #991b1b;">در صورت تغییر برنامه و تمایل به حضور مجدد:</span>
+              <button type="button" class="btn btn-attend" id="btnReAttend" style="padding: 9px 18px; font-size: 0.86rem; background: #b45309;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                تغییر نظر: مایل به شرکت هستم
+              </button>
+            </div>
+
+            <div id="reAttendExpiredNotice" style="display: none; margin-top: 16px; border-top: 1px solid #fecaca; padding-top: 12px; font-size: 0.84rem; color: #991b1b; line-height: 1.6;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 5px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰ به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <footer class="page-footer">
+      گروه توسعه سرمایه گذاری انتخاب &copy; تمامی حقوق محفوظ است.
+    </footer>
+  </div>
+
+  <!-- پاپ‌آپ نتیجه ثبت -->
+  <div class="modal-overlay" id="resultModal">
+    <div class="modal-card">
+      <div class="modal-icon-wrap" id="modalIcon"></div>
+      <h3 class="modal-title" id="modalTitle">ثبت با موفقیت انجام شد</h3>
+      <p class="modal-desc" id="modalMessage"></p>
+      
+      <div class="modal-info-box">
+        <div class="modal-info-row">
+          <span class="modal-info-label">رویداد:</span>
+          <span class="modal-info-value">تور کویر ورزنه</span>
+        </div>
+        <div class="modal-info-row">
+          <span class="modal-info-label">نام و نام خانوادگی:</span>
+          <span class="modal-info-value" id="resName">-</span>
+        </div>
+        <div class="modal-info-row">
+          <span class="modal-info-label">شماره پرسنلی:</span>
+          <span class="modal-info-value" id="resCode">-</span>
+        </div>
+        <div class="modal-info-row">
+          <span class="modal-info-label">وضعیت اعلامی:</span>
+          <span class="modal-info-value" id="resStatus">-</span>
+        </div>
+        <div class="modal-info-row">
+          <span class="modal-info-label">زمان ثبت:</span>
+          <span class="modal-info-value" id="resTime">-</span>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-primary" style="width: 100%;" id="btnCloseModal">
+        متوجه شدم / بستن
+      </button>
+    </div>
+  </div>
+
+  <!-- اسکریپت‌ها -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/storage.js"></script>
+  <script src="assets/js/personnel-data.js"></script>
+  <script>
+    const EVENT_ID = "kavir-varzaneh";
+    const EVENT_TITLE = "تور کویر ورزنه";
+    const SESSION_KEY = "entekhab_user_session_" + EVENT_ID;
+
+    // مهلت ثبت‌نام و انصراف: ۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰ (2026-09-13T13:00:00+03:30)
+    const REGISTRATION_DEADLINE_MS = 1789291800000;
+
+    // تابع بررسی انقضای مهلت ثبت‌نام یا انصراف
+    function isRegistrationExpired() {
+      // ۱. بررسی بر اساس میلی‌ثانیه زمان UTC
+      if (Date.now() > REGISTRATION_DEADLINE_MS) return true;
+
+      // ۲. بررسی تکمیلی بر اساس تقویم جلالی رسمی
+      try {
+        const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'Asia/Tehran'
+        });
+        const parts = formatter.formatToParts(new Date());
+        const getPart = type => parseInt(parts.find(p => p.type === type)?.value || '0', 10);
+        const pYear = getPart('year');
+        const pMonth = getPart('month');
+        const pDay = getPart('day');
+        const pHour = getPart('hour');
+        
+        if (pYear > 1405) return true;
+        if (pYear === 1405) {
+          if (pMonth > 6) return true;
+          if (pMonth === 6) {
+            if (pDay > 22) return true;
+            if (pDay === 22 && pHour >= 13) return true;
+          }
+        }
+      } catch (e) {}
+
+      return false;
+    }
+
+    let currentUser = null;
+
+    // بررسی لاگین بودن کاربر
+    function checkUserAuth() {
+      const session = sessionStorage.getItem(SESSION_KEY);
+      const loginScreen = document.getElementById('loginScreen');
+      const mainContainer = document.getElementById('mainContainer');
+
+      if (session) {
+        try {
+          currentUser = JSON.parse(session);
+          document.getElementById('loggedInUserName').textContent = currentUser.fullName;
+          document.getElementById('loggedInUserCode').textContent = currentUser.personnelCode;
+          document.getElementById('userPromptName').textContent = currentUser.fullName;
+          loginScreen.style.display = 'none';
+          mainContainer.style.display = 'block';
+          loadUserStatus();
+          return true;
+        } catch (e) {
+          sessionStorage.removeItem(SESSION_KEY);
+        }
+      }
+
+      loginScreen.style.display = 'block';
+      mainContainer.style.display = 'none';
+      return false;
+    }
+
+    // بارگذاری آخرین وضعیت کاربر از دیتابیس PostgreSQL
+    async function loadUserStatus() {
+      if (!currentUser) return;
+      
+      const loading = document.getElementById('statusLoading');
+      const notDecided = document.getElementById('statusNotDecided');
+      const attendingCard = document.getElementById('statusAttendingCard');
+      const declinedCard = document.getElementById('statusDeclinedCard');
+      const deadlineExpired = document.getElementById('statusDeadlineExpired');
+      const cancelSection = document.getElementById('cancelAttendanceSection');
+      const cancelExpiredNotice = document.getElementById('cancelExpiredNotice');
+      const reAttendSection = document.getElementById('reAttendSection');
+      const reAttendExpiredNotice = document.getElementById('reAttendExpiredNotice');
+
+      loading.style.display = 'block';
+      notDecided.style.display = 'none';
+      attendingCard.style.display = 'none';
+      declinedCard.style.display = 'none';
+      if (deadlineExpired) deadlineExpired.style.display = 'none';
+
+      const isExpired = isRegistrationExpired();
+
+      try {
+        const record = await StorageService.getUserRegistration(EVENT_ID, currentUser.personnelCode);
+        loading.style.display = 'none';
+
+        if (!record) {
+          if (isExpired) {
+            if (deadlineExpired) deadlineExpired.style.display = 'block';
+            notDecided.style.display = 'none';
+          } else {
+            notDecided.style.display = 'block';
+          }
+        } else if (record.status === 'attending') {
+          document.getElementById('attendingTimeText').textContent = record.jalaliDate || record.timestamp;
+          attendingCard.style.display = 'block';
+
+          if (isExpired) {
+            if (cancelSection) cancelSection.style.display = 'none';
+            if (cancelExpiredNotice) cancelExpiredNotice.style.display = 'block';
+          } else {
+            if (cancelSection) cancelSection.style.display = 'flex';
+            if (cancelExpiredNotice) cancelExpiredNotice.style.display = 'none';
+          }
+        } else {
+          document.getElementById('declinedTimeText').textContent = record.jalaliDate || record.timestamp;
+          declinedCard.style.display = 'block';
+
+          if (isExpired) {
+            if (reAttendSection) reAttendSection.style.display = 'none';
+            if (reAttendExpiredNotice) reAttendExpiredNotice.style.display = 'block';
+          } else {
+            if (reAttendSection) reAttendSection.style.display = 'flex';
+            if (reAttendExpiredNotice) reAttendExpiredNotice.style.display = 'none';
+          }
+        }
+      } catch (err) {
+        console.error("خطا در بارگذاری وضعیت:", err);
+        loading.style.display = 'none';
+        if (isExpired) {
+          if (deadlineExpired) deadlineExpired.style.display = 'block';
+        } else {
+          notDecided.style.display = 'block';
+        }
+      }
+    }
+
+    // ثبت یا به‌روزرسانی تصمیم حضور/انصراف
+    async function submitAttendance(status, customText) {
+      if (!currentUser) return;
+
+      // جلوگیری از ثبت یا انصراف پس از پایان مهلت
+      if (isRegistrationExpired()) {
+        alert("مهلت ثبت‌نام و انصراف در رویداد تور کویر ورزنه در تاریخ ۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰ به پایان رسیده است و در حال حاضر امکان انجام این عملیات وجود ندارد.");
+        await loadUserStatus();
+        return;
+      }
+
+      const btnAttend = document.getElementById('btnAttend');
+      const btnDecline = document.getElementById('btnDecline');
+      const btnCancel = document.getElementById('btnCancelAttendance');
+      const btnReAttend = document.getElementById('btnReAttend');
+
+      if (btnAttend) btnAttend.disabled = true;
+      if (btnDecline) btnDecline.disabled = true;
+      if (btnCancel) btnCancel.disabled = true;
+      if (btnReAttend) btnReAttend.disabled = true;
+
+      try {
+        const result = await StorageService.saveRegistration({
+          eventId: EVENT_ID,
+          eventTitle: EVENT_TITLE,
+          personnelCode: currentUser.personnelCode,
+          fullName: currentUser.fullName,
+          status: status,
+          statusText: customText || (status === 'attending' ? 'مایل به شرکت در این برنامه هستم' : 'عدم حضور / انصراف')
+        });
+
+        // نمایش پاپ‌آپ نتیجه
+        const modal = document.getElementById('resultModal');
+        const modalIcon = document.getElementById('modalIcon');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+
+        if (status === 'attending') {
+          modalIcon.className = "modal-icon-wrap modal-icon-success";
+          modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+          modalTitle.textContent = "حضور شما با موفقیت ثبت شد";
+          modalMessage.textContent = "از همراهی و تمایل شما برای شرکت در تور کویر ورزنه صمیمانه سپاسگزاریم.";
+        } else {
+          modalIcon.className = "modal-icon-wrap modal-icon-decline";
+          modalIcon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+          modalTitle.textContent = "انصراف / عدم حضور شما ثبت شد";
+          modalMessage.textContent = "اطلاعات انصراف شما در سامانه و دیتابیس ثبت گردید.";
+        }
+
+        document.getElementById('resName').textContent = currentUser.fullName;
+        document.getElementById('resCode').textContent = currentUser.personnelCode;
+        document.getElementById('resStatus').innerHTML = status === 'attending'
+          ? '<span class="status-badge status-badge-attending">مایل به شرکت در برنامه</span>'
+          : '<span class="status-badge status-badge-declined">عدم حضور / انصراف</span>';
+        document.getElementById('resTime').textContent = result.record.jalaliDate;
+
+        modal.classList.add('active');
+
+        // به‌روزرسانی کارت وضعیت
+        await loadUserStatus();
+
+      } catch (e) {
+        console.error(e);
+        alert(e.message || "خطا در برقراری ارتباط با دیتابیس. لطفاً مجدداً تلاش فرمایید.");
+      } finally {
+        if (btnAttend) btnAttend.disabled = false;
+        if (btnDecline) btnDecline.disabled = false;
+        if (btnCancel) btnCancel.disabled = false;
+        if (btnReAttend) btnReAttend.disabled = false;
+      }
+    }
+
+    // مشاهده یا مخفی‌سازی کلمه عبور (کد ملی)
+    const btnToggleNatPass = document.getElementById('btnToggleNatPass');
+    if (btnToggleNatPass) {
+      btnToggleNatPass.addEventListener('click', function() {
+        const passInput = document.getElementById('inputNationalCode');
+        const isPass = passInput.type === 'password';
+        passInput.type = isPass ? 'text' : 'password';
+        this.title = isPass ? 'مخفی‌سازی رمز عبور' : 'مشاهده رمز عبور';
+        this.innerHTML = isPass
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      });
+    }
+
+    // فرم لاگین
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const rawCode = document.getElementById('inputPersonnelCode').value.trim();
+      const rawNat = document.getElementById('inputNationalCode').value.trim();
+      const errBox = document.getElementById('loginError');
+
+      const auth = authenticatePersonnel(rawCode, rawNat);
+      if (auth && auth.success) {
+        errBox.style.display = 'none';
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+          personnelCode: auth.user.personnelCode,
+          fullName: auth.user.fullName,
+          nationalCode: auth.user.nationalCode,
+          department: auth.user.department || ''
+        }));
+        checkUserAuth();
+      } else {
+        errBox.textContent = (auth && auth.message) ? auth.message : 'شماره پرسنلی یا کد ملی وارد شده صحیح نمی‌باشد.';
+        errBox.style.display = 'block';
+        if (auth && auth.message && auth.message.includes('کد ملی')) {
+          document.getElementById('inputNationalCode').focus();
+        } else {
+          document.getElementById('inputPersonnelCode').focus();
+        }
+      }
+    });
+
+    // دکمه خروج
+    document.getElementById('btnLogoutUser').addEventListener('click', function() {
+      if (confirm("آیا قصد خروج از حساب کاربری خود را دارید؟")) {
+        sessionStorage.removeItem(SESSION_KEY);
+        currentUser = null;
+        checkUserAuth();
+      }
+    });
+
+    // دکمه‌های اعلام حضور / عدم حضور اولیه
+    document.getElementById('btnAttend').addEventListener('click', () => {
+      if (isRegistrationExpired()) {
+        alert("مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰ به پایان رسیده است.");
+        loadUserStatus();
+        return;
+      }
+      submitAttendance('attending');
+    });
+
+    document.getElementById('btnDecline').addEventListener('click', () => {
+      if (isRegistrationExpired()) {
+        alert("مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰ به پایان رسیده است.");
+        loadUserStatus();
+        return;
+      }
+      submitAttendance('declined', 'عدم حضور');
+    });
+
+    // دکمه انصراف از شرکت در رویداد
+    document.getElementById('btnCancelAttendance').addEventListener('click', () => {
+      if (isRegistrationExpired()) {
+        alert("مهلت انصراف از این رویداد در تاریخ ۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰ به پایان رسیده است و امکان انصراف وجود ندارد.");
+        loadUserStatus();
+        return;
+      }
+      if (confirm("همکار گرامی، آیا از انصراف از شرکت در این رویداد اطمینان دارید؟")) {
+        submitAttendance('declined', 'انصراف از حضور');
+      }
+    });
+
+    // دکمه تغییر نظر و حضور مجدد
+    document.getElementById('btnReAttend').addEventListener('click', () => {
+      if (isRegistrationExpired()) {
+        alert("مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰ به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.");
+        loadUserStatus();
+        return;
+      }
+      submitAttendance('attending', 'مایل به شرکت در این برنامه هستم');
+    });
+
+    // بستن پاپ‌آپ
+    document.getElementById('btnCloseModal').addEventListener('click', () => {
+      document.getElementById('resultModal').classList.remove('active');
+    });
+
+    // آغاز اجرای صفحه
+    checkUserAuth();
+  </script>
+</body>
+</html>

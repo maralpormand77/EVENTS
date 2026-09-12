@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ورود به پنل مدیریت | گروه توسعه سرمایه گذاری انتخاب</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <style>
+    .admin-header-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .modal-lg {
+      max-width: 850px;
+      width: 95%;
+      max-height: 90vh;
+      overflow-y: auto;
+      text-align: right;
+    }
+    .sms-box {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      margin-top: 10px;
+      position: relative;
+    }
+    .sms-box-text {
+      color: #334155;
+      line-height: 1.6;
+    }
+    .btn-copy {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+    }
+    .action-btn {
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .action-btn-del {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .action-btn-del:hover {
+      background: #fca5a5;
+    }
+    .preview-iframe {
+      width: 100%;
+      height: 520px;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      background: #ffffff;
+    }
+    /* استایل‌های اختصاصی فرم لاگین */
+    .login-container {
+      max-width: 440px;
+      margin: 40px auto 60px;
+      padding: 0 16px;
+    }
+    .login-card {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: 36px 28px;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border-color);
+      text-align: center;
+    }
+    .login-error {
+      display: none;
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      margin-bottom: 18px;
+      text-align: right;
+    }
+    .user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f1f5f9;
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- صفحه فرم ورود (Login Gate) -->
+  <div id="loginScreen" class="login-container">
+    <div class="brand-header">
+      <div class="brand-logo-container">
+        <img src="assets/images/logo.png" onerror="this.src='../images.png'" alt="لوگو انتخاب" class="brand-logo">
+      </div>
+      <div>
+        <span class="org-badge">
+          سامانه اختصاصی مدیریت رویدادها
+        </span>
+      </div>
+    </div>
+
+    <div class="login-card">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: #e0edff; color: var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+      <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--text-primary); margin-bottom: 6px;">ورود به پنل مدیریت</h2>
+      <p style="font-size: 0.86rem; color: var(--text-secondary); margin-bottom: 22px;">لطفاً جهت دسترسی به دیتای رویدادها هویت خود را تایید نمایید:</p>
+
+      <div id="loginError" class="login-error">
+        نام کاربری یا رمز عبور نادرست است.
+      </div>
+
+      <form id="loginForm" novalidate>
+        <div class="form-group" style="text-align: right;">
+          <label for="usernameInput" class="form-label">نام کاربری:</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="usernameInput" class="form-input" placeholder="نام کاربری مجاز" required autofocus>
+          </div>
+        </div>
+
+        <div class="form-group" style="text-align: right; margin-bottom: 24px;">
+          <label for="passwordInput" class="form-label">رمز عبور:</label>
+          <div class="input-wrapper has-password-toggle">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="passwordInput" class="form-input" placeholder="رمز عبور" required>
+            <button type="button" class="btn-toggle-password" id="btnToggleAdminPass" aria-label="نمایش / مخفی‌سازی رمز عبور" title="مشاهده رمز عبور">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 13px;">
+          ورود به پنل &larr;
+        </button>
+      </form>
+    </div>
+
+    <footer class="page-footer">
+      گروه توسعه سرمایه گذاری انتخاب &copy; تمامی حقوق محفوظ است.
+    </footer>
+  </div>
+
+  <!-- داشبورد اصلی ادمین (فقط پس از لاگین نمایش داده می‌شود) -->
+  <div id="adminDashboard" class="container container-wide" style="display: none;">
+    
+    <!-- نوار مدیریت بالا -->
+    <header class="admin-navbar">
+      <div class="admin-nav-title">
+        <img src="assets/images/logo.png" onerror="this.src='../images.png'" alt="لوگو انتخاب" style="height: 48px;">
+        <div>
+          <h1>پنل مدیریت جامع رویدادها</h1>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">
+            کنترل ۳ رویداد، آمار لحظه‌ای، مدیریت و خروجی دیتای پرسنل
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-header-actions">
+        <!-- کاربر لاگین شده -->
+        <div class="user-pill">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="currentAdminName">مدیر</span>
+        </div>
+
+        <button type="button" class="btn btn-secondary" id="btnCloudSettings">
+          <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          تنظیمات دیتابیس PostgreSQL
+        </button>
+
+        <button type="button" class="btn btn-attend" id="btnExportExcel">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          خروجی اکسل (Excel)
+        </button>
+
+        <button type="button" class="btn btn-secondary" onclick="window.print()">
+          <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          چاپ
+        </button>
+
+        <!-- دکمه خروج -->
+        <button type="button" class="btn btn-decline" id="btnLogout" style="padding: 10px 14px;" title="خروج از حساب مدیریت">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          خروج
+        </button>
+      </div>
+    </header>
+
+    <!-- نوار اطلاع‌رسانی وضعیت اتصال دیتابیس متمرکز -->
+    <div class="cloud-banner" id="cloudStatusBanner">
+      <div class="cloud-banner-text">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        <span id="cloudStatusText">
+          در حال بررسی وضعیت دیتابیس متمرکز...
+        </span>
+      </div>
+      <div>
+        <button type="button" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.82rem;" id="btnQuickConfig">
+          اتصال به دیتابیس PostgreSQL
+        </button>
+      </div>
+    </div>
+
+    <!-- بخش کنترل و دسترسی به ۳ صفحه ایونت -->
+    <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 14px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+      کنترل و لینک‌های اختصاصی کوتاه ۳ رویداد (جهت پیامک به پرسنل)
+    </h2>
+
+    <div class="event-previews-grid">
+      <!-- کارت رویداد ۱ -->
+      <div class="preview-card">
+        <div class="preview-card-header banner-sobh">
+          <span class="event-tag" style="background: rgba(255,255,255,0.25);">لینک ۱</span>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-top: 4px;">صبح همدلی</h3>
+          <p style="font-size: 0.85rem; opacity: 0.9;">پیاده روی مدیران گروه انتخاب</p>
+        </div>
+        <div class="preview-card-body">
+          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px;">
+            <strong>زمان:</strong> یکشنبه ۲۲/۰۶/۱۴۰۵ ساعت ۰۶:۳۰ صبح
+          </div>
+          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px;">
+            <strong>مکان:</strong> خیابان نشاط، عمارت ماهور
+          </div>
+          
+          <div class="sms-box">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #004b93; margin-bottom: 4px;">متن پیامک آماده با لینک کوتاه:</div>
+            <div class="sms-box-text" id="smsText1">همکار ارجمند، جهت اطلاع از جزئیات و اعلام حضور در «پیاده روی صبح همدلی» روی لینک زیر کلیک فرمایید:
+...</div>
+            <button class="btn btn-secondary btn-copy" onclick="copySms(1)">کپی متن و لینک</button>
+          </div>
+        </div>
+        <div class="preview-card-footer">
+          <a href="https://entekhab-sobh.vercel.app/" id="viewBtn1" target="_blank" class="btn btn-primary" style="flex: 1; font-size: 0.88rem;">
+            مشاهده صفحه
+          </a>
+          <button type="button" class="btn btn-secondary" onclick="openPreviewModal(getEventUrl(1), 'صبح همدلی')">
+            پیش‌نمایش سریع
+          </button>
+        </div>
+      </div>
+
+      <!-- کارت رویداد ۲ -->
+      <div class="preview-card">
+        <div class="preview-card-header banner-kavir">
+          <span class="event-tag" style="background: rgba(255,255,255,0.25);">لینک ۲</span>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-top: 4px;">تور کویر ورزنه</h3>
+          <p style="font-size: 0.85rem; opacity: 0.9;">ایونت علمی تفریحی گروه انتخاب</p>
+        </div>
+        <div class="preview-card-body">
+          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px;">
+            <strong>حرکت:</strong> چهارشنبه ۲۵/۰۶/۱۴۰۵ ساعت ۱۴:۰۰
+          </div>
+          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px;">
+            <strong>مکان:</strong> ساختمان مرکزی (خیابان امام خمینی)
+          </div>
+          
+          <div class="sms-box">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #b45309; margin-bottom: 4px;">متن پیامک آماده با لینک کوتاه:</div>
+            <div class="sms-box-text" id="smsText2">همکار ارجمند، جهت اطلاع از جزئیات و ثبت‌نام در «تور کویر ورزنه» روی لینک زیر کلیک فرمایید:
+...</div>
+            <button class="btn btn-secondary btn-copy" onclick="copySms(2)">کپی متن و لینک</button>
+          </div>
+        </div>
+        <div class="preview-card-footer">
+          <a href="https://entekhab-kavir.vercel.app/" id="viewBtn2" target="_blank" class="btn btn-primary" style="flex: 1; font-size: 0.88rem; background: #b45309;">
+            مشاهده صفحه
+          </a>
+          <button type="button" class="btn btn-secondary" onclick="openPreviewModal(getEventUrl(2), 'تور کویر ورزنه')">
+            پیش‌نمایش سریع
+          </button>
+        </div>
+      </div>
+
+      <!-- کارت رویداد ۳ -->
+      <div class="preview-card">
+        <div class="preview-card-header banner-rafting">
+          <span class="event-tag" style="background: rgba(255,255,255,0.25);">لینک ۳</span>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin-top: 4px;">تور رفتینگ مارکده</h3>
+          <p style="font-size: 0.85rem; opacity: 0.9;">ایونت تفریحی گروه انتخاب</p>
+        </div>
+        <div class="preview-card-body">
+          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px;">
+            <strong>حرکت:</strong> پنجشنبه ۰۲/۰۷/۱۴۰۵ ساعت ۰۶:۰۰
+          </div>
+          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px;">
+            <strong>مکان:</strong> ساختمان مرکزی
+          </div>
+          
+          <div class="sms-box">
+            <div style="font-size: 0.78rem; font-weight: 700; color: #0284c7; margin-bottom: 4px;">متن پیامک آماده با لینک کوتاه:</div>
+            <div class="sms-box-text" id="smsText3">همکار ارجمند، جهت اطلاع از جزئیات و ثبت‌نام در «تور رفتینگ مارکده» روی لینک زیر کلیک فرمایید:
+...</div>
+            <button class="btn btn-secondary btn-copy" onclick="copySms(3)">کپی متن و لینک</button>
+          </div>
+        </div>
+        <div class="preview-card-footer">
+          <a href="https://entekhab-rafting.vercel.app/" id="viewBtn3" target="_blank" class="btn btn-primary" style="flex: 1; font-size: 0.88rem; background: #0284c7;">
+            مشاهده صفحه
+          </a>
+          <button type="button" class="btn btn-secondary" onclick="openPreviewModal(getEventUrl(3), 'تور رفتینگ مارکده')">
+            پیش‌نمایش سریع
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- کارت‌های آمار و گزارش لحظه‌ای -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>مجموع ثبت‌نام‌ها</h3>
+          <div class="stat-number" id="statTotal">۰</div>
+        </div>
+        <div class="stat-icon stat-icon-blue">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>مایل به شرکت (حاضرین)</h3>
+          <div class="stat-number" style="color: #059669;" id="statAttending">۰</div>
+        </div>
+        <div class="stat-icon stat-icon-green">
+          <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>اعلام عدم حضور</h3>
+          <div class="stat-number" style="color: #dc2626;" id="statDeclined">۰</div>
+        </div>
+        <div class="stat-icon stat-icon-red">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>درصد تمایل به مشارکت</h3>
+          <div class="stat-number" style="color: #d97706;" id="statRate">۰٪</div>
+        </div>
+        <div class="stat-icon stat-icon-amber">
+          <svg viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- تب‌های فیلتر بر اساس ایونت -->
+    <div class="event-tabs">
+      <button class="tab-btn active" data-event="all">همه رویدادها (<span id="countAll">۰</span>)</button>
+      <button class="tab-btn" data-event="sobh-hamdeli">صبح همدلی (<span id="countSobh">۰</span>)</button>
+      <button class="tab-btn" data-event="kavir-varzaneh">کویر ورزنه (<span id="countKavir">۰</span>)</button>
+      <button class="tab-btn" data-event="rafting-markadeh">رفتینگ مارکده (<span id="countRafting">۰</span>)</button>
+    </div>
+
+    <!-- نوار جستجو و فیلتر جدول -->
+    <div class="control-bar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="جستجو بر اساس نام یا شماره پرسنلی...">
+      </div>
+
+      <div class="filter-group">
+        <select id="statusFilter" class="filter-select">
+          <option value="all">همه وضعیت‌ها</option>
+          <option value="attending">فقط مایل به شرکت (حاضرین)</option>
+          <option value="declined">فقط عدم حضور / انصراف</option>
+        </select>
+
+        <button type="button" class="btn btn-secondary" id="btnRefresh" title="به‌روزرسانی داده‌ها">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          تازه‌سازی
+        </button>
+      </div>
+    </div>
+
+    <!-- جدول نمایش اطلاعات ثبت‌نامی‌ها -->
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">ردیف</th>
+            <th>نام رویداد</th>
+            <th>شماره پرسنلی</th>
+            <th>نام و نام خانوادگی</th>
+            <th>وضعیت اعلامی</th>
+            <th>تاریخ و زمان ثبت</th>
+            <th style="width: 90px;">عملیات</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- ردیف‌ها با جاوااسکریپت پر می‌شوند -->
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="page-footer">
+      سامانه مدیریت یکپارچه ایونت‌های گروه توسعه سرمایه گذاری انتخاب &copy; ۱۴۰۵
+    </footer>
+  </div>
+
+  <!-- مودال تنظیمات دیتابیس ابری PostgreSQL (Supabase) -->
+  <div class="modal-overlay" id="cloudModal">
+    <div class="modal-card modal-lg" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <h3 class="modal-title" style="margin-bottom: 0; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+          تنظیمات دیتابیس متمرکز PostgreSQL (Supabase)
+        </h3>
+        <button type="button" style="background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #94a3b8;" onclick="document.getElementById('cloudModal').classList.remove('active')">&times;</button>
+      </div>
+      
+      <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 16px;">
+        با اتصال به دیتابیس واقعی <strong>PostgreSQL</strong> (از طریق Supabase)، تمام ثبت‌نام‌ها به شکل متمرکز ذخیره شده و بلادرنگ در پنل ادمین و بین تمام دستگاه‌ها و پرسنل همگام می‌شوند.
+      </p>
+
+      <div class="notes-box" style="margin-bottom: 16px; background: #f8fafc; border-color: #cbd5e1; border-right-color: var(--primary);">
+        <div class="notes-box-title" style="color: var(--primary); font-size: 0.92rem; margin-bottom: 8px;">
+          راهنمای سریع راه‌اندازی در ۳ گام (رایگان در ۲ دقیقه):
+        </div>
+        <ol style="margin-right: 20px; font-size: 0.84rem; color: #334155; line-height: 1.9;">
+          <li>وارد سایت <a href="https://supabase.com" target="_blank" style="color: #0284c7; font-weight: bold;">supabase.com</a> شده، یک حساب کاربری بسازید و دکمه <strong>New Project</strong> را بزنید.</li>
+          <li>از منوی سمت چپ وارد <strong>SQL Editor</strong> شوید، کد SQL زیر را پیست کرده و دکمه سبز <strong>Run</strong> را بزنید:</li>
+        </ol>
+
+        <div style="position: relative; margin: 10px 0 6px 0;">
+          <pre id="sqlSnippet" style="direction: ltr; text-align: left; background: #0f172a; color: #38bdf8; padding: 12px; border-radius: 8px; font-size: 0.76rem; overflow-x: auto; max-height: 125px; line-height: 1.5; margin: 0;">-- ایجاد جدول ثبت‌نام رویدادها در PostgreSQL
+CREATE TABLE IF NOT EXISTS registrations (
+  id TEXT PRIMARY KEY,
+  event_id TEXT NOT NULL,
+  event_title TEXT NOT NULL,
+  personnel_code TEXT NOT NULL,
+  full_name TEXT NOT NULL,
+  status TEXT NOT NULL,
+  status_text TEXT,
+  timestamp TEXT,
+  jalali_date TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE registrations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow public insert" ON registrations FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public read" ON registrations FOR SELECT USING (true);
+CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</pre>
+          <button type="button" class="btn btn-secondary" id="btnCopySql" style="position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 0.72rem; background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.2);">کپی کدهای SQL</button>
+        </div>
+
+        <div style="font-size: 0.84rem; color: #334155; line-height: 1.9; margin-top: 8px;">
+          ۳. از منوی <strong>Project Settings &rarr; Data API</strong>، مقادیر <strong>Project URL</strong> و <strong>Project API key (anon / public)</strong> را کپی و در کادرهای زیر قرار دهید:
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="supabaseUrlInput" class="form-label">آدرس پروژه Supabase (Project URL):</label>
+        <input type="url" id="supabaseUrlInput" class="form-input" style="direction: ltr; font-family: monospace;" placeholder="https://xxxxxxxxxxxx.supabase.co">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="supabaseKeyInput" class="form-label">کلید دسترسی عمومی (Project API Key - anon public):</label>
+        <input type="text" id="supabaseKeyInput" class="form-input" style="direction: ltr; font-family: monospace; font-size: 0.82rem;" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label for="supabaseTableInput" class="form-label">نام جدول در دیتابیس:</label>
+        <input type="text" id="supabaseTableInput" class="form-input" style="direction: ltr; font-family: monospace;" value="registrations">
+      </div>
+
+      <div id="connectionStatusBox" style="display: none; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px;"></div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary" id="btnCloseCloudModal">بستن</button>
+        <button type="button" class="btn btn-secondary" id="btnTestConnection" style="background: #f1f5f9; color: var(--primary); font-weight: 600;">
+          بررسی و تست اتصال دیتابیس
+        </button>
+        <button type="button" class="btn btn-primary" id="btnSaveCloudUrl">ذخیره و همگام‌سازی</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال پیش‌نمایش سریع ایونت -->
+  <div class="modal-overlay" id="previewModal">
+    <div class="modal-card modal-lg">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 class="modal-title" id="previewModalTitle" style="margin: 0;">پیش‌نمایش رویداد</h3>
+        <button type="button" class="btn btn-secondary" style="padding: 4px 12px;" onclick="closePreviewModal()">✕</button>
+      </div>
+      <iframe id="previewIframe" class="preview-iframe" src="about:blank"></iframe>
+      <div style="margin-top: 14px; text-align: left;">
+        <button type="button" class="btn btn-secondary" onclick="closePreviewModal()">بستن پیش‌نمایش</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- اسکریپت‌ها -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/storage.js"></script>
+  <script>
+    // اطلاعات کاربران ادمین مجاز
+    const AUTHORIZED_ADMINS = [
+      {
+        usernames: ["maral pourmand", "maral pourmand", "maralpormand", "مرال پورمند", "مارال پورمند"],
+        password: "992113",
+        displayName: "Maral pourmand"
+      },
+      {
+        usernames: ["hasan landi", "hasanlandi", "حسن لندی", "hassan landi", "hassanlandi"],
+        password: "980253",
+        displayName: "Hasan Landi"
+      }
+    ];
+
+    const SESSION_KEY = "entekhab_admin_session";
+
+    function toStandardDigits(str) {
+      return (str || '').replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+                         .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+    }
+
+    // بررسی احراز هویت
+    function checkAuth() {
+      const session = sessionStorage.getItem(SESSION_KEY);
+      const loginScreen = document.getElementById('loginScreen');
+      const adminDashboard = document.getElementById('adminDashboard');
+      const currentAdminName = document.getElementById('currentAdminName');
+
+      if (session) {
+        try {
+          const user = JSON.parse(session);
+          currentAdminName.textContent = user.displayName;
+          loginScreen.style.display = 'none';
+          adminDashboard.style.display = 'block';
+          document.title = 'پنل مدیریت رویدادها | گروه توسعه سرمایه گذاری انتخاب';
+          return true;
+        } catch (e) {
+          sessionStorage.removeItem(SESSION_KEY);
+        }
+      }
+
+      loginScreen.style.display = 'block';
+      adminDashboard.style.display = 'none';
+      document.title = 'ورود به پنل مدیریت | گروه توسعه سرمایه گذاری انتخاب';
+      return false;
+    }
+
+    // فرم لاگین
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const username = document.getElementById('usernameInput').value.trim().toLowerCase();
+      const rawPassword = document.getElementById('passwordInput').value.trim();
+      const password = toStandardDigits(rawPassword);
+      const errorBox = document.getElementById('loginError');
+
+      const foundAdmin = AUTHORIZED_ADMINS.find(admin => {
+        const usernameMatch = admin.usernames.some(u => u.toLowerCase() === username);
+        const passwordMatch = admin.password === password;
+        return usernameMatch && passwordMatch;
+      });
+
+      if (foundAdmin) {
+        errorBox.style.display = 'none';
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+          displayName: foundAdmin.displayName,
+          loginAt: Date.now()
+        }));
+        checkAuth();
+        updateSmsTexts();
+        checkCloudStatus();
+        loadData();
+      } else {
+        errorBox.style.display = 'block';
+        document.getElementById('passwordInput').value = '';
+        document.getElementById('passwordInput').focus();
+      }
+    });
+
+    // مشاهده یا مخفی‌سازی کلمه عبور ادمین
+    const btnToggleAdminPass = document.getElementById('btnToggleAdminPass');
+    if (btnToggleAdminPass) {
+      btnToggleAdminPass.addEventListener('click', function() {
+        const passInput = document.getElementById('passwordInput');
+        const isPass = passInput.type === 'password';
+        passInput.type = isPass ? 'text' : 'password';
+        this.title = isPass ? 'مخفی‌سازی رمز عبور' : 'مشاهده رمز عبور';
+        this.innerHTML = isPass
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      });
+    }
+
+    // دکمه خروج
+    document.getElementById('btnLogout').addEventListener('click', function() {
+      if (confirm("آیا قصد خروج از پنل مدیریت را دارید؟")) {
+        sessionStorage.removeItem(SESSION_KEY);
+        checkAuth();
+      }
+    });
+
+    // سایر کدهای پنل ادمین
+    let currentRegistrations = [];
+    let selectedEventFilter = 'all';
+
+    function getEventUrl(num) {
+      const host = window.location.hostname;
+      if (host.includes('vercel.app') || host.includes('entekhab')) {
+        if (num === 1) return 'https://entekhab-sobh.vercel.app/';
+        if (num === 2) return 'https://entekhab-kavir.vercel.app/';
+        if (num === 3) return 'https://entekhab-rafting.vercel.app/';
+      }
+      if (host.includes('github.io')) {
+        const base = window.location.href.substring(0, window.location.href.indexOf('/admin'));
+        return base + '/' + num + '/';
+      }
+      return '../' + num + '/';
+    }
+
+    function updateSmsTexts() {
+      const link1 = getEventUrl(1);
+      const link2 = getEventUrl(2);
+      const link3 = getEventUrl(3);
+
+      const b1 = document.getElementById('viewBtn1');
+      const b2 = document.getElementById('viewBtn2');
+      const b3 = document.getElementById('viewBtn3');
+      if (b1) b1.href = link1;
+      if (b2) b2.href = link2;
+      if (b3) b3.href = link3;
+
+      document.getElementById('smsText1').innerText = `همکار ارجمند، جهت اطلاع از جزئیات و اعلام حضور در «پیاده روی صبح همدلی» روی لینک زیر کلیک فرمایید:\n${link1}`;
+      document.getElementById('smsText2').innerText = `همکار ارجمند، جهت اطلاع از جزئیات و ثبت‌نام در «تور کویر ورزنه» روی لینک زیر کلیک فرمایید:\n${link2}`;
+      document.getElementById('smsText3').innerText = `همکار ارجمند، جهت اطلاع از جزئیات و ثبت‌نام در «تور رفتینگ مارکده» روی لینک زیر کلیک فرمایید:\n${link3}`;
+    }
+
+    function copySms(num) {
+      const text = document.getElementById('smsText' + num).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("متن پیامک به همراه لینک کوتاه در کلیپ‌بورد کپی شد.");
+      }).catch(() => {
+        alert("متن کپی شد:\n" + text);
+      });
+    }
+
+    function openPreviewModal(url, title) {
+      document.getElementById('previewModalTitle').textContent = 'پیش‌نمایش رویداد: ' + title;
+      document.getElementById('previewIframe').src = url;
+      document.getElementById('previewModal').classList.add('active');
+    }
+
+    function closePreviewModal() {
+      document.getElementById('previewModal').classList.remove('active');
+      document.getElementById('previewIframe').src = 'about:blank';
+    }
+
+    function checkCloudStatus() {
+      const sp = getActiveSupabaseConfig();
+      const banner = document.getElementById('cloudStatusBanner');
+      const text = document.getElementById('cloudStatusText');
+
+      if (sp && sp.url && sp.anonKey) {
+        banner.style.background = "#dcfce7";
+        banner.style.borderColor = "#86efac";
+        text.style.color = "#166534";
+        text.innerHTML = `<strong>اتصال به دیتابیس متمرکز PostgreSQL فعال است (Supabase):</strong> تمام ثبت‌نام‌های پرسنل از هر دستگاه به صورت آنلاین در PostgreSQL ذخیره و بلادرنگ همگام می‌شوند.`;
+      } else {
+        const legacy = getActiveScriptUrl();
+        if (legacy) {
+          banner.style.background = "#fef3c7";
+          banner.style.borderColor = "#fcd34d";
+          text.style.color = "#92400e";
+          text.innerHTML = `سامانه به سرویس REST متصل است. جهت پایداری کامل و جلوگیری از تداخل، اتصال به دیتابیس PostgreSQL پیشنهاد می‌شود.`;
+        } else {
+          banner.style.background = "#eff6ff";
+          banner.style.borderColor = "#bfdbfe";
+          text.style.color = "#1e40af";
+          text.innerHTML = `سامانه در حالت حافظه محلی (آفلاین) فعال است. جهت ذخیره دائمی و همگام‌سازی واقعی بین پرسنل و پنل، دیتابیس PostgreSQL را متصل فرمایید.`;
+        }
+      }
+    }
+
+    async function loadData() {
+      const refreshBtn = document.getElementById('btnRefresh');
+      refreshBtn.disabled = true;
+
+      try {
+        const res = await StorageService.fetchRegistrations();
+        currentRegistrations = res.data;
+        renderDashboard();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        refreshBtn.disabled = false;
+      }
+    }
+
+    function renderDashboard() {
+      const total = currentRegistrations.length;
+      const attending = currentRegistrations.filter(r => r.status === 'attending').length;
+      const declined = currentRegistrations.filter(r => r.status === 'declined').length;
+      const rate = total > 0 ? Math.round((attending / total) * 100) : 0;
+
+      document.getElementById('statTotal').textContent = total.toLocaleString('fa-IR');
+      document.getElementById('statAttending').textContent = attending.toLocaleString('fa-IR');
+      document.getElementById('statDeclined').textContent = declined.toLocaleString('fa-IR');
+      document.getElementById('statRate').textContent = rate.toLocaleString('fa-IR') + '٪';
+
+      const countSobh = currentRegistrations.filter(r => r.eventId === 'sobh-hamdeli').length;
+      const countKavir = currentRegistrations.filter(r => r.eventId === 'kavir-varzaneh').length;
+      const countRafting = currentRegistrations.filter(r => r.eventId === 'rafting-markadeh').length;
+
+      document.getElementById('countAll').textContent = total.toLocaleString('fa-IR');
+      document.getElementById('countSobh').textContent = countSobh.toLocaleString('fa-IR');
+      document.getElementById('countKavir').textContent = countKavir.toLocaleString('fa-IR');
+      document.getElementById('countRafting').textContent = countRafting.toLocaleString('fa-IR');
+
+      renderTable();
+    }
+
+    function renderTable() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+      const statusFilter = document.getElementById('statusFilter').value;
+      const tbody = document.getElementById('tableBody');
+
+      let filtered = currentRegistrations.filter(item => {
+        if (selectedEventFilter !== 'all' && item.eventId !== selectedEventFilter) {
+          return false;
+        }
+        if (statusFilter !== 'all' && item.status !== statusFilter) {
+          return false;
+        }
+        if (searchTerm) {
+          const matchName = (item.fullName || '').toLowerCase().includes(searchTerm);
+          const matchCode = (item.personnelCode || '').toLowerCase().includes(searchTerm);
+          if (!matchName && !matchCode) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);">
+              هیچ رکوردی برای نمایش وجود ندارد.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map((item, index) => {
+        const eventBadgeColor = 
+          item.eventId === 'sobh-hamdeli' ? '#004b93' :
+          item.eventId === 'kavir-varzaneh' ? '#b45309' : '#0284c7';
+
+        const statusHtml = item.status === 'attending'
+          ? `<span class="status-badge status-badge-attending">مایل به شرکت</span>`
+          : `<span class="status-badge status-badge-declined">عدم حضور / انصراف</span>`;
+
+        return `
+          <tr>
+            <td>${(index + 1).toLocaleString('fa-IR')}</td>
+            <td>
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${eventBadgeColor}; margin-left: 6px;"></span>
+              <strong>${item.eventTitle || item.eventId}</strong>
+            </td>
+            <td><code style="font-size: 0.95rem; font-weight: 600;">${item.personnelCode}</code></td>
+            <td><strong>${item.fullName}</strong></td>
+            <td>${statusHtml}</td>
+            <td style="font-size: 0.84rem; color: var(--text-secondary);">${item.jalaliDate || item.timestamp || '-'}</td>
+            <td>
+              <button class="action-btn action-btn-del" onclick="deleteItem('${item.id}')" title="حذف این رکورد">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                حذف
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function deleteItem(id) {
+      if (!confirm("آیا از حذف این رکورد اطمینان دارید؟")) return;
+      await StorageService.deleteRegistration(id);
+      currentRegistrations = currentRegistrations.filter(r => r.id !== id);
+      renderDashboard();
+    }
+
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedEventFilter = btn.dataset.event;
+        renderTable();
+      });
+    });
+
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    document.getElementById('statusFilter').addEventListener('change', renderTable);
+
+    document.getElementById('btnExportExcel').addEventListener('click', () => {
+      StorageService.exportToExcel(currentRegistrations);
+    });
+
+    document.getElementById('btnRefresh').addEventListener('click', loadData);
+
+    const cloudModal = document.getElementById('cloudModal');
+    const btnCloudSettings = document.getElementById('btnCloudSettings');
+    const btnQuickConfig = document.getElementById('btnQuickConfig');
+    const btnCloseCloudModal = document.getElementById('btnCloseCloudModal');
+    const btnSaveCloudUrl = document.getElementById('btnSaveCloudUrl');
+    const btnTestConnection = document.getElementById('btnTestConnection');
+    const btnCopySql = document.getElementById('btnCopySql');
+    const supabaseUrlInput = document.getElementById('supabaseUrlInput');
+    const supabaseKeyInput = document.getElementById('supabaseKeyInput');
+    const supabaseTableInput = document.getElementById('supabaseTableInput');
+    const connectionStatusBox = document.getElementById('connectionStatusBox');
+
+    function openCloudModal() {
+      const sp = getActiveSupabaseConfig();
+      supabaseUrlInput.value = sp.url;
+      supabaseKeyInput.value = sp.anonKey;
+      supabaseTableInput.value = sp.table || 'registrations';
+      connectionStatusBox.style.display = 'none';
+      cloudModal.classList.add('active');
+    }
+
+    btnCloudSettings.addEventListener('click', openCloudModal);
+    btnQuickConfig.addEventListener('click', openCloudModal);
+    btnCloseCloudModal.addEventListener('click', () => cloudModal.classList.remove('active'));
+
+    if (btnCopySql) {
+      btnCopySql.addEventListener('click', () => {
+        const code = document.getElementById('sqlSnippet').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+          btnCopySql.textContent = "کپی شد ✓";
+          setTimeout(() => { btnCopySql.textContent = "کپی کدهای SQL"; }, 2000);
+        }).catch(() => {
+          alert("کد کپی شد:\n" + code);
+        });
+      });
+    }
+
+    if (btnTestConnection) {
+      btnTestConnection.addEventListener('click', async () => {
+        const url = supabaseUrlInput.value.trim();
+        const key = supabaseKeyInput.value.trim();
+        const tbl = supabaseTableInput.value.trim() || 'registrations';
+
+        if (!url || !key) {
+          connectionStatusBox.style.display = 'block';
+          connectionStatusBox.style.background = '#fef2f2';
+          connectionStatusBox.style.color = '#991b1b';
+          connectionStatusBox.style.border = '1px solid #fecaca';
+          connectionStatusBox.textContent = 'لطفاً هم آدرس پروژه (Project URL) و هم کلید عمومی (anon key) را وارد فرمایید.';
+          return;
+        }
+
+        btnTestConnection.disabled = true;
+        btnTestConnection.textContent = 'در حال تست اتصال...';
+
+        const result = await StorageService.testSupabaseConnection(url, key, tbl);
+        btnTestConnection.disabled = false;
+        btnTestConnection.textContent = 'بررسی و تست اتصال دیتابیس';
+
+        connectionStatusBox.style.display = 'block';
+        if (result.ok) {
+          connectionStatusBox.style.background = '#f0fdf4';
+          connectionStatusBox.style.color = '#166534';
+          connectionStatusBox.style.border = '1px solid #bbf7d0';
+          connectionStatusBox.innerHTML = '<strong>اتصال با موفقیت برقرار شد!</strong> جدول دیتابیس PostgreSQL با موفقیت متصل شد و آماده ذخیره و همگام‌سازی است.';
+        } else {
+          connectionStatusBox.style.background = '#fef2f2';
+          connectionStatusBox.style.color = '#991b1b';
+          connectionStatusBox.style.border = '1px solid #fecaca';
+          connectionStatusBox.innerHTML = `<strong>عدم برقراری ارتباط:</strong> ${result.error || 'لطفاً اطمینان حاصل فرمایید که کدهای SQL را در SQL Editor سوپابیس اجرا کرده‌اید.'}`;
+        }
+      });
+    }
+
+    btnSaveCloudUrl.addEventListener('click', async () => {
+      const url = supabaseUrlInput.value.trim();
+      const key = supabaseKeyInput.value.trim();
+      const tbl = supabaseTableInput.value.trim() || 'registrations';
+
+      setActiveSupabaseConfig(url, key, tbl);
+      checkCloudStatus();
+      cloudModal.classList.remove('active');
+      alert("تنظیمات دیتابیس PostgreSQL با موفقیت ذخیره شد. در حال همگام‌سازی اطلاعات...");
+      await loadData();
+    });
+
+    // آغاز اجرای صفحه
+    if (checkAuth()) {
+      updateSmsTexts();
+      checkCloudStatus();
+      loadData();
+    }
+  </script>
+</body>
+</html>
