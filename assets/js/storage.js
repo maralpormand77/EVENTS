@@ -297,7 +297,7 @@ const StorageService = {
             }
         }
 
-        return merged;
+        return Object.assign({ success: true, settings: merged }, merged);
     },
 
     // بررسی وضعیت و تست اتصال به دیتابیس Supabase PostgreSQL

@@ -1194,6 +1194,12 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
       if (!dateInput || !timeInput || !badge || !toggleBtn) return;
 
+      if (!setting) {
+        setting = StorageService.getDefaultEventSettings(eventId);
+      } else if (setting.settings) {
+        setting = setting.settings;
+      }
+
       dateInput.value = setting.deadlineDate || '';
       timeInput.value = setting.deadlineTime || '';
 
@@ -1241,7 +1247,8 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           deadlineDate: dateNorm,
           deadlineTime: timeNorm
         });
-        updateEventDeadlineUI(num, res.settings);
+        const setting = (res && res.settings) ? res.settings : (res || StorageService.getDefaultEventSettings(eventId));
+        updateEventDeadlineUI(num, setting);
         alert(`تنظیمات مهلت ثبت‌نام رویداد با موفقیت ذخیره شد.\nمهلت ثبت‌نام: ${dateNorm || 'نامحدود'} ساعت ${timeNorm}`);
       } catch (err) {
         console.error(err);
@@ -1263,7 +1270,8 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         const res = await StorageService.saveEventSettings(eventId, {
           isClosed: newStatus
         });
-        updateEventDeadlineUI(num, res.settings);
+        const setting = (res && res.settings) ? res.settings : (res || StorageService.getDefaultEventSettings(eventId));
+        updateEventDeadlineUI(num, setting);
         alert(newStatus ? "ثبت‌نام این رویداد فوراً مسدود شد." : "ثبت‌نام این رویداد بازگشایی شد.");
       } catch (err) {
         console.error(err);
