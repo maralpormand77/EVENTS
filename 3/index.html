@@ -309,6 +309,154 @@
       return false;
     }
 
+    // اعمال متون و مشخصات داینامیک تنظیم‌شده از پنل مدیریت
+    function applyDynamicEventTexts(setting) {
+      if (!setting || !setting.customTexts) return;
+      const c = setting.customTexts;
+
+      // ۱. عنوان و تیتر اصلی
+      if (c.title) {
+        const el = document.querySelector('.event-title');
+        if (el) el.textContent = c.title;
+        document.title = c.title + " | گروه توسعه سرمایه گذاری انتخاب";
+      }
+      if (c.subtitle) {
+        const el = document.querySelector('.event-subtitle');
+        if (el) el.textContent = c.subtitle;
+      }
+      if (c.tag) {
+        let el = document.querySelector('.event-tag');
+        if (el) {
+          el.textContent = c.tag;
+        } else {
+          const banner = document.querySelector('.event-banner');
+          if (banner) {
+            el = document.createElement('span');
+            el.className = 'event-tag';
+            el.textContent = c.tag;
+            banner.insertBefore(el, banner.querySelector('.event-title'));
+          }
+        }
+      }
+
+      // ۲. تصویر پوستر رویداد
+      let posterWrap = document.querySelector('.event-poster-wrap');
+      if (c.posterUrl && c.posterUrl.trim() !== '') {
+        if (!posterWrap) {
+          posterWrap = document.createElement('div');
+          posterWrap.className = 'event-poster-wrap';
+          const img = document.createElement('img');
+          img.className = 'event-poster';
+          img.src = c.posterUrl;
+          img.alt = c.title || 'پوستر رویداد';
+          posterWrap.appendChild(img);
+
+          const banner = document.querySelector('.event-banner');
+          if (banner && banner.nextSibling) {
+            banner.parentNode.insertBefore(posterWrap, banner.nextSibling);
+          } else if (banner) {
+            banner.parentNode.appendChild(posterWrap);
+          }
+        } else {
+          const img = posterWrap.querySelector('.event-poster');
+          if (img) img.src = c.posterUrl;
+          posterWrap.style.display = 'block';
+        }
+      } else if (c.posterUrl === '') {
+        if (posterWrap) posterWrap.style.display = 'none';
+      }
+
+      // ۳. مشخصات سه‌گانه (عنوان‌ها و مقادیر)
+      const detailItems = document.querySelectorAll('.details-grid .detail-item');
+      if (detailItems.length >= 3) {
+        if (c.label1) {
+          const h4 = detailItems[0].querySelector('h4');
+          if (h4) h4.textContent = c.label1;
+        }
+        if (c.dateText) {
+          const p = detailItems[0].querySelector('p');
+          if (p) p.textContent = c.dateText;
+        }
+
+        if (c.label2) {
+          const h4 = detailItems[1].querySelector('h4');
+          if (h4) h4.textContent = c.label2;
+        }
+        if (c.timeText) {
+          const p = detailItems[1].querySelector('p');
+          if (p) p.textContent = c.timeText;
+        }
+
+        if (c.label3) {
+          const h4 = detailItems[2].querySelector('h4');
+          if (h4) h4.textContent = c.label3;
+        }
+        if (c.locationText) {
+          const p = detailItems[2].querySelector('p');
+          if (p) p.textContent = c.locationText;
+        }
+      }
+
+      // ۴. باکس نکات مهم و قوانین
+      if (c.notesTitle) {
+        let titleEl = document.querySelector('.notes-box-title');
+        if (!titleEl) {
+          titleEl = document.createElement('div');
+          titleEl.className = 'notes-box-title';
+          titleEl.style.cssText = 'color: #166534; font-weight: 800; font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;';
+          const notesBox = document.querySelector('.notes-box');
+          if (notesBox) notesBox.insertBefore(titleEl, notesBox.firstChild);
+        }
+        const svg = titleEl.querySelector('svg');
+        titleEl.innerHTML = '';
+        if (svg) titleEl.appendChild(svg);
+        titleEl.appendChild(document.createTextNode(' ' + c.notesTitle));
+      }
+      if (c.notesText !== undefined && c.notesText !== null) {
+        const list = document.querySelector('.notes-box .notes-list, .notes-list');
+        if (list) {
+          const lines = c.notesText.split('\n').map(l => l.trim()).filter(Boolean);
+          if (lines.length > 0) {
+            list.innerHTML = lines.map(l => `<li>${l}</li>`).join('');
+          }
+        }
+      }
+
+      // ۵. متون فرم تصمیم‌گیری و دکمه‌ها
+      if (c.formTitle) {
+        const formH3 = document.querySelector('#statusNotDecided .form-header h3');
+        if (formH3) formH3.textContent = c.formTitle;
+      }
+      if (c.btnAttendText) {
+        const btn = document.getElementById('btnAttend');
+        if (btn) {
+          const svg = btn.querySelector('svg');
+          btn.innerHTML = '';
+          if (svg) btn.appendChild(svg);
+          btn.appendChild(document.createTextNode(' ' + c.btnAttendText));
+        }
+      }
+      if (c.btnDeclineText) {
+        const btn = document.getElementById('btnDecline');
+        if (btn) {
+          const svg = btn.querySelector('svg');
+          btn.innerHTML = '';
+          if (svg) btn.appendChild(svg);
+          btn.appendChild(document.createTextNode(' ' + c.btnDeclineText));
+        }
+      }
+
+      // ۶. پیام مهلت پایان‌یافته
+      if (c.deadlineTitle) {
+        const dTitle = document.querySelector('#statusDeadlineExpired h3');
+        if (dTitle) dTitle.textContent = c.deadlineTitle;
+      }
+      if (c.deadlineDesc) {
+        const dDesc = document.querySelector('#statusDeadlineExpired p');
+        if (dDesc) dDesc.textContent = c.deadlineDesc;
+      }
+    }
+
     let currentUser = null;
 
     // بررسی لاگین بودن کاربر
@@ -357,12 +505,46 @@
       declinedCard.style.display = 'none';
       if (deadlineExpired) deadlineExpired.style.display = 'none';
 
-      // دریافت آخرین تنظیمات مهلت و مسدودی از سرور
+      // دریافت آخرین تنظیمات مهلت و متون رویداد از سرور
       try {
         if (typeof StorageService !== 'undefined' && StorageService.getEventSettings) {
-          await StorageService.getEventSettings(EVENT_ID);
+          const setting = await StorageService.getEventSettings(EVENT_ID);
+          applyDynamicEventTexts(setting);
         }
       } catch (e) {}
+
+      // بررسی دسترسی کاربر به این رویداد
+      if (typeof StorageService !== 'undefined' && StorageService.isPersonnelAllowed) {
+        const isAllowed = StorageService.isPersonnelAllowed(EVENT_ID, currentUser.personnelCode, currentUser.nationalCode);
+        if (!isAllowed) {
+          loading.style.display = 'none';
+          if (notDecided) notDecided.style.display = 'none';
+          if (attendingCard) attendingCard.style.display = 'none';
+          if (declinedCard) declinedCard.style.display = 'none';
+          if (deadlineExpired) deadlineExpired.style.display = 'none';
+
+          let notAllowedCard = document.getElementById('statusNotAllowedCard');
+          if (!notAllowedCard) {
+            notAllowedCard = document.createElement('div');
+            notAllowedCard.id = 'statusNotAllowedCard';
+            notAllowedCard.className = 'status-card';
+            notAllowedCard.style.cssText = 'background: #fff7ed; border: 1.5px solid #fdba74; padding: 22px; border-radius: 14px; margin-top: 15px; text-align: center; color: #9a3412;';
+            notAllowedCard.innerHTML = `
+              <div style="width: 46px; height: 46px; background: #ffedd5; color: #ea580c; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; color: #9a3412;">عدم دسترسی به ثبت‌نام در رویداد «${EVENT_TITLE}»</h4>
+              <p style="font-size: 0.88rem; line-height: 1.7; color: #7c2d12; margin: 0;">همکار گرامی، این رویداد ویژه گروه مشخصی از همکاران تعریف شده است و شماره پرسنلی شما در لیست مجاز این برنامه ثبت نگردیده است.</p>
+            `;
+            loading.parentNode.insertBefore(notAllowedCard, loading.nextSibling);
+          }
+          notAllowedCard.style.display = 'block';
+          return;
+        } else {
+          const notAllowedCard = document.getElementById('statusNotAllowedCard');
+          if (notAllowedCard) notAllowedCard.style.display = 'none';
+        }
+      }
 
       const isExpired = isRegistrationExpired();
 
@@ -418,6 +600,13 @@
       // جلوگیری از ثبت یا انصراف پس از پایان مهلت
       if (isRegistrationExpired()) {
         alert("مهلت ثبت‌نام یا انصراف در این رویداد به پایان رسیده است و در حال حاضر امکان انجام این عملیات وجود ندارد.");
+        await loadUserStatus();
+        return;
+      }
+
+      // بررسی مجاز بودن پرسنل در این رویداد
+      if (typeof StorageService !== 'undefined' && StorageService.isPersonnelAllowed && !StorageService.isPersonnelAllowed(EVENT_ID, currentUser.personnelCode, currentUser.nationalCode)) {
+        alert(`همکار گرامی، شماره پرسنلی شما در لیست افراد مجاز رویداد «${EVENT_TITLE}» قرار ندارد.`);
         await loadUserStatus();
         return;
       }
@@ -498,7 +687,7 @@
     }
 
     // فرم لاگین
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const rawCode = document.getElementById('inputPersonnelCode').value.trim();
       const rawNat = document.getElementById('inputNationalCode').value.trim();
@@ -506,6 +695,22 @@
 
       const auth = authenticatePersonnel(rawCode, rawNat);
       if (auth && auth.success) {
+        // همگام‌سازی و بررسی لیست پرسنل مجاز برای این رویداد
+        try {
+          if (typeof StorageService !== 'undefined' && StorageService.getEventSettings) {
+            await StorageService.getEventSettings(EVENT_ID);
+          }
+        } catch (err) {}
+
+        if (typeof StorageService !== 'undefined' && StorageService.isPersonnelAllowed) {
+          const isAllowed = StorageService.isPersonnelAllowed(EVENT_ID, auth.user.personnelCode, auth.user.nationalCode);
+          if (!isAllowed) {
+            errBox.textContent = `همکار گرامی، ثبت‌نام در رویداد «${EVENT_TITLE}» ویژه گروه مشخصی از همکاران تعریف شده است و شماره پرسنلی شما در لیست مجاز این برنامه قرار ندارد.`;
+            errBox.style.display = 'block';
+            return;
+          }
+        }
+
         errBox.style.display = 'none';
         sessionStorage.setItem(SESSION_KEY, JSON.stringify({
           personnelCode: auth.user.personnelCode,
@@ -582,6 +787,14 @@
 
     // آغاز اجرای صفحه
     checkUserAuth();
+    (async function() {
+      try {
+        if (typeof StorageService !== 'undefined' && StorageService.getEventSettings) {
+          const setting = await StorageService.getEventSettings(EVENT_ID);
+          applyDynamicEventTexts(setting);
+        }
+      } catch (e) {}
+    })();
   </script>
 </body>
 </html>

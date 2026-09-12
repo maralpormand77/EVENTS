@@ -60,43 +60,124 @@ const StorageService = {
 
     // تنظیمات پیش‌فرض رویدادها
     getDefaultEventSettings: function(eventId) {
-        if (eventId === 'kavir-varzaneh') {
-            return {
-                eventId: 'kavir-varzaneh',
-                isClosed: false,
-                deadlineDate: '1405/06/22',
-                deadlineTime: '13:00',
-                deadlineTimestamp: 1789291800000, // 2026-09-13T13:00:00+03:30 (۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰)
-                deadlineJalali: '۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰'
-            };
-        }
-        if (eventId === 'sobh-hamdeli') {
-            return {
+        const defaults = {
+            'sobh-hamdeli': {
                 eventId: 'sobh-hamdeli',
                 isClosed: false,
                 deadlineDate: '',
                 deadlineTime: '',
                 deadlineTimestamp: 0,
-                deadlineJalali: ''
-            };
-        }
-        if (eventId === 'rafting-markadeh') {
-            return {
+                deadlineJalali: '',
+                isRestricted: false,
+                allowedPersonnel: [],
+                customTexts: {
+                    title: 'صبح همدلی',
+                    subtitle: 'پیاده روی مدیران گروه توسعه سرمایه گذاری انتخاب',
+                    tag: 'رویداد ویژه سلامت و همدلی',
+                    posterUrl: '',
+                    label1: 'تاریخ و روز برگزاری',
+                    dateText: 'یکشنبه ۲۲/۰۶/۱۴۰۵',
+                    label2: 'زمان گردهمایی',
+                    timeText: 'ساعت ۰۶:۳۰ صبح',
+                    label3: 'مکان گردهمایی',
+                    locationText: 'خیابان نشاط، کوچه ۲۰، عمارت ماهور',
+                    notesTitle: 'نکات مهم حضور در برنامه:',
+                    notesText: 'لطفاً با لباس و کفش مناسب جهت پیاده‌روی و نرمش صبحگاهی حضور به‌هم رسانید.\nجهت برنامه‌ریزی هرچه بهتر پذیرایی و امور هماهنگی، خواهشمند است تمایل یا عدم تمایل خود به حضور را از طریق فرم زیر ثبت فرمایید.',
+                    formTitle: 'اعلام وضعیت حضور در برنامه',
+                    btnAttendText: 'مایل به شرکت در این برنامه هستم',
+                    btnDeclineText: 'تمایلی به حضور ندارم',
+                    deadlineTitle: 'مهلت ثبت‌نام به پایان رسیده است',
+                    deadlineDesc: 'همکار گرامی، مهلت اعلام حضور و ثبت‌نام در رویداد «صبح همدلی» به پایان رسیده است و در حال حاضر امکان ثبت‌نام جدید وجود ندارد.'
+                }
+            },
+            'kavir-varzaneh': {
+                eventId: 'kavir-varzaneh',
+                isClosed: false,
+                deadlineDate: '1405/06/22',
+                deadlineTime: '13:00',
+                deadlineTimestamp: 1789291800000,
+                deadlineJalali: '۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰',
+                isRestricted: false,
+                allowedPersonnel: [],
+                customTexts: {
+                    title: 'تور کویر ورزنه',
+                    subtitle: 'رویداد علمی تفریحی گروه توسعه سرمایه گذاری انتخاب',
+                    tag: 'رویداد علمی تفریحی',
+                    posterUrl: 'assets/images/kavir.jpg?v=2',
+                    label1: 'زمان حرکت',
+                    dateText: 'چهارشنبه ۲۵/۰۶/۱۴۰۵ ساعت ۱۴:۰۰',
+                    label2: 'زمان بازگشت',
+                    timeText: 'پنجشنبه ۲۶/۰۶/۱۴۰۵ ساعت ۱۳:۰۰',
+                    label3: 'مکان گردهمایی و سوار شدن',
+                    locationText: 'ساختمان مرکزی گروه توسعه سرمایه‌گذاری انتخاب (خیابان امام خمینی)',
+                    notesTitle: 'نکات مهم حضور در برنامه:',
+                    notesText: 'مهلت ثبت نام نهایتا تا ساعت 13:00 روز یکشنبه مورخ 1405/06/22 می باشد.\nدرصورت ثبت نام و عدم حضور هزینه سرانه از حقوق همکار کسر خواهد شد.\nلطفاً با توجه به محدودیت‌های هماهنگی اقامت و ترابری، در اسرع وقت وضعیت خود را ثبت کنید.\nوسایل شخصی سبک، کلاه و عینک آفتابی، و کفش مناسب کویر همراه داشته باشید.',
+                    formTitle: 'اعلام وضعیت حضور در برنامه',
+                    btnAttendText: 'مایل به شرکت در این برنامه هستم',
+                    btnDeclineText: 'تمایلی به حضور ندارم',
+                    deadlineTitle: 'مهلت ثبت‌نام به پایان رسیده است',
+                    deadlineDesc: 'همکار گرامی، مهلت اعلام حضور و ثبت‌نام در رویداد «تور کویر ورزنه» به پایان رسیده است و در حال حاضر امکان ثبت‌نام جدید وجود ندارد.'
+                }
+            },
+            'rafting-markadeh': {
                 eventId: 'rafting-markadeh',
                 isClosed: false,
                 deadlineDate: '',
                 deadlineTime: '',
                 deadlineTimestamp: 0,
-                deadlineJalali: ''
-            };
-        }
-        return {
+                deadlineJalali: '',
+                isRestricted: false,
+                allowedPersonnel: [],
+                customTexts: {
+                    title: 'تور رفتینگ مارکده',
+                    subtitle: 'ایونت تفریحی گروه توسعه سرمایه گذاری انتخاب',
+                    tag: 'ایونت هیجان‌انگیز ورزشی و تفریحی',
+                    posterUrl: '',
+                    label1: 'زمان حرکت',
+                    dateText: 'پنجشنبه ۰۲/۰۷/۱۴۰۵ ساعت ۰۶:۰۰',
+                    label2: 'زمان بازگشت',
+                    timeText: 'پنجشنبه ۰۲/۰۷/۱۴۰۵ ساعت ۱۸:۰۰',
+                    label3: 'مکان گردهمایی و حرکت',
+                    locationText: 'ساختمان مرکزی گروه توسعه سرمایه‌گذاری انتخاب',
+                    notesTitle: 'جهت بهره‌مندی هرچه بیشتر از این سفر، موضوعات ذیل را مد نظر قرار دهید:',
+                    notesText: '۱- همراه داشتن لوازم شخصی (دارو، کرم ضد آفتاب، کلاه، تیشرت آستین بلند، عینک آفتابی، دستمال مرطوب و ...)\n۲- با توجه به مواجهه با آب، حتماً یک دست لباس اضافه و حوله همراه داشته باشید.\n۳- از آوردن هرگونه زیورآلات، ساعت و اکسسوری غیر ضروری خودداری فرمائید.\n۴- با توجه به حضور در رودخانه، همراه داشتن صندل بندی می‌تواند کارایی بالایی داشته باشد.\nوسایل مورد نیاز جهت صرف غذا و پذیرایی: لیوان، قاشق و چنگال شخصی',
+                    formTitle: 'اعلام وضعیت حضور در برنامه',
+                    btnAttendText: 'مایل به شرکت در این برنامه هستم',
+                    btnDeclineText: 'تمایلی به حضور ندارم',
+                    deadlineTitle: 'مهلت ثبت‌نام به پایان رسیده است',
+                    deadlineDesc: 'همکار گرامی، مهلت اعلام حضور و ثبت‌نام در رویداد «تور رفتینگ مارکده» به پایان رسیده است و در حال حاضر امکان ثبت‌نام جدید وجود ندارد.'
+                }
+            }
+        };
+
+        return defaults[eventId] || {
             eventId: eventId,
             isClosed: false,
             deadlineDate: '',
             deadlineTime: '',
             deadlineTimestamp: 0,
-            deadlineJalali: ''
+            deadlineJalali: '',
+            isRestricted: false,
+            allowedPersonnel: [],
+            customTexts: {
+                title: '',
+                subtitle: '',
+                tag: '',
+                posterUrl: '',
+                label1: '',
+                dateText: '',
+                label2: '',
+                timeText: '',
+                label3: '',
+                locationText: '',
+                notesTitle: '',
+                notesText: '',
+                formTitle: '',
+                btnAttendText: '',
+                btnDeclineText: '',
+                deadlineTitle: '',
+                deadlineDesc: ''
+            }
         };
     },
 
@@ -233,6 +314,79 @@ const StorageService = {
         return false;
     },
 
+    // بررسی اینکه آیا پرسنل مجاز به شرکت در رویداد است یا خیر (محدودیت افراد مجاز)
+    isPersonnelAllowed: function(eventId, personnelCode, nationalCode = null, cachedSettings = null) {
+        let setting = null;
+        if (cachedSettings && cachedSettings[eventId]) {
+            setting = cachedSettings[eventId];
+        } else {
+            try {
+                const raw = localStorage.getItem(this.DEADLINES_KEY);
+                if (raw) {
+                    const all = JSON.parse(raw);
+                    setting = all[eventId];
+                }
+            } catch (e) {}
+        }
+        if (!setting) {
+            setting = this.getDefaultEventSettings(eventId);
+        }
+
+        // اگر رویداد محدود نشده یا لیست خالی باشد، همه پرسنل مجاز به ثبت‌نام هستند
+        if (!setting.isRestricted || !setting.allowedPersonnel || !Array.isArray(setting.allowedPersonnel) || setting.allowedPersonnel.length === 0) {
+            return true;
+        }
+
+        const cleanCode = String(personnelCode || '')
+            .replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+            .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+            .trim();
+        const cleanNat = String(nationalCode || '')
+            .replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+            .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+            .trim();
+
+        if (!cleanCode && !cleanNat) return false;
+
+        return setting.allowedPersonnel.some(item => {
+            if (!item) return false;
+            let itemCode = '';
+            let itemNat = '';
+            if (typeof item === 'string' || typeof item === 'number') {
+                itemCode = String(item).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).trim();
+            } else if (typeof item === 'object') {
+                itemCode = String(item.code || item.personnelCode || '').replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).trim();
+                itemNat = String(item.nationalCode || '').replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).trim();
+            }
+
+            if (cleanCode && itemCode) {
+                if (itemCode === cleanCode) return true;
+                if (itemCode.replace(/^0+/, '') === cleanCode.replace(/^0+/, '')) return true;
+            }
+            if (cleanNat && (itemNat || itemCode)) {
+                if (itemNat && itemNat === cleanNat) return true;
+                if (itemCode === cleanNat) return true;
+            }
+            return false;
+        });
+    },
+
+    // ذخیره یا به‌روزرسانی لیست پرسنل مجاز برای یک رویداد
+    saveEventAllowedPersonnel: async function(eventId, allowedList, isRestricted = true) {
+        return await this.saveEventSettings(eventId, {
+            isRestricted: isRestricted && Array.isArray(allowedList) && allowedList.length > 0,
+            allowedPersonnel: Array.isArray(allowedList) ? allowedList : []
+        });
+    },
+
+    // حذف محدودیت افراد مجاز و عمومی‌سازی رویداد برای کلیه همکاران
+    clearEventAllowedPersonnel: async function(eventId) {
+        return await this.saveEventSettings(eventId, {
+            isRestricted: false,
+            allowedPersonnel: []
+        });
+    },
+
     // ذخیره تنظیمات مهلت و وضعیت ثبت‌نام توسط ادمین
     saveEventSettings: async function(eventId, newSetting) {
         let all = {};
@@ -241,9 +395,15 @@ const StorageService = {
             if (raw) all = JSON.parse(raw);
         } catch (e) {}
 
-        const merged = Object.assign({}, this.getDefaultEventSettings(eventId), all[eventId], newSetting);
+        const def = this.getDefaultEventSettings(eventId);
+        const existing = all[eventId] || {};
+        const merged = Object.assign({}, def, existing, newSetting);
         merged.eventId = eventId;
         merged.updatedAt = new Date().toISOString();
+
+        if (newSetting.customTexts || existing.customTexts || def.customTexts) {
+            merged.customTexts = Object.assign({}, def.customTexts || {}, existing.customTexts || {}, newSetting.customTexts || {});
+        }
 
         if (merged.deadlineDate && merged.deadlineDate.trim()) {
             merged.deadlineTimestamp = this.jalaliToTimestamp(merged.deadlineDate, merged.deadlineTime || "23:59");

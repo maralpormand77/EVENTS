@@ -65,6 +65,101 @@
       border-radius: var(--radius-md);
       background: #ffffff;
     }
+    /* استایل‌های کارت‌های رویداد در پنل کلی */
+    .event-overview-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .event-overview-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+    .event-overview-body {
+      padding: 18px 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .event-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    .badge-status-open { background: #dcfce7; color: #166534; }
+    .badge-status-closed { background: #fee2e2; color: #991b1b; }
+    .badge-status-expired { background: #ffedd5; color: #9a3412; }
+    .badge-access-public { background: #e0f2fe; color: #0369a1; }
+    .badge-access-restricted { background: #fef3c7; color: #92400e; }
+
+    .event-stats-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 10px;
+      text-align: center;
+    }
+    .event-stats-strip-item span {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+    .event-stats-strip-item strong {
+      font-size: 1.15rem;
+      font-weight: 800;
+    }
+
+    /* منطقه اختصاصی آپلود اکسل */
+    .excel-drop-zone {
+      border: 2px dashed #16a34a;
+      background: #f0fdf4;
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .excel-drop-zone:hover, .excel-drop-zone.dragover {
+      background: #dcfce7;
+      border-color: #15803d;
+      transform: scale(1.01);
+    }
+
+    .modal-tabs-header {
+      display: flex;
+      gap: 8px;
+      border-bottom: 2px solid #e2e8f0;
+      margin-bottom: 18px;
+    }
+    .modal-tab-btn {
+      padding: 10px 18px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      border: none;
+      background: none;
+      color: #64748b;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+    .modal-tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
     /* استایل‌های اختصاصی فرم لاگین */
     .login-container {
       max-width: 440px;
@@ -138,6 +233,12 @@
       th:last-child, td:last-child {
         display: none !important;
       }
+    }
+    #eventSettingsModal.active {
+      display: flex !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
     }
   </style>
 </head>
@@ -258,193 +359,198 @@
       </div>
     </div>
 
-    <!-- بخش کنترل و دسترسی به ۳ صفحه ایونت -->
-    <h2 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 14px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-      کنترل و لینک‌های اختصاصی کوتاه ۳ رویداد (جهت پیامک به پرسنل)
-    </h2>
+    <!-- بخش خلاصه رویدادها (در پنل کلی فقط رویدادها را نشان می‌دهد) -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+      <h2 style="font-size: 1.18rem; font-weight: 800; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        رویدادهای فعال گروه توسعه سرمایه‌گذاری انتخاب
+      </h2>
+      <span style="font-size: 0.82rem; color: #64748b;">
+        برای ویرایش مشخصات، متون، زمان یا آپلود لیست اکسل مجاز، روی <strong>⚙️ تنظیمات رویداد</strong> کلیک فرمایید.
+      </span>
+    </div>
 
-    <div class="event-previews-grid">
-      <!-- کارت رویداد ۱ -->
-      <div class="preview-card">
-        <div class="preview-card-header banner-sobh">
-          <span class="event-tag" style="background: rgba(255,255,255,0.25);">لینک ۱</span>
-          <h3 style="font-size: 1.25rem; font-weight: 800; margin-top: 4px;">صبح همدلی</h3>
-          <p style="font-size: 0.85rem; opacity: 0.9;">پیاده روی مدیران گروه انتخاب</p>
+    <div class="event-previews-grid" style="margin-bottom: 26px;">
+      <!-- کارت رویداد ۱: صبح همدلی -->
+      <div class="event-overview-card" id="overviewCard1">
+        <div class="preview-card-header banner-sobh" style="padding: 16px 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="event-tag" style="background: rgba(255,255,255,0.25);" id="cardTag1">رویداد ویژه سلامت و همدلی</span>
+            <span id="cardAccessBadge1" class="event-badge-pill badge-access-public">عمومی (همه پرسنل)</span>
+          </div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin: 8px 0 3px 0;" id="cardTitle1">صبح همدلی</h3>
+          <p style="font-size: 0.82rem; opacity: 0.9; margin: 0;" id="cardSubtitle1">پیاده روی مدیران گروه توسعه سرمایه گذاری انتخاب</p>
         </div>
-        <div class="preview-card-body">
-          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px;">
-            <strong>زمان:</strong> یکشنبه ۲۲/۰۶/۱۴۰۵ ساعت ۰۶:۳۰ صبح
-          </div>
-          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px;">
-            <strong>مکان:</strong> خیابان نشاط، عمارت ماهور
-          </div>
-          
-          <div class="sms-box">
-            <div style="font-size: 0.78rem; font-weight: 700; color: #004b93; margin-bottom: 4px;">متن پیامک آماده با لینک کوتاه:</div>
-            <div class="sms-box-text" id="smsText1">همکار ارجمند، جهت اطلاع از جزئیات و اعلام حضور در «پیاده روی صبح همدلی» روی لینک زیر کلیک فرمایید:
-...</div>
-            <button class="btn btn-secondary btn-copy" onclick="copySms(1)">کپی متن و لینک</button>
+        <div class="event-overview-body">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              وضعیت مهلت:
+            </span>
+            <span id="cardStatusBadge1" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
           </div>
 
-          <!-- مدیریت مهلت و وضعیت ثبت‌نام رویداد ۱ -->
-          <div class="event-deadline-box" style="margin-top: 14px; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-md);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-size: 0.82rem; font-weight: 700; color: #004b93; display: flex; align-items: center; gap: 5px;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                مدیریت مهلت و پایان ثبت‌نام:
-              </span>
-              <span id="deadlineBadge1" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: #dcfce7; color: #166534;">در حال ثبت‌نام</span>
+          <div style="font-size: 0.82rem; color: #475569; line-height: 1.7; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div><strong>زمان:</strong> <span id="cardDateText1">یکشنبه ۲۲/۰۶/۱۴۰۵ ساعت ۰۶:۳۰ صبح</span></div>
+            <div><strong>مکان:</strong> <span id="cardLocationText1">خیابان نشاط، کوچه ۲۰، عمارت ماهور</span></div>
+          </div>
+
+          <!-- نوار خلاصه آمار -->
+          <div class="event-stats-strip">
+            <div class="event-stats-strip-item">
+              <span>حاضرین</span>
+              <strong style="color: #166534;" id="cardAttendingCount1">۰</strong>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-              <div>
-                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">تاریخ پایان (شمسی):</label>
-                <input type="text" id="deadlineDate1" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 1405/06/22">
-              </div>
-              <div>
-                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">ساعت پایان:</label>
-                <input type="text" id="deadlineTime1" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 13:00">
-              </div>
+            <div class="event-stats-strip-item">
+              <span>انصرافی‌ها</span>
+              <strong style="color: #b91c1c;" id="cardDeclinedCount1">۰</strong>
             </div>
+            <div class="event-stats-strip-item">
+              <span>کل ثبت‌نام</span>
+              <strong style="color: var(--primary);" id="cardTotalCount1">۰</strong>
+            </div>
+          </div>
+
+          <!-- دکمه‌های اقدام تمیز -->
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto;">
+            <button type="button" class="btn btn-primary" style="width: 100%; padding: 9px 12px; font-size: 0.88rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="openEventSettingsModal('sobh-hamdeli', 1)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              ⚙️ تنظیمات رویداد و آپلود اکسل
+            </button>
             <div style="display: flex; gap: 6px;">
-              <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 6px; font-size: 0.78rem;" onclick="saveEventDeadline('sobh-hamdeli', 1)">
-                ذخیره مهلت
+              <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 8px; font-size: 0.8rem;" onclick="showEventParticipants('sobh-hamdeli')">
+                👥 شرکت‌کنندگان
               </button>
-              <button type="button" class="btn btn-decline" id="btnToggleClose1" style="padding: 7px 10px; font-size: 0.78rem;" onclick="toggleEventClosure('sobh-hamdeli', 1)">
-                بستن فوری
+              <a href="https://entekhab-sobh.vercel.app/" id="viewBtn1" target="_blank" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem; text-decoration: none;" title="مشاهده صفحه اختصاصی رویداد">
+                🔗 مشاهده
+              </a>
+              <button type="button" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem;" onclick="copySms(1)" title="کپی پیامک دعوت همکاران">
+                📱 پیامک
               </button>
             </div>
           </div>
-        </div>
-        <div class="preview-card-footer">
-          <a href="https://entekhab-sobh.vercel.app/" id="viewBtn1" target="_blank" class="btn btn-primary" style="flex: 1; font-size: 0.88rem;">
-            مشاهده صفحه
-          </a>
-          <button type="button" class="btn btn-secondary" onclick="openPreviewModal(getEventUrl(1), 'صبح همدلی')">
-            پیش‌نمایش سریع
-          </button>
         </div>
       </div>
 
-      <!-- کارت رویداد ۲ -->
-      <div class="preview-card">
-        <div class="preview-card-header banner-kavir">
-          <span class="event-tag" style="background: rgba(255,255,255,0.25);">لینک ۲</span>
-          <h3 style="font-size: 1.25rem; font-weight: 800; margin-top: 4px;">تور کویر ورزنه</h3>
-          <p style="font-size: 0.85rem; opacity: 0.9;">رویداد علمی تفریحی گروه انتخاب</p>
+      <!-- کارت رویداد ۲: تور کویر ورزنه -->
+      <div class="event-overview-card" id="overviewCard2">
+        <div class="preview-card-header banner-kavir" style="padding: 16px 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="event-tag" style="background: rgba(255,255,255,0.25);" id="cardTag2">رویداد علمی تفریحی</span>
+            <span id="cardAccessBadge2" class="event-badge-pill badge-access-public">عمومی (همه پرسنل)</span>
+          </div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin: 8px 0 3px 0;" id="cardTitle2">تور کویر ورزنه</h3>
+          <p style="font-size: 0.82rem; opacity: 0.9; margin: 0;" id="cardSubtitle2">رویداد علمی تفریحی گروه انتخاب</p>
         </div>
-        <div class="preview-card-body">
-          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px;">
-            <strong>حرکت:</strong> چهارشنبه ۲۵/۰۶/۱۴۰۵ ساعت ۱۴:۰۰
-          </div>
-          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px;">
-            <strong>مکان:</strong> ساختمان مرکزی (خیابان امام خمینی)
-          </div>
-          
-          <div class="sms-box">
-            <div style="font-size: 0.78rem; font-weight: 700; color: #b45309; margin-bottom: 4px;">متن پیامک آماده با لینک کوتاه:</div>
-            <div class="sms-box-text" id="smsText2">همکار ارجمند، جهت اطلاع از جزئیات و ثبت‌نام در «تور کویر ورزنه» روی لینک زیر کلیک فرمایید:
-...</div>
-            <button class="btn btn-secondary btn-copy" onclick="copySms(2)">کپی متن و لینک</button>
+        <div class="event-overview-body">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              وضعیت مهلت:
+            </span>
+            <span id="cardStatusBadge2" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
           </div>
 
-          <!-- مدیریت مهلت و وضعیت ثبت‌نام رویداد ۲ -->
-          <div class="event-deadline-box" style="margin-top: 14px; padding: 12px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: var(--radius-md);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-size: 0.82rem; font-weight: 700; color: #b45309; display: flex; align-items: center; gap: 5px;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                مدیریت مهلت و پایان ثبت‌نام:
-              </span>
-              <span id="deadlineBadge2" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: #dcfce7; color: #166534;">در حال ثبت‌نام</span>
+          <div style="font-size: 0.82rem; color: #475569; line-height: 1.7; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div><strong>زمان:</strong> <span id="cardDateText2">چهارشنبه ۲۵/۰۶/۱۴۰۵ ساعت ۱۴:۰۰ بعدازظهر</span></div>
+            <div><strong>مکان:</strong> <span id="cardLocationText2">ساختمان مرکزی (خیابان امام خمینی)</span></div>
+          </div>
+
+          <!-- نوار خلاصه آمار -->
+          <div class="event-stats-strip">
+            <div class="event-stats-strip-item">
+              <span>حاضرین</span>
+              <strong style="color: #166534;" id="cardAttendingCount2">۰</strong>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-              <div>
-                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">تاریخ پایان (شمسی):</label>
-                <input type="text" id="deadlineDate2" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 1405/06/22">
-              </div>
-              <div>
-                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">ساعت پایان:</label>
-                <input type="text" id="deadlineTime2" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 13:00">
-              </div>
+            <div class="event-stats-strip-item">
+              <span>انصرافی‌ها</span>
+              <strong style="color: #b91c1c;" id="cardDeclinedCount2">۰</strong>
             </div>
+            <div class="event-stats-strip-item">
+              <span>کل ثبت‌نام</span>
+              <strong style="color: var(--primary);" id="cardTotalCount2">۰</strong>
+            </div>
+          </div>
+
+          <!-- دکمه‌های اقدام تمیز -->
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto;">
+            <button type="button" class="btn btn-primary" style="width: 100%; padding: 9px 12px; font-size: 0.88rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; background: #b45309;" onclick="openEventSettingsModal('kavir-varzaneh', 2)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              ⚙️ تنظیمات رویداد و آپلود اکسل
+            </button>
             <div style="display: flex; gap: 6px;">
-              <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 6px; font-size: 0.78rem;" onclick="saveEventDeadline('kavir-varzaneh', 2)">
-                ذخیره مهلت
+              <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 8px; font-size: 0.8rem;" onclick="showEventParticipants('kavir-varzaneh')">
+                👥 شرکت‌کنندگان
               </button>
-              <button type="button" class="btn btn-decline" id="btnToggleClose2" style="padding: 7px 10px; font-size: 0.78rem;" onclick="toggleEventClosure('kavir-varzaneh', 2)">
-                بستن فوری
+              <a href="https://entekhab-kavir.vercel.app/" id="viewBtn2" target="_blank" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem; text-decoration: none;" title="مشاهده صفحه اختصاصی رویداد">
+                🔗 مشاهده
+              </a>
+              <button type="button" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem;" onclick="copySms(2)" title="کپی پیامک دعوت همکاران">
+                📱 پیامک
               </button>
             </div>
           </div>
-        </div>
-        <div class="preview-card-footer">
-          <a href="https://entekhab-kavir.vercel.app/" id="viewBtn2" target="_blank" class="btn btn-primary" style="flex: 1; font-size: 0.88rem; background: #b45309;">
-            مشاهده صفحه
-          </a>
-          <button type="button" class="btn btn-secondary" onclick="openPreviewModal(getEventUrl(2), 'تور کویر ورزنه')">
-            پیش‌نمایش سریع
-          </button>
         </div>
       </div>
 
-      <!-- کارت رویداد ۳ -->
-      <div class="preview-card">
-        <div class="preview-card-header banner-rafting">
-          <span class="event-tag" style="background: rgba(255,255,255,0.25);">لینک ۳</span>
-          <h3 style="font-size: 1.25rem; font-weight: 800; margin-top: 4px;">تور رفتینگ مارکده</h3>
-          <p style="font-size: 0.85rem; opacity: 0.9;">ایونت تفریحی گروه انتخاب</p>
+      <!-- کارت رویداد ۳: تور رفتینگ مارکده -->
+      <div class="event-overview-card" id="overviewCard3">
+        <div class="preview-card-header banner-rafting" style="padding: 16px 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="event-tag" style="background: rgba(255,255,255,0.25);" id="cardTag3">ایونت تفریحی و ورزشی</span>
+            <span id="cardAccessBadge3" class="event-badge-pill badge-access-public">عمومی (همه پرسنل)</span>
+          </div>
+          <h3 style="font-size: 1.25rem; font-weight: 800; margin: 8px 0 3px 0;" id="cardTitle3">تور رفتینگ مارکده</h3>
+          <p style="font-size: 0.82rem; opacity: 0.9; margin: 0;" id="cardSubtitle3">ایونت تفریحی گروه انتخاب</p>
         </div>
-        <div class="preview-card-body">
-          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px;">
-            <strong>حرکت:</strong> پنجشنبه ۰۲/۰۷/۱۴۰۵ ساعت ۰۶:۰۰
-          </div>
-          <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 12px;">
-            <strong>مکان:</strong> ساختمان مرکزی
-          </div>
-          
-          <div class="sms-box">
-            <div style="font-size: 0.78rem; font-weight: 700; color: #0284c7; margin-bottom: 4px;">متن پیامک آماده با لینک کوتاه:</div>
-            <div class="sms-box-text" id="smsText3">همکار ارجمند، جهت اطلاع از جزئیات و ثبت‌نام در «تور رفتینگ مارکده» روی لینک زیر کلیک فرمایید:
-...</div>
-            <button class="btn btn-secondary btn-copy" onclick="copySms(3)">کپی متن و لینک</button>
+        <div class="event-overview-body">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 5px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              وضعیت مهلت:
+            </span>
+            <span id="cardStatusBadge3" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
           </div>
 
-          <!-- مدیریت مهلت و وضعیت ثبت‌نام رویداد ۳ -->
-          <div class="event-deadline-box" style="margin-top: 14px; padding: 12px; background: #f0f9ff; border: 1px solid #e0f2fe; border-radius: var(--radius-md);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-size: 0.82rem; font-weight: 700; color: #0284c7; display: flex; align-items: center; gap: 5px;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                مدیریت مهلت و پایان ثبت‌نام:
-              </span>
-              <span id="deadlineBadge3" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: #dcfce7; color: #166534;">در حال ثبت‌نام</span>
+          <div style="font-size: 0.82rem; color: #475569; line-height: 1.7; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div><strong>زمان:</strong> <span id="cardDateText3">پنجشنبه ۰۲/۰۷/۱۴۰۵ ساعت ۰۶:۰۰ صبح</span></div>
+            <div><strong>مکان:</strong> <span id="cardLocationText3">ساختمان مرکزی</span></div>
+          </div>
+
+          <!-- نوار خلاصه آمار -->
+          <div class="event-stats-strip">
+            <div class="event-stats-strip-item">
+              <span>حاضرین</span>
+              <strong style="color: #166534;" id="cardAttendingCount3">۰</strong>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-              <div>
-                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">تاریخ پایان (شمسی):</label>
-                <input type="text" id="deadlineDate3" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 1405/06/22">
-              </div>
-              <div>
-                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">ساعت پایان:</label>
-                <input type="text" id="deadlineTime3" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 13:00">
-              </div>
+            <div class="event-stats-strip-item">
+              <span>انصرافی‌ها</span>
+              <strong style="color: #b91c1c;" id="cardDeclinedCount3">۰</strong>
             </div>
+            <div class="event-stats-strip-item">
+              <span>کل ثبت‌نام</span>
+              <strong style="color: var(--primary);" id="cardTotalCount3">۰</strong>
+            </div>
+          </div>
+
+          <!-- دکمه‌های اقدام تمیز -->
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto;">
+            <button type="button" class="btn btn-primary" style="width: 100%; padding: 9px 12px; font-size: 0.88rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; background: #0284c7;" onclick="openEventSettingsModal('rafting-markadeh', 3)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              ⚙️ تنظیمات رویداد و آپلود اکسل
+            </button>
             <div style="display: flex; gap: 6px;">
-              <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 6px; font-size: 0.78rem;" onclick="saveEventDeadline('rafting-markadeh', 3)">
-                ذخیره مهلت
+              <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 8px; font-size: 0.8rem;" onclick="showEventParticipants('rafting-markadeh')">
+                👥 شرکت‌کنندگان
               </button>
-              <button type="button" class="btn btn-decline" id="btnToggleClose3" style="padding: 7px 10px; font-size: 0.78rem;" onclick="toggleEventClosure('rafting-markadeh', 3)">
-                بستن فوری
+              <a href="https://entekhab-rafting.vercel.app/" id="viewBtn3" target="_blank" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem; text-decoration: none;" title="مشاهده صفحه اختصاصی رویداد">
+                🔗 مشاهده
+              </a>
+              <button type="button" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem;" onclick="copySms(3)" title="کپی پیامک دعوت همکاران">
+                📱 پیامک
               </button>
             </div>
           </div>
-        </div>
-        <div class="preview-card-footer">
-          <a href="https://entekhab-rafting.vercel.app/" id="viewBtn3" target="_blank" class="btn btn-primary" style="flex: 1; font-size: 0.88rem; background: #0284c7;">
-            مشاهده صفحه
-          </a>
-          <button type="button" class="btn btn-secondary" onclick="openPreviewModal(getEventUrl(3), 'تور رفتینگ مارکده')">
-            پیش‌نمایش سریع
-          </button>
         </div>
       </div>
     </div>
@@ -625,6 +731,389 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     </div>
   </div>
 
+  <!-- مودال جامع تنظیمات و مدیریت رویداد -->
+  <div id="eventSettingsModal" class="modal-overlay">
+    <div class="modal-card modal-lg" style="max-width: 860px; max-height: 92vh; display: flex; flex-direction: column;">
+      <!-- هدر مودال -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: #e0edff; color: var(--primary); display: flex; align-items: center; justify-content: center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
+          <div>
+            <h3 class="modal-title" id="eventSettingsModalTitle" style="margin: 0; font-size: 1.15rem; color: #0f172a;">
+              تنظیمات و مدیریت رویداد
+            </h3>
+            <p id="eventSettingsModalSubtitle" style="margin: 2px 0 0 0; font-size: 0.8rem; color: #64748b;">
+              ویرایش متن‌ها، مشخصات، زمان‌بندی و اختصاصی‌سازی اسامی با اکسل
+            </p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary" style="padding: 4px 12px; font-size: 1rem;" onclick="closeEventSettingsModal()">✕</button>
+      </div>
+
+      <!-- تب‌های درون مدال -->
+      <div class="modal-tabs-header" style="margin-top: 14px;">
+        <button type="button" class="modal-tab-btn active" id="tabBtnTexts" onclick="switchSettingsTab('texts')">
+          📝 مشخصات، متون و تصویر رویداد
+        </button>
+        <button type="button" class="modal-tab-btn" id="tabBtnPreview" onclick="switchSettingsTab('preview')">
+          👁️ پیش‌نمایش زنده رویداد
+        </button>
+        <button type="button" class="modal-tab-btn" id="tabBtnWhitelist" onclick="switchSettingsTab('whitelist')">
+          📊 لیست اسامی پرسنل مجاز (فقط فایل اکسل)
+        </button>
+      </div>
+
+      <!-- محتوای اسکرول‌پذیر -->
+      <div style="overflow-y: auto; flex: 1; padding: 4px 6px;">
+        
+        <!-- تب ۱: مشخصات، متون و تصویر رویداد -->
+        <div id="settingsTabTexts">
+
+          <!-- بخش ۱: اطلاعات سربرگ رویداد -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
+            <div style="font-size: 0.9rem; font-weight: 800; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+              اطلاعات سربرگ و عنوان‌های رویداد
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <label class="form-label" style="font-size: 0.8rem; font-weight: 700;">عنوان اصلی رویداد:</label>
+                <input type="text" id="cfgTitle" class="form-input" placeholder="مثال: تور کویر ورزنه">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.8rem; font-weight: 700;">برچسب / موضوع بالای عنوان:</label>
+                <input type="text" id="cfgTag" class="form-input" placeholder="مثال: رویداد علمی تفریحی">
+              </div>
+              <div style="grid-column: 1 / -1;">
+                <label class="form-label" style="font-size: 0.8rem; font-weight: 700;">زیرعنوان / توضیحات زیر نام رویداد:</label>
+                <input type="text" id="cfgSubtitle" class="form-input" placeholder="مثال: رویداد علمی تفریحی گروه توسعه سرمایه گذاری انتخاب">
+              </div>
+            </div>
+          </div>
+
+          <!-- بخش ۲: پوستر و تصویر رویداد -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
+            <div style="font-size: 0.9rem; font-weight: 800; color: #b45309; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              تصویر و پوستر رسمی رویداد
+            </div>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 0 0 10px 0;">
+              در صورت تمایل می‌توانید عکس یا پوستر اختصاصی رویداد را آپلود فرمایید (فرمت‌های JPG، PNG، WebP). این تصویر در صفحه ثبت‌نام رویداد به نمایش درخواهد آمد.
+            </p>
+
+            <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+              <!-- باکس پیش‌نمایش تصویر فعلی -->
+              <div id="posterPreviewBox" style="display: none; position: relative; border-radius: 10px; overflow: hidden; border: 1.5px solid #cbd5e1; max-width: 240px; max-height: 140px; background: #000;">
+                <img id="posterPreviewImg" src="" alt="پوستر رویداد" style="width: 100%; height: 140px; object-fit: cover; display: block;">
+              </div>
+              <div id="posterEmptyNotice" style="font-size: 0.82rem; color: #94a3b8; padding: 14px 20px; border: 1.5px dashed #cbd5e1; border-radius: 10px; background: #fff;">
+                تصویری برای این رویداد تنظیم نشده است
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <input type="file" id="posterFileInput" accept="image/*" style="display: none;" onchange="handlePosterUpload(event)">
+                <button type="button" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.84rem; display: inline-flex; align-items: center; gap: 6px;" onclick="document.getElementById('posterFileInput').click()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  انتخاب و آپلود تصویر پوستر
+                </button>
+                <button type="button" class="btn btn-outline" id="btnRemovePoster" style="display: none; padding: 6px 14px; font-size: 0.8rem; color: #b91c1c; border-color: #fca5a5;" onclick="removeCustomPoster()">
+                  حذف تصویر پوستر
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- بخش ۳: مشخصات سه‌گانه زمان، مکان و برنامه -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
+            <div style="font-size: 0.9rem; font-weight: 800; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              جزئیات ۳ باکس اطلاعاتی رویداد (عنوان برچسب و مقدار متن)
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <!-- باکس ۱ -->
+              <div>
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">عنوان باکس ۱:</label>
+                <input type="text" id="cfgLabel1" class="form-input" placeholder="مثال: تاریخ و روز برگزاری یا زمان حرکت">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">متن مقدار باکس ۱:</label>
+                <input type="text" id="cfgDate" class="form-input" placeholder="مثال: یکشنبه ۲۲/۰۶/۱۴۰۵">
+              </div>
+
+              <!-- باکس ۲ -->
+              <div>
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">عنوان باکس ۲:</label>
+                <input type="text" id="cfgLabel2" class="form-input" placeholder="مثال: زمان گردهمایی یا زمان بازگشت">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">متن مقدار باکس ۲:</label>
+                <input type="text" id="cfgTime" class="form-input" placeholder="مثال: ساعت ۰۶:۳۰ صبح">
+              </div>
+
+              <!-- باکس ۳ -->
+              <div>
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">عنوان باکس ۳:</label>
+                <input type="text" id="cfgLabel3" class="form-input" placeholder="مثال: مکان گردهمایی و حرکت">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">متن مقدار باکس ۳ (آدرس):</label>
+                <input type="text" id="cfgLocation" class="form-input" placeholder="مثال: خیابان نشاط، کوچه ۲۰، عمارت ماهور">
+              </div>
+            </div>
+          </div>
+
+          <!-- بخش ۴: نکات مهم، شرایط و لوازم مورد نیاز -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
+            <div style="font-size: 0.9rem; font-weight: 800; color: #b45309; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              باکس نکات مهم، شرایط حضور و لوازم مورد نیاز
+            </div>
+            <div style="margin-bottom: 10px;">
+              <label class="form-label" style="font-size: 0.78rem; color: #475569;">عنوان باکس نکات:</label>
+              <input type="text" id="cfgNotesTitle" class="form-input" placeholder="مثال: نکات مهم حضور در برنامه:">
+            </div>
+            <div>
+              <label class="form-label" style="font-size: 0.78rem; color: #475569;">متن نکات و بندهای توضیحی (هر سطر را در یک خط جداگانه بنویسید تا به صورت بالت در صفحه نمایش یابد):</label>
+              <textarea id="cfgNotes" rows="4" class="form-input" style="font-size: 0.85rem; line-height: 1.7;" placeholder="نکات مهم و قوانین..."></textarea>
+            </div>
+          </div>
+
+          <!-- بخش ۵: متون فرم ثبت‌نام و پیام‌ها -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;">
+            <div style="font-size: 0.9rem; font-weight: 800; color: var(--primary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              متون فرم تصمیم‌گیری پرسنل و پیام‌های ثبت‌نام
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+              <div style="grid-column: 1 / -1;">
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">عنوان بالای دکمه‌های اعلام وضعیت:</label>
+                <input type="text" id="cfgFormTitle" class="form-input" placeholder="مثال: اعلام وضعیت حضور در برنامه">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">متن دکمه اعلام حضور (سبز):</label>
+                <input type="text" id="cfgBtnAttendText" class="form-input" placeholder="مثال: مایل به شرکت در این برنامه هستم">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">متن دکمه عدم حضور / انصراف (قرمز):</label>
+                <input type="text" id="cfgBtnDeclineText" class="form-input" placeholder="مثال: تمایلی به حضور ندارم">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">عنوان کادر پایان مهلت:</label>
+                <input type="text" id="cfgDeadlineTitle" class="form-input" placeholder="مثال: مهلت ثبت‌نام به پایان رسیده است">
+              </div>
+              <div>
+                <label class="form-label" style="font-size: 0.78rem; color: #475569;">متن پیام پایان مهلت:</label>
+                <input type="text" id="cfgDeadlineDesc" class="form-input" placeholder="متن پیام توضیحی پس از انقضا...">
+              </div>
+            </div>
+          </div>
+
+          <!-- بخش ۶: مهلت و وضعیت ثبت‌نام -->
+          <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <span style="font-size: 0.88rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                مهلت پایان ثبت‌نام و مسدودی رویداد:
+              </span>
+              <span id="cfgDeadlineStatusBadge" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+              <div>
+                <label style="font-size: 0.76rem; color: #475569; display: block; margin-bottom: 4px;">تاریخ پایان ثبت‌نام (شمسی):</label>
+                <input type="text" id="cfgDeadlineDate" class="form-input" placeholder="مثال: 1405/06/22" style="text-align: center;">
+              </div>
+              <div>
+                <label style="font-size: 0.76rem; color: #475569; display: block; margin-bottom: 4px;">ساعت پایان ثبت‌نام:</label>
+                <input type="text" id="cfgDeadlineTime" class="form-input" placeholder="مثال: 13:00" style="text-align: center;">
+              </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end;">
+              <button type="button" class="btn btn-decline" id="cfgBtnToggleClose" style="padding: 7px 14px; font-size: 0.82rem;" onclick="toggleCurrentEventClosure()">
+                بستن فوری ثبت‌نام
+              </button>
+            </div>
+          </div>
+
+          <!-- دکمه‌های اقدام ذخیره و انتشار / پیش‌نمایش -->
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 0;">
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" class="btn btn-primary" style="padding: 11px 28px; font-size: 0.95rem; font-weight: 800; background: #166534; box-shadow: 0 4px 12px rgba(22, 101, 52, 0.25);" onclick="saveEventTextsAndSettings()">
+                🚀 انتشار و ذخیره نهایی تغییرات
+              </button>
+              <button type="button" class="btn btn-secondary" style="padding: 11px 18px; font-size: 0.9rem;" onclick="switchSettingsTab('preview')">
+                👁️ پیش‌نمایش زنده رویداد
+              </button>
+            </div>
+            <button type="button" class="btn btn-outline" style="padding: 9px 18px;" onclick="closeEventSettingsModal()">
+              انصراف و بستن
+            </button>
+          </div>
+        </div>
+
+        <!-- تب ۲: پیش‌نمایش زنده رویداد -->
+        <div id="settingsTabPreview" style="display: none;">
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.84rem; color: #1e40af; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <span>👁️ <strong>پیش‌نمایش زنده:</strong> صفحه رویداد با مشخصات و تصویر فعلی به این صورت برای همکاران نمایش داده خواهد شد.</span>
+            <button type="button" class="btn btn-primary" style="background: #166534; font-size: 0.84rem; padding: 6px 14px; font-weight: 700;" onclick="saveEventTextsAndSettings()">
+              🚀 انتشار و ذخیره همین تغییرات
+            </button>
+          </div>
+
+          <div class="live-preview-wrapper" style="border: 2px solid #cbd5e1; border-radius: 16px; overflow: hidden; background: #f8fafc; box-shadow: 0 4px 15px rgba(0,0,0,0.06);">
+            <!-- بنر شبیه‌سازی شده -->
+            <div id="prevBanner" class="event-banner" style="padding: 24px 20px; color: #fff; text-align: center; position: relative;">
+              <span id="prevTag" class="event-tag" style="display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; background: rgba(255,255,255,0.25); margin-bottom: 8px;">برچسب رویداد</span>
+              <h1 id="prevTitle" style="font-size: 1.5rem; font-weight: 800; margin: 0 0 6px 0;">عنوان رویداد</h1>
+              <p id="prevSubtitle" style="font-size: 0.88rem; opacity: 0.9; margin: 0;">زیرعنوان رویداد</p>
+            </div>
+
+            <!-- تصویر پوستر شبیه‌سازی شده -->
+            <div id="prevPosterWrap" style="display: none; width: 100%; max-height: 360px; overflow: hidden; background: #e2e8f0; text-align: center; border-bottom: 1px solid #cbd5e1;">
+              <img id="prevPosterImg" src="" style="width: 100%; max-height: 360px; object-fit: cover; display: block;" alt="پوستر رویداد">
+            </div>
+
+            <!-- مشخصات سه‌گانه -->
+            <div style="padding: 16px 20px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 16px;">
+                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+                  <div style="font-size: 0.76rem; color: #64748b;" id="prevLabel1">تاریخ و روز برگزاری</div>
+                  <strong style="font-size: 0.88rem; color: #0f172a;" id="prevVal1">-</strong>
+                </div>
+                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px;">
+                  <div style="font-size: 0.76rem; color: #64748b;" id="prevLabel2">زمان گردهمایی</div>
+                  <strong style="font-size: 0.88rem; color: #0f172a;" id="prevVal2">-</strong>
+                </div>
+                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; grid-column: 1 / -1;">
+                  <div style="font-size: 0.76rem; color: #64748b;" id="prevLabel3">مکان گردهمایی</div>
+                  <strong style="font-size: 0.88rem; color: #0f172a;" id="prevVal3">-</strong>
+                </div>
+              </div>
+
+              <!-- نکات مهم -->
+              <div style="background: #fffbeb; border: 1px solid #fde68a; border-right: 4px solid #f59e0b; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;">
+                <div style="font-weight: 800; font-size: 0.88rem; color: #92400e; margin-bottom: 6px;" id="prevNotesTitle">نکات مهم حضور در برنامه:</div>
+                <ul id="prevNotesList" style="margin: 0; padding-right: 20px; font-size: 0.82rem; color: #78350f; line-height: 1.8;"></ul>
+              </div>
+
+              <!-- شبیه‌ساز فرم ثبت‌نام -->
+              <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; text-align: center;">
+                <h4 style="margin: 0 0 12px 0; font-size: 0.95rem; font-weight: 800; color: #0f172a;" id="prevFormTitle">اعلام وضعیت حضور در برنامه</h4>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                  <button type="button" class="btn btn-attend" style="pointer-events: none; padding: 8px 18px; font-size: 0.85rem;" id="prevBtnAttend">مایل به شرکت در این برنامه هستم</button>
+                  <button type="button" class="btn btn-decline" style="pointer-events: none; padding: 8px 18px; font-size: 0.85rem;" id="prevBtnDecline">تمایلی به حضور ندارم</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+            <button type="button" class="btn btn-secondary" onclick="switchSettingsTab('texts')">
+              ✏️ بازگشت به ویرایش متون و مشخصات
+            </button>
+            <button type="button" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; background: #166534;" onclick="saveEventTextsAndSettings()">
+              🚀 انتشار و ذخیره نهایی تغییرات
+            </button>
+          </div>
+        </div>
+
+        <!-- تب ۲: لیست اسامی پرسنل مجاز (فقط فایل اکسل) -->
+        <div id="settingsTabWhitelist" style="display: none;">
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 0.84rem; color: #166534; line-height: 1.7;">
+            <div style="font-weight: 800; margin-bottom: 2px;">اختصاصی‌سازی دسترسی با فایل اکسل (.xlsx, .xls):</div>
+            برای محدودسازی این رویداد، فایل اکسل حاوی شماره پرسنلی همکاران را بارگذاری فرمایید. تنها شماره‌های موجود در اکسل امکان ثبت‌نام خواهند داشت. در صورت عدم آپلود، رویداد برای تمامی پرسنل عمومی خواهد بود.
+          </div>
+
+          <!-- وضعیت کنونی دسترسی رویداد -->
+          <div id="cfgWhitelistStatusBox" style="margin-bottom: 14px; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; background: #f1f5f9;">
+            <span id="cfgWhitelistStatusText">وضعیت: عمومی (تمام پرسنل مجاز به ثبت‌نام)</span>
+            <button type="button" class="btn btn-outline" id="btnExportCurrentExcel" style="padding: 4px 10px; font-size: 0.78rem; display: none;" onclick="exportCurrentWhitelistExcel()">
+              دریافت خروجی اکسل از لیست مجاز فعلی
+            </button>
+          </div>
+
+          <!-- باکس اختصاصی آپلود فایل اکسل -->
+          <div class="excel-drop-zone" id="excelDropZone" onclick="triggerExcelFileInput()">
+            <input type="file" id="excelWhitelistInput" accept=".xlsx, .xls" style="display: none;" onchange="handleExcelUpload(event)">
+            <div style="width: 48px; height: 48px; background: #dcfce7; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <div style="font-weight: 800; font-size: 0.98rem; color: #166534; margin-bottom: 5px;">
+              فایل اکسل اسامی مجاز را اینجا بکشید یا برای انتخاب کلیک فرمایید
+            </div>
+            <p style="font-size: 0.8rem; color: #15803d; margin: 0 0 10px 0;">
+              فرمت‌های مجاز: <strong>Excel (.xlsx, .xls)</strong> — ستون کد پرسنلی خودکار شناسایی و تطبیق داده می‌شود
+            </p>
+            <div style="display: inline-flex; gap: 8px;">
+              <button type="button" class="btn btn-primary" style="background: #16a34a; padding: 7px 16px; font-size: 0.82rem; pointer-events: none;">
+                انتخاب فایل اکسل
+              </button>
+              <button type="button" class="btn btn-outline" style="background: #fff; padding: 7px 14px; font-size: 0.82rem;" onclick="event.stopPropagation(); downloadSampleExcel();">
+                دانلود نمونه فایل اکسل
+              </button>
+            </div>
+          </div>
+          <div id="excelProcessingNotice" style="display: none; text-align: center; padding: 10px; color: #0284c7; font-weight: 600; font-size: 0.85rem;">
+            در حال خواندن و استخراج مشخصات از فایل اکسل...
+          </div>
+
+          <!-- پیش‌نمایش افراد استخراج‌شده -->
+          <div id="whitelistPreviewSection" style="display: none; border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <span id="whitelistStatsTotal" class="status-badge" style="background: #f1f5f9; color: #334155; font-size: 0.82rem;">تعداد کل: ۰</span>
+                <span id="whitelistStatsMatched" class="status-badge" style="background: #dcfce7; color: #166534; font-size: 0.82rem;">شناسایی‌شده در دیتابیس: ۰</span>
+              </div>
+              <div>
+                <input type="text" id="whitelistSearchInput" placeholder="جستجو در لیست..." style="padding: 5px 10px; font-size: 0.8rem; border-radius: 6px; border: 1px solid #cbd5e1; width: 170px;" oninput="filterWhitelistTable()">
+              </div>
+            </div>
+
+            <div style="max-height: 240px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+              <table class="data-table" style="font-size: 0.82rem; margin: 0;">
+                <thead>
+                  <tr>
+                    <th style="width: 45px; text-align: center;">#</th>
+                    <th>کد پرسنلی</th>
+                    <th>نام و نام خانوادگی</th>
+                    <th>کد ملی</th>
+                    <th>دپارتمان</th>
+                    <th style="width: 50px; text-align: center;">حذف</th>
+                  </tr>
+                </thead>
+                <tbody id="whitelistTableBody">
+                  <!-- ردیف‌ها پویا اضافه می‌شوند -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- دکمه‌های تایید لیست مجاز -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn btn-primary" style="padding: 9px 20px; font-size: 0.88rem; background: #166534; font-weight: 700;" onclick="saveCurrentWhitelist()">
+                  ✓ ذخیره و فعال‌سازی لیست مجاز
+                </button>
+                <button type="button" class="btn btn-outline" style="padding: 9px 14px; font-size: 0.85rem; color: #b91c1c; border-color: #fca5a5;" onclick="clearEventWhitelist()">
+                  حذف محدودیت (عمومی‌سازی رویداد)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- فوتر مدال -->
+      <div style="display: flex; justify-content: flex-end; padding-top: 14px; border-top: 1px solid #e2e8f0; margin-top: 12px;">
+        <button type="button" class="btn btn-secondary" style="padding: 8px 18px; font-size: 0.88rem;" onclick="closeEventSettingsModal()">
+          بستن پنجره
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- مودال پیش‌نمایش سریع ایونت -->
   <div class="modal-overlay" id="previewModal">
     <div class="modal-card modal-lg">
@@ -639,9 +1128,16 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     </div>
   </div>
 
-  <!-- اسکریپت‌ها -->
+  <!-- اسکریپت‌ها (لود محلی کتابخانه اکسل برای کارکرد ۱۰۰٪ آفلاین و بدون خطا) -->
+  <script src="assets/js/xlsx.full.min.js"></script>
+  <script>
+    if (typeof XLSX === 'undefined') {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"><\/script>');
+    }
+  </script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/storage.js"></script>
+  <script src="assets/js/personnel-data.js"></script>
   <script>
     // اطلاعات کاربران ادمین مجاز
     const AUTHORIZED_ADMINS = [
@@ -1170,112 +1666,937 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       3: 'rafting-markadeh'
     };
 
-    // مقداردهی اولیه و بارگذاری مهلت‌های رویدادها در پنل مدیریت
+    const EVENT_NAMES = {
+      1: 'صبح همدلی',
+      2: 'تور کویر ورزنه',
+      3: 'تور رفتینگ مارکده'
+    };
+
+    let activeSettingsEventId = null;
+    let activeSettingsNum = null;
+    let currentUploadedPoster = '';
+    let currentParsedWhitelist = [];
+
+    // مقداردهی اولیه و بارگذاری مهلت‌ها، متون و آمار رویدادها در کارت‌های صفحه اصلی
     async function initDeadlineControls() {
       try {
         const allSettings = await StorageService.getAllEventSettings();
         for (let num = 1; num <= 3; num++) {
           const eventId = EVENT_MAPPING[num];
           const setting = allSettings[eventId] || StorageService.getDefaultEventSettings(eventId);
-          updateEventDeadlineUI(num, setting);
+          updateEventCardUI(num, setting);
         }
       } catch (e) {
-        console.error("خطا در بارگذاری مهلت رویدادها:", e);
+        console.error("خطا در بارگذاری تنظیمات رویدادها:", e);
       }
     }
 
-    // به‌روزرسانی ظاهر کادرهای مدیریت مهلت در هر کارت
-    function updateEventDeadlineUI(num, setting) {
+    // به‌روزرسانی ظاهر و متون کارت هر رویداد در پنل کلی
+    function updateEventCardUI(num, setting) {
       const eventId = EVENT_MAPPING[num];
-      const dateInput = document.getElementById('deadlineDate' + num);
-      const timeInput = document.getElementById('deadlineTime' + num);
-      const badge = document.getElementById('deadlineBadge' + num);
-      const toggleBtn = document.getElementById('btnToggleClose' + num);
+      const def = StorageService.getDefaultEventSettings(eventId);
+      if (!setting) setting = def;
 
-      if (!dateInput || !timeInput || !badge || !toggleBtn) return;
+      const custom = setting.customTexts || def.customTexts || {};
 
-      if (!setting) {
-        setting = StorageService.getDefaultEventSettings(eventId);
-      } else if (setting.settings) {
-        setting = setting.settings;
+      // به‌روزرسانی متون روی کارت
+      const tagEl = document.getElementById('cardTag' + num);
+      const titleEl = document.getElementById('cardTitle' + num);
+      const subEl = document.getElementById('cardSubtitle' + num);
+      const dateEl = document.getElementById('cardDateText' + num);
+      const locEl = document.getElementById('cardLocationText' + num);
+
+      if (tagEl && custom.tag) tagEl.textContent = custom.tag;
+      if (titleEl && custom.title) titleEl.textContent = custom.title;
+      if (subEl && custom.subtitle) subEl.textContent = custom.subtitle;
+      if (dateEl) dateEl.textContent = `${custom.dateText || ''} ${custom.timeText || ''}`.trim();
+      if (locEl && custom.locationText) locEl.textContent = custom.locationText;
+
+      // وضعیت مهلت ثبت‌نام
+      const statusBadge = document.getElementById('cardStatusBadge' + num);
+      if (statusBadge) {
+        const isClosed = StorageService.isEventClosed(eventId, { [eventId]: setting });
+        if (setting.isClosed) {
+          statusBadge.textContent = "بسته (دستی)";
+          statusBadge.className = "event-badge-pill badge-status-closed";
+        } else if (isClosed) {
+          statusBadge.textContent = "مهلت پایان یافته";
+          statusBadge.className = "event-badge-pill badge-status-expired";
+        } else {
+          statusBadge.textContent = "در حال ثبت‌نام";
+          statusBadge.className = "event-badge-pill badge-status-open";
+        }
       }
 
-      dateInput.value = setting.deadlineDate || '';
-      timeInput.value = setting.deadlineTime || '';
+      // وضعیت دسترسی (عمومی یا محدود)
+      const accessBadge = document.getElementById('cardAccessBadge' + num);
+      if (accessBadge) {
+        const isRestricted = setting.isRestricted && Array.isArray(setting.allowedPersonnel) && setting.allowedPersonnel.length > 0;
+        if (isRestricted) {
+          accessBadge.textContent = `🔒 اختصاصی (${setting.allowedPersonnel.length.toLocaleString('fa-IR')} نفر)`;
+          accessBadge.className = "event-badge-pill badge-access-restricted";
+        } else {
+          accessBadge.textContent = "🌐 عمومی (همه پرسنل)";
+          accessBadge.className = "event-badge-pill badge-access-public";
+        }
+      }
 
+      // آمار ثبت‌نامی‌های این رویداد
+      const attendingCount = currentRegistrations.filter(r => r.eventId === eventId && r.status === 'attending').length;
+      const declinedCount = currentRegistrations.filter(r => r.eventId === eventId && r.status === 'declined').length;
+      const totalCount = attendingCount + declinedCount;
+
+      const attEl = document.getElementById('cardAttendingCount' + num);
+      const decEl = document.getElementById('cardDeclinedCount' + num);
+      const totEl = document.getElementById('cardTotalCount' + num);
+
+      if (attEl) attEl.textContent = attendingCount.toLocaleString('fa-IR');
+      if (decEl) decEl.textContent = declinedCount.toLocaleString('fa-IR');
+      if (totEl) totEl.textContent = totalCount.toLocaleString('fa-IR');
+    }
+
+    // هدایت به جدول شرکت‌کنندگان یک رویداد خاص
+    function showEventParticipants(eventId) {
+      const tabBtn = document.querySelector(`.event-tabs .tab-btn[data-event="${eventId}"]`);
+      if (tabBtn) {
+        document.querySelectorAll('.event-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        tabBtn.classList.add('active');
+        selectedEventFilter = eventId;
+        renderTable();
+        const tableWrapper = document.querySelector('.table-wrapper') || document.querySelector('.control-bar');
+        if (tableWrapper) {
+          tableWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    }
+
+    // تغییر تب‌های داخل مدال تنظیمات رویداد (۳ تب: مشخصات و متون، پیش‌نمایش زنده، اکسل افراد مجاز)
+    function switchSettingsTab(tab) {
+      const btnTexts = document.getElementById('tabBtnTexts');
+      const btnPreview = document.getElementById('tabBtnPreview');
+      const btnWhitelist = document.getElementById('tabBtnWhitelist');
+      const tabTexts = document.getElementById('settingsTabTexts');
+      const tabPreview = document.getElementById('settingsTabPreview');
+      const tabWhitelist = document.getElementById('settingsTabWhitelist');
+
+      if (btnTexts) btnTexts.classList.remove('active');
+      if (btnPreview) btnPreview.classList.remove('active');
+      if (btnWhitelist) btnWhitelist.classList.remove('active');
+
+      if (tabTexts) tabTexts.style.display = 'none';
+      if (tabPreview) tabPreview.style.display = 'none';
+      if (tabWhitelist) tabWhitelist.style.display = 'none';
+
+      if (tab === 'texts') {
+        if (btnTexts) btnTexts.classList.add('active');
+        if (tabTexts) tabTexts.style.display = 'block';
+      } else if (tab === 'preview') {
+        if (btnPreview) btnPreview.classList.add('active');
+        if (tabPreview) tabPreview.style.display = 'block';
+        renderLivePreview();
+      } else if (tab === 'whitelist') {
+        if (btnWhitelist) btnWhitelist.classList.add('active');
+        if (tabWhitelist) tabWhitelist.style.display = 'block';
+      }
+    }
+
+    // رندر بلادرنگ پیش‌نمایش زنده رویداد درون تب پیش‌نمایش
+    function renderLivePreview() {
+      const num = activeSettingsNum || 1;
+      const banner = document.getElementById('prevBanner');
+      if (banner) {
+        if (num === 1) {
+          banner.style.background = 'linear-gradient(135deg, #004b93 0%, #0066cc 100%)';
+        } else if (num === 2) {
+          banner.style.background = 'linear-gradient(135deg, #78350f 0%, #b45309 100%)';
+        } else {
+          banner.style.background = 'linear-gradient(135deg, #0369a1 0%, #0284c7 100%)';
+        }
+      }
+
+      const getVal = (id, fallback = '') => {
+        const el = document.getElementById(id);
+        return el ? (el.value.trim() || fallback) : fallback;
+      };
+
+      const tag = getVal('cfgTag', 'رویداد ویژه');
+      const title = getVal('cfgTitle', 'عنوان رویداد');
+      const subtitle = getVal('cfgSubtitle', 'توضیحات و زیرعنوان رویداد');
+
+      const tagEl = document.getElementById('prevTag');
+      const titleEl = document.getElementById('prevTitle');
+      const subtitleEl = document.getElementById('prevSubtitle');
+
+      if (tagEl) tagEl.textContent = tag;
+      if (titleEl) titleEl.textContent = title;
+      if (subtitleEl) subtitleEl.textContent = subtitle;
+
+      // نمایش پوستر آپلود شده
+      const prevPosterWrap = document.getElementById('prevPosterWrap');
+      const prevPosterImg = document.getElementById('prevPosterImg');
+      if (currentUploadedPoster && currentUploadedPoster.trim() !== '') {
+        if (prevPosterImg) prevPosterImg.src = currentUploadedPoster;
+        if (prevPosterWrap) prevPosterWrap.style.display = 'block';
+      } else {
+        if (prevPosterWrap) prevPosterWrap.style.display = 'none';
+        if (prevPosterImg) prevPosterImg.src = '';
+      }
+
+      // ۳ باکس مشخصات
+      const label1 = getVal('cfgLabel1', 'تاریخ و روز برگزاری');
+      const val1 = getVal('cfgDate', '-');
+      const label2 = getVal('cfgLabel2', 'زمان گردهمایی');
+      const val2 = getVal('cfgTime', '-');
+      const label3 = getVal('cfgLabel3', 'مکان گردهمایی');
+      const val3 = getVal('cfgLocation', '-');
+
+      const elL1 = document.getElementById('prevLabel1');
+      const elV1 = document.getElementById('prevVal1');
+      const elL2 = document.getElementById('prevLabel2');
+      const elV2 = document.getElementById('prevVal2');
+      const elL3 = document.getElementById('prevLabel3');
+      const elV3 = document.getElementById('prevVal3');
+
+      if (elL1) elL1.textContent = label1;
+      if (elV1) elV1.textContent = val1;
+      if (elL2) elL2.textContent = label2;
+      if (elV2) elV2.textContent = val2;
+      if (elL3) elL3.textContent = label3;
+      if (elV3) elV3.textContent = val3;
+
+      // نکات مهم
+      const notesTitle = getVal('cfgNotesTitle', 'نکات مهم حضور در برنامه:');
+      const notesText = getVal('cfgNotes', '');
+      const prevNotesTitle = document.getElementById('prevNotesTitle');
+      const prevNotesList = document.getElementById('prevNotesList');
+
+      if (prevNotesTitle) prevNotesTitle.textContent = notesTitle;
+      if (prevNotesList) {
+        prevNotesList.innerHTML = '';
+        if (notesText) {
+          const lines = notesText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+          lines.forEach(l => {
+            const li = document.createElement('li');
+            li.textContent = l;
+            prevNotesList.appendChild(li);
+          });
+        }
+      }
+
+      // شبیه‌ساز فرم ثبت‌نام
+      const formTitle = getVal('cfgFormTitle', 'اعلام وضعیت حضور در برنامه');
+      const btnAttend = getVal('cfgBtnAttendText', 'مایل به شرکت در این برنامه هستم');
+      const btnDecline = getVal('cfgBtnDeclineText', 'تمایلی به حضور ندارم');
+
+      const elFormTitle = document.getElementById('prevFormTitle');
+      const elBtnAttend = document.getElementById('prevBtnAttend');
+      const elBtnDecline = document.getElementById('prevBtnDecline');
+
+      if (elFormTitle) elFormTitle.textContent = formTitle;
+      if (elBtnAttend) elBtnAttend.textContent = btnAttend;
+      if (elBtnDecline) elBtnDecline.textContent = btnDecline;
+    }
+
+    // پردازش و فشرده‌سازی تصویر پوستر رویداد (حداکثر ۱۲۰۰ پیکسل و کیفیت ۰.۸۵)
+    function handlePosterUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        alert("لطفاً یک فایل تصویری مجاز (JPG, PNG, WebP) انتخاب فرمایید.");
+        event.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          try {
+            const maxDimension = 1200;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+            currentUploadedPoster = compressedBase64;
+            updatePosterPreviewUI(currentUploadedPoster);
+          } catch (err) {
+            console.error("خطا در بهینه‌سازی تصویر پوستر:", err);
+            currentUploadedPoster = e.target.result;
+            updatePosterPreviewUI(currentUploadedPoster);
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.onerror = function() {
+        alert("خطا در بارگذاری تصویر پوستر.");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // نمایش وضعیت تصویر پوستر در کادر پیش‌نمایش تب ۱
+    function updatePosterPreviewUI(posterUrl) {
+      const box = document.getElementById('posterPreviewBox');
+      const img = document.getElementById('posterPreviewImg');
+      const empty = document.getElementById('posterEmptyNotice');
+      const btnRemove = document.getElementById('btnRemovePoster');
+
+      if (posterUrl && posterUrl.trim() !== '') {
+        if (img) img.src = posterUrl;
+        if (box) box.style.display = 'block';
+        if (empty) empty.style.display = 'none';
+        if (btnRemove) btnRemove.style.display = 'inline-block';
+      } else {
+        if (img) img.src = '';
+        if (box) box.style.display = 'none';
+        if (empty) empty.style.display = 'block';
+        if (btnRemove) btnRemove.style.display = 'none';
+      }
+    }
+
+    // حذف پوستر بارگذاری شده
+    function removeCustomPoster() {
+      currentUploadedPoster = '';
+      const input = document.getElementById('posterFileInput');
+      if (input) input.value = '';
+      updatePosterPreviewUI('');
+    }
+
+    // باز کردن مدال جامع تنظیمات رویداد (کاملاً آنی و بدون تاخیر)
+    async function openEventSettingsModal(eventId, num) {
+      activeSettingsEventId = eventId;
+      activeSettingsNum = num;
+
+      const modal = document.getElementById('eventSettingsModal');
+      if (!modal) {
+        console.error("المان eventSettingsModal یافت نشد.");
+        return;
+      }
+
+      const titleEl = document.getElementById('eventSettingsModalTitle');
+      if (titleEl) {
+        titleEl.textContent = `تنظیمات و مدیریت: ${EVENT_NAMES[num] || eventId}`;
+      }
+
+      // ۱. نمایش فوری و بلادرنگ پنجره مودال
+      switchSettingsTab('texts');
+      modal.style.display = 'flex';
+      modal.classList.add('active');
+
+      // ۲. پر کردن سریع با تنظیمات پیش‌فرض یا کش لوکال استوریج (۰ میلی‌ثانیه)
+      const def = StorageService.getDefaultEventSettings(eventId);
+      let localSetting = null;
+      try {
+        const raw = localStorage.getItem(StorageService.DEADLINES_KEY);
+        if (raw) {
+          const all = JSON.parse(raw);
+          if (all && all[eventId]) localSetting = all[eventId];
+        }
+      } catch (e) {}
+
+      populateModalFields(eventId, num, localSetting || def, def);
+
+      // ۳. به‌روزرسانی در پس‌زمینه از سرور (بدون فریز کردن پنجره)
+      try {
+        const remoteSetting = await StorageService.getEventSettings(eventId);
+        if (remoteSetting && activeSettingsEventId === eventId) {
+          populateModalFields(eventId, num, remoteSetting, def);
+        }
+      } catch (err) {
+        console.warn("خطا در همگام‌سازی از سرور:", err);
+      }
+    }
+
+    // پر کردن تمام فیلدهای پنجره تنظیمات بدون جا افتادن هیچ داده‌ای
+    function populateModalFields(eventId, num, setting, def) {
+      if (!setting) setting = def || StorageService.getDefaultEventSettings(eventId);
+      const custom = setting.customTexts || (def && def.customTexts) || {};
+
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val !== undefined && val !== null ? val : '';
+      };
+
+      setVal('cfgTitle', custom.title || (def && def.customTexts && def.customTexts.title) || '');
+      setVal('cfgSubtitle', custom.subtitle || (def && def.customTexts && def.customTexts.subtitle) || '');
+      setVal('cfgTag', custom.tag || (def && def.customTexts && def.customTexts.tag) || '');
+      
+      setVal('cfgLabel1', custom.label1 || (def && def.customTexts && def.customTexts.label1) || 'تاریخ و روز برگزاری');
+      setVal('cfgDate', custom.dateText || (def && def.customTexts && def.customTexts.dateText) || '');
+      
+      setVal('cfgLabel2', custom.label2 || (def && def.customTexts && def.customTexts.label2) || 'زمان گردهمایی');
+      setVal('cfgTime', custom.timeText || (def && def.customTexts && def.customTexts.timeText) || '');
+      
+      setVal('cfgLabel3', custom.label3 || (def && def.customTexts && def.customTexts.label3) || 'مکان گردهمایی');
+      setVal('cfgLocation', custom.locationText || (def && def.customTexts && def.customTexts.locationText) || '');
+      
+      setVal('cfgNotesTitle', custom.notesTitle || (def && def.customTexts && def.customTexts.notesTitle) || 'نکات مهم حضور در برنامه:');
+      setVal('cfgNotes', custom.notesText || (def && def.customTexts && def.customTexts.notesText) || '');
+      
+      setVal('cfgFormTitle', custom.formTitle || (def && def.customTexts && def.customTexts.formTitle) || 'اعلام وضعیت حضور در برنامه');
+      setVal('cfgBtnAttendText', custom.btnAttendText || (def && def.customTexts && def.customTexts.btnAttendText) || 'مایل به شرکت در این برنامه هستم');
+      setVal('cfgBtnDeclineText', custom.btnDeclineText || (def && def.customTexts && def.customTexts.btnDeclineText) || 'تمایلی به حضور ندارم');
+      
+      setVal('cfgDeadlineTitle', custom.deadlineTitle || (def && def.customTexts && def.customTexts.deadlineTitle) || 'مهلت ثبت‌نام به پایان رسیده است');
+      setVal('cfgDeadlineDesc', custom.deadlineDesc || (def && def.customTexts && def.customTexts.deadlineDesc) || '');
+
+      setVal('cfgDeadlineDate', setting.deadlineDate || '');
+      setVal('cfgDeadlineTime', setting.deadlineTime || '');
+
+      // بارگذاری پوستر اختصاصی
+      currentUploadedPoster = custom.posterUrl || (def && def.customTexts && def.customTexts.posterUrl) || '';
+      updatePosterPreviewUI(currentUploadedPoster);
+
+      updateModalDeadlineBadge(eventId, setting);
+
+      // تب ۲: پر کردن وضعیت افراد مجاز اکسل
+      const isRestricted = setting.isRestricted && Array.isArray(setting.allowedPersonnel) && setting.allowedPersonnel.length > 0;
+      const statusBox = document.getElementById('cfgWhitelistStatusBox');
+      const statusText = document.getElementById('cfgWhitelistStatusText');
+      const exportBtn = document.getElementById('btnExportCurrentExcel');
+      const previewSection = document.getElementById('whitelistPreviewSection');
+
+      if (isRestricted) {
+        if (statusBox) {
+          statusBox.style.background = '#fef3c7';
+          statusBox.style.color = '#92400e';
+        }
+        if (statusText) {
+          statusText.innerHTML = `<strong>وضعیت دسترسی:</strong> محدود به <strong>${setting.allowedPersonnel.length.toLocaleString('fa-IR')} نفر</strong> همکار مجاز.`;
+        }
+        if (exportBtn) exportBtn.style.display = 'inline-block';
+
+        currentParsedWhitelist = setting.allowedPersonnel.map(item => {
+          let code = '', name = '', nat = '', dept = '';
+          if (typeof item === 'string' || typeof item === 'number') {
+            code = String(item).trim();
+          } else if (item && typeof item === 'object') {
+            code = String(item.code || item.personnelCode || '').trim();
+            name = item.name || item.fullName || '';
+            nat = item.nationalCode || '';
+            dept = item.department || '';
+          }
+          const cleanNoZero = code.replace(/^0+/, '');
+          if (!name && window.PERSONNEL_MAP && (window.PERSONNEL_MAP[code] || window.PERSONNEL_MAP[cleanNoZero])) {
+            const entry = window.PERSONNEL_MAP[code] || window.PERSONNEL_MAP[cleanNoZero];
+            name = entry[0];
+            nat = entry[1] || '';
+            dept = entry[2] || '';
+          }
+          return {
+            code: code,
+            name: name || 'نامشخص در سیستم',
+            nationalCode: nat,
+            department: dept,
+            status: (window.PERSONNEL_MAP && (window.PERSONNEL_MAP[code] || window.PERSONNEL_MAP[cleanNoZero])) ? 'matched' : 'custom'
+          };
+        });
+        renderWhitelistPreview(currentParsedWhitelist);
+      } else {
+        if (statusBox) {
+          statusBox.style.background = '#e0f2fe';
+          statusBox.style.color = '#0369a1';
+        }
+        if (statusText) {
+          statusText.innerHTML = `<strong>وضعیت دسترسی:</strong> عمومی — کلیه پرسنل گروه انتخاب مجاز به ثبت‌نام در این رویداد هستند.`;
+        }
+        if (exportBtn) exportBtn.style.display = 'none';
+        currentParsedWhitelist = [];
+        if (previewSection) previewSection.style.display = 'none';
+      }
+    }
+
+    // به‌روزرسانی نشانگر وضعیت مهلت درون مدال
+    function updateModalDeadlineBadge(eventId, setting) {
+      const badge = document.getElementById('cfgDeadlineStatusBadge');
+      const toggleBtn = document.getElementById('cfgBtnToggleClose');
       const isClosed = StorageService.isEventClosed(eventId, { [eventId]: setting });
+
+      if (!badge || !toggleBtn) return;
 
       if (setting.isClosed) {
         badge.textContent = "بسته (دستی)";
-        badge.style.background = "#fee2e2";
-        badge.style.color = "#991b1b";
+        badge.className = "event-badge-pill badge-status-closed";
         toggleBtn.textContent = "بازگشایی ثبت‌نام";
         toggleBtn.className = "btn btn-primary";
-        toggleBtn.style.fontSize = "0.78rem";
-        toggleBtn.style.padding = "7px 10px";
       } else if (isClosed) {
         badge.textContent = "مهلت پایان یافته";
-        badge.style.background = "#ffedd5";
-        badge.style.color = "#9a3412";
-        toggleBtn.textContent = "بستن فوری";
+        badge.className = "event-badge-pill badge-status-expired";
+        toggleBtn.textContent = "بستن فوری ثبت‌نام";
         toggleBtn.className = "btn btn-decline";
-        toggleBtn.style.fontSize = "0.78rem";
-        toggleBtn.style.padding = "7px 10px";
       } else {
         badge.textContent = "در حال ثبت‌نام";
-        badge.style.background = "#dcfce7";
-        badge.style.color = "#166534";
-        toggleBtn.textContent = "بستن فوری";
+        badge.className = "event-badge-pill badge-status-open";
+        toggleBtn.textContent = "بستن فوری ثبت‌نام";
         toggleBtn.className = "btn btn-decline";
-        toggleBtn.style.fontSize = "0.78rem";
-        toggleBtn.style.padding = "7px 10px";
       }
     }
 
-    // ذخیره تاریخ و ساعت پایان ثبت‌نام توسط ادمین
-    async function saveEventDeadline(eventId, num) {
-      const dateInput = document.getElementById('deadlineDate' + num);
-      const timeInput = document.getElementById('deadlineTime' + num);
-      const rawDate = (dateInput.value || '').trim();
-      const rawTime = (timeInput.value || '').trim() || '23:59';
+    // بستن مدال تنظیمات رویداد
+    function closeEventSettingsModal() {
+      const modal = document.getElementById('eventSettingsModal');
+      if (modal) {
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+      }
+      activeSettingsEventId = null;
+      activeSettingsNum = null;
+      currentUploadedPoster = '';
+      currentParsedWhitelist = [];
+      const fileInput = document.getElementById('posterFileInput');
+      if (fileInput) fileInput.value = '';
+    }
+
+    // ذخیره مشخصات، متون، تصویر و مهلت رویداد و انتشار آن در سامانه
+    async function saveEventTextsAndSettings() {
+      if (!activeSettingsEventId || !activeSettingsNum) return;
+
+      const rawDate = (document.getElementById('cfgDeadlineDate').value || '').trim();
+      const rawTime = (document.getElementById('cfgDeadlineTime').value || '').trim() || '23:59';
 
       const dateNorm = toStandardDigits(rawDate);
       const timeNorm = toStandardDigits(rawTime);
 
+      const customTexts = {
+        title: (document.getElementById('cfgTitle').value || '').trim(),
+        subtitle: (document.getElementById('cfgSubtitle').value || '').trim(),
+        tag: (document.getElementById('cfgTag').value || '').trim(),
+        posterUrl: currentUploadedPoster || '',
+        label1: (document.getElementById('cfgLabel1').value || '').trim(),
+        dateText: (document.getElementById('cfgDate').value || '').trim(),
+        label2: (document.getElementById('cfgLabel2').value || '').trim(),
+        timeText: (document.getElementById('cfgTime').value || '').trim(),
+        label3: (document.getElementById('cfgLabel3').value || '').trim(),
+        locationText: (document.getElementById('cfgLocation').value || '').trim(),
+        notesTitle: (document.getElementById('cfgNotesTitle').value || '').trim(),
+        notesText: (document.getElementById('cfgNotes').value || '').trim(),
+        formTitle: (document.getElementById('cfgFormTitle').value || '').trim(),
+        btnAttendText: (document.getElementById('cfgBtnAttendText').value || '').trim(),
+        btnDeclineText: (document.getElementById('cfgBtnDeclineText').value || '').trim(),
+        deadlineTitle: (document.getElementById('cfgDeadlineTitle').value || '').trim(),
+        deadlineDesc: (document.getElementById('cfgDeadlineDesc').value || '').trim()
+      };
+
       try {
-        const res = await StorageService.saveEventSettings(eventId, {
+        const res = await StorageService.saveEventSettings(activeSettingsEventId, {
           deadlineDate: dateNorm,
-          deadlineTime: timeNorm
+          deadlineTime: timeNorm,
+          customTexts: customTexts
         });
-        const setting = (res && res.settings) ? res.settings : (res || StorageService.getDefaultEventSettings(eventId));
-        updateEventDeadlineUI(num, setting);
-        alert(`تنظیمات مهلت ثبت‌نام رویداد با موفقیت ذخیره شد.\nمهلت ثبت‌نام: ${dateNorm || 'نامحدود'} ساعت ${timeNorm}`);
+
+        const setting = (res && res.settings) ? res.settings : (res || StorageService.getDefaultEventSettings(activeSettingsEventId));
+        updateEventCardUI(activeSettingsNum, setting);
+        updateModalDeadlineBadge(activeSettingsEventId, setting);
+        renderLivePreview();
+
+        alert(`مشخصات، متون، تصویر و مهلت رویداد «${EVENT_NAMES[activeSettingsNum]}» با موفقیت ذخیره و در سامانه منتشر شد.`);
       } catch (err) {
         console.error(err);
-        alert("خطا در ذخیره مهلت رویداد: " + (err.message || err));
+        alert("خطا در ذخیره و انتشار تنظیمات رویداد: " + (err.message || err));
       }
     }
 
-    // بستن فوری یا بازگشایی ثبت‌نام رویداد توسط ادمین
-    async function toggleEventClosure(eventId, num) {
+    // تغییر وضعیت فوری مسدودی / بازگشایی از درون مدال
+    async function toggleCurrentEventClosure() {
+      if (!activeSettingsEventId || !activeSettingsNum) return;
+
       try {
-        const current = await StorageService.getEventSettings(eventId);
+        const current = await StorageService.getEventSettings(activeSettingsEventId);
         const newStatus = !current.isClosed;
         const confirmMsg = newStatus 
-          ? "آیا مطمئن هستید که می‌خواهید ثبت‌نام و انصراف در این رویداد را فوراً مسدود کنید؟ کاربران دیگر قادر به ثبت‌نام جدید یا انصراف نخواهند بود."
-          : "آیا مطمئن هستید که می‌خواهید ثبت‌نام این رویداد را بازگشایی نمایید؟";
+          ? "آیا از مسدودسازی فوری ثبت‌نام در این رویداد اطمینان دارید؟"
+          : "آیا از بازگشایی ثبت‌نام این رویداد اطمینان دارید؟";
 
         if (!confirm(confirmMsg)) return;
 
-        const res = await StorageService.saveEventSettings(eventId, {
+        const res = await StorageService.saveEventSettings(activeSettingsEventId, {
           isClosed: newStatus
         });
-        const setting = (res && res.settings) ? res.settings : (res || StorageService.getDefaultEventSettings(eventId));
-        updateEventDeadlineUI(num, setting);
-        alert(newStatus ? "ثبت‌نام این رویداد فوراً مسدود شد." : "ثبت‌نام این رویداد بازگشایی شد.");
+        const setting = (res && res.settings) ? res.settings : (res || StorageService.getDefaultEventSettings(activeSettingsEventId));
+        updateEventCardUI(activeSettingsNum, setting);
+        updateModalDeadlineBadge(activeSettingsEventId, setting);
+
+        alert(newStatus ? "ثبت‌نام این رویداد فوراً مسدود گردید." : "ثبت‌نام این رویداد بازگشایی شد.");
       } catch (err) {
         console.error(err);
         alert("خطا در تغییر وضعیت رویداد: " + (err.message || err));
+      }
+    }
+
+    // ==========================================
+    // پردازش و آپلود اختصاصی فایل اکسل (SheetJS)
+    // ==========================================
+    function triggerExcelFileInput() {
+      const fileInput = document.getElementById('excelWhitelistInput');
+      if (fileInput) fileInput.click();
+    }
+
+    // بارگذاری و پردازش فایل اکسل
+    function handleExcelUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const fileName = file.name;
+      const ext = fileName.split('.').pop().toLowerCase();
+
+      if (ext !== 'xlsx' && ext !== 'xls') {
+        alert("فرمت فایل انتخاب‌شده مجاز نیست. لطفاً فقط فایل با پسوند .xlsx یا .xls انتخاب فرمایید.");
+        event.target.value = '';
+        return;
+      }
+
+      if (typeof XLSX === 'undefined') {
+        alert("کتابخانه اکسل لود نشده است. لطفاً صفحه را تازه‌سازی (F5) نمایید.");
+        return;
+      }
+
+      const notice = document.getElementById('excelProcessingNotice');
+      if (notice) notice.style.display = 'block';
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            alert("فایل اکسل بدون برگه (Sheet) می‌باشد.");
+            if (notice) notice.style.display = 'none';
+            return;
+          }
+
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+
+          if (!rawRows || rawRows.length === 0) {
+            alert("فایل اکسل انتخاب‌شده خالی است.");
+            if (notice) notice.style.display = 'none';
+            return;
+          }
+
+          extractPersonnelFromExcelRows(rawRows);
+        } catch (err) {
+          console.error(err);
+          alert("خطا در پردازش فایل اکسل: " + err.message);
+        } finally {
+          if (notice) notice.style.display = 'none';
+          event.target.value = '';
+        }
+      };
+      reader.onerror = function() {
+        alert("خطا در خواندن فایل از روی سیستم.");
+        if (notice) notice.style.display = 'none';
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // استخراج هوشمند شماره‌های پرسنلی از ردیف‌های اکسل
+    function extractPersonnelFromExcelRows(rows) {
+      const codeSet = new Set();
+      const extractedList = [];
+
+      // جستجوی ستون‌های کد پرسنلی، نام و کد ملی در سطر هدر
+      let targetCol = -1;
+      let nameCol = -1;
+      let natCol = -1;
+      const headerRow = rows[0] || [];
+      for (let c = 0; c < headerRow.length; c++) {
+        const val = String(headerRow[c] || '').trim().toLowerCase();
+        if (targetCol < 0 && (val.includes('پرسنل') || val.includes('کد') || val.includes('personnel') || val.includes('code') || val.includes('id'))) {
+          targetCol = c;
+        } else if (nameCol < 0 && (val.includes('نام') || val.includes('name') || val.includes('شخص') || val.includes('کارمند'))) {
+          nameCol = c;
+        } else if (natCol < 0 && (val.includes('ملی') || val.includes('national'))) {
+          natCol = c;
+        }
+      }
+
+      for (let r = 0; r < rows.length; r++) {
+        const row = rows[r];
+        if (!Array.isArray(row)) continue;
+
+        let cellCandidate = null;
+        if (targetCol >= 0 && r > 0 && row[targetCol] !== undefined) {
+          cellCandidate = row[targetCol];
+        } else {
+          for (let c = 0; c < row.length; c++) {
+            const cleanStr = toStandardDigits(String(row[c] || '')).trim();
+            if (/^\d{4,8}$/.test(cleanStr)) {
+              cellCandidate = cleanStr;
+              break;
+            }
+          }
+        }
+
+        if (cellCandidate !== null && cellCandidate !== undefined) {
+          const clean = toStandardDigits(String(cellCandidate)).trim();
+          if (/^\d{4,8}$/.test(clean)) {
+            if (!codeSet.has(clean)) {
+              codeSet.add(clean);
+              let name = '', nat = '', dept = '';
+              const cleanNoZero = clean.replace(/^0+/, '');
+              const mapEntry = (window.PERSONNEL_MAP && (window.PERSONNEL_MAP[clean] || window.PERSONNEL_MAP[cleanNoZero]));
+              if (mapEntry) {
+                name = mapEntry[0] || '';
+                nat = mapEntry[1] || '';
+                dept = mapEntry[2] || '';
+              }
+              if (!name && nameCol >= 0 && row[nameCol]) {
+                name = String(row[nameCol]).trim();
+              }
+              if (!nat && natCol >= 0 && row[natCol]) {
+                nat = toStandardDigits(String(row[natCol])).trim();
+              }
+              extractedList.push({
+                code: clean,
+                name: name || 'نامشخص در سیستم',
+                nationalCode: nat,
+                department: dept,
+                status: mapEntry ? 'matched' : (name ? 'custom' : 'unknown')
+              });
+            }
+          }
+        }
+      }
+
+      if (extractedList.length === 0) {
+        alert("هیچ شماره پرسنلی معتبری در فایل اکسل یافت نشد. لطفاً مطمئن شوید ستون کدهای پرسنلی در فایل وجود دارد.");
+        return;
+      }
+
+      currentParsedWhitelist = extractedList;
+      renderWhitelistPreview(currentParsedWhitelist);
+      alert(`فایل اکسل با موفقیت تحلیل شد.\nتعداد ${currentParsedWhitelist.length} کد پرسنلی استخراج گردید. لطفاً پیش‌نمایش را بررسی فرمایید و سپس دکمه «ذخیره و فعال‌سازی لیست مجاز» را انتخاب فرمایید.`);
+    }
+
+    // Drag & Drop روی منطقه آپلود اکسل
+    document.addEventListener('DOMContentLoaded', () => {
+      setupDropZone();
+    });
+
+    function setupDropZone() {
+      const dropZone = document.getElementById('excelDropZone');
+      if (!dropZone) return;
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('dragover');
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('dragover');
+        }, false);
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length) {
+          handleExcelUpload({ target: { files: files, value: '' } });
+        }
+      }, false);
+    }
+
+    // نمایش پیش‌نمایش افراد مجاز در جدول
+    function renderWhitelistPreview(list) {
+      const section = document.getElementById('whitelistPreviewSection');
+      const totalEl = document.getElementById('whitelistStatsTotal');
+      const matchedEl = document.getElementById('whitelistStatsMatched');
+
+      section.style.display = 'block';
+
+      const totalCount = list.length;
+      const matchedCount = list.filter(x => x.status === 'matched').length;
+
+      totalEl.textContent = `تعداد کل پرسنل فایل: ${totalCount.toLocaleString('fa-IR')} نفر`;
+      matchedEl.textContent = `شناسایی‌شده در بانک گروه: ${matchedCount.toLocaleString('fa-IR')} نفر`;
+
+      filterWhitelistTable();
+    }
+
+    // فیلتر و جستجو در جدول پیش‌نمایش افراد مجاز
+    function filterWhitelistTable() {
+      const search = (document.getElementById('whitelistSearchInput').value || '').trim().toLowerCase();
+      const tbody = document.getElementById('whitelistTableBody');
+      tbody.innerHTML = '';
+
+      const filtered = currentParsedWhitelist.filter(item => {
+        if (!search) return true;
+        return item.code.includes(search) || (item.name && item.name.toLowerCase().includes(search));
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 14px;">موردی با این مشخصات یافت نشد.</td></tr>';
+        return;
+      }
+
+      filtered.forEach((item, index) => {
+        const originalIndex = currentParsedWhitelist.indexOf(item);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="text-align: center; color: #64748b;">${(index + 1).toLocaleString('fa-IR')}</td>
+          <td style="font-family: monospace; font-weight: 700; color: #004b93;">${item.code}</td>
+          <td><strong>${item.name}</strong></td>
+          <td style="font-family: monospace; font-size: 0.8rem; color: #475569;">${item.nationalCode || '-'}</td>
+          <td style="font-size: 0.78rem; color: #64748b;">${item.department || '-'}</td>
+          <td style="text-align: center;">
+            <button type="button" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 1rem; font-weight: bold;" onclick="removeWhitelistItem(${originalIndex})" title="حذف این مورد">✕</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // حذف یک ردیف از لیست مجاز
+    function removeWhitelistItem(index) {
+      if (index >= 0 && index < currentParsedWhitelist.length) {
+        currentParsedWhitelist.splice(index, 1);
+        renderWhitelistPreview(currentParsedWhitelist);
+      }
+    }
+
+    // ذخیره نهایی لیست مجاز در دیتابیس و فعال‌سازی محدودیت
+    async function saveCurrentWhitelist() {
+      if (!activeSettingsEventId || !activeSettingsNum) return;
+      if (!currentParsedWhitelist || currentParsedWhitelist.length === 0) {
+        alert("هیچ پرسنلی در لیست مجاز وجود ندارد. اگر قصد دارید رویداد برای همه عمومی باشد، دکمه «حذف محدودیت (عمومی‌سازی رویداد)» را بزنید.");
+        return;
+      }
+
+      const listToSave = currentParsedWhitelist.map(x => ({
+        code: x.code,
+        name: x.name,
+        nationalCode: x.nationalCode || '',
+        department: x.department || ''
+      }));
+
+      try {
+        const res = await StorageService.saveEventAllowedPersonnel(activeSettingsEventId, listToSave, true);
+        const setting = (res && res.settings) ? res.settings : (res || StorageService.getDefaultEventSettings(activeSettingsEventId));
+        updateEventCardUI(activeSettingsNum, setting);
+
+        const statusBox = document.getElementById('cfgWhitelistStatusBox');
+        const statusText = document.getElementById('cfgWhitelistStatusText');
+        const exportBtn = document.getElementById('btnExportCurrentExcel');
+
+        statusBox.style.background = '#fef3c7';
+        statusBox.style.color = '#92400e';
+        statusText.innerHTML = `<strong>وضعیت دسترسی:</strong> محدود به <strong>${listToSave.length.toLocaleString('fa-IR')} نفر</strong> مجاز.`;
+        exportBtn.style.display = 'inline-block';
+
+        alert(`لیست اسامی مجاز رویداد «${EVENT_NAMES[activeSettingsNum]}» با موفقیت ذخیره شد.\nتعداد افراد مجاز: ${listToSave.length.toLocaleString('fa-IR')} نفر.\nاز این پس تنها این افراد امکان ورود و ثبت‌نام در رویداد را خواهند داشت.`);
+      } catch (err) {
+        alert("خطا در ذخیره لیست مجاز: " + (err.message || err));
+      }
+    }
+
+    // حذف محدودیت رویداد و عمومی‌سازی برای همه پرسنل
+    async function clearEventWhitelist() {
+      if (!activeSettingsEventId || !activeSettingsNum) return;
+      if (!confirm(`آیا مطمئن هستید که می‌خواهید محدودیت رویداد «${EVENT_NAMES[activeSettingsNum]}» را لغو فرمایید تا برای تمامی پرسنل عمومی شود؟`)) {
+        return;
+      }
+
+      try {
+        const res = await StorageService.clearEventAllowedPersonnel(activeSettingsEventId);
+        const setting = (res && res.settings) ? res.settings : (res || StorageService.getDefaultEventSettings(activeSettingsEventId));
+        updateEventCardUI(activeSettingsNum, setting);
+
+        const statusBox = document.getElementById('cfgWhitelistStatusBox');
+        const statusText = document.getElementById('cfgWhitelistStatusText');
+        const exportBtn = document.getElementById('btnExportCurrentExcel');
+
+        statusBox.style.background = '#e0f2fe';
+        statusBox.style.color = '#0369a1';
+        statusText.innerHTML = `<strong>وضعیت دسترسی:</strong> عمومی — کلیه پرسنل گروه انتخاب مجاز به ثبت‌نام هستند.`;
+        exportBtn.style.display = 'none';
+
+        currentParsedWhitelist = [];
+        document.getElementById('whitelistPreviewSection').style.display = 'none';
+
+        alert(`محدودیت رویداد «${EVENT_NAMES[activeSettingsNum]}» با موفقیت حذف شد و این رویداد برای تمامی همکاران عمومی گردید.`);
+      } catch (err) {
+        alert("خطا در حذف محدودیت رویداد: " + (err.message || err));
+      }
+    }
+
+    // دانلود نمونه فایل استاندارد اکسل (.xlsx) با SheetJS واقعی
+    function downloadSampleExcel() {
+      if (typeof XLSX === 'undefined') {
+        alert("کتابخانه اکسل هنوز لود نشده است.");
+        return;
+      }
+      try {
+        const wb = XLSX.utils.book_new();
+        const sampleData = [
+          ["شماره پرسنلی", "نام و نام خانوادگی"],
+          ["610167", "محمدرضا رفیعی"],
+          ["610715", "غلامرضا قدیر"],
+          ["611053", "محمد رئیسی وستگانی"],
+          ["611525", "عاطفه کلاهی"]
+        ];
+        const ws = XLSX.utils.aoa_to_sheet(sampleData);
+        XLSX.utils.book_append_sheet(wb, ws, "اسامی مجاز");
+        XLSX.writeFile(wb, "sample_allowed_personnel.xlsx");
+      } catch (err) {
+        console.error(err);
+        alert("خطا در ایجاد فایل اکسل نمونه: " + err.message);
+      }
+    }
+
+    // دریافت خروجی اکسل واقعی (.xlsx) از لیست مجاز فعلی
+    function exportCurrentWhitelistExcel() {
+      if (typeof XLSX === 'undefined') {
+        alert("کتابخانه اکسل هنوز لود نشده است.");
+        return;
+      }
+      if (!currentParsedWhitelist || currentParsedWhitelist.length === 0) {
+        alert("لیستی برای دریافت خروجی اکسل موجود نیست.");
+        return;
+      }
+      try {
+        const wb = XLSX.utils.book_new();
+        const data = [
+          ["ردیف", "کد پرسنلی", "نام و نام خانوادگی", "کد ملی", "دپارتمان"]
+        ];
+        currentParsedWhitelist.forEach((item, index) => {
+          data.push([
+            index + 1,
+            item.code,
+            item.name || '',
+            item.nationalCode || '',
+            item.department || ''
+          ]);
+        });
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        XLSX.utils.book_append_sheet(wb, ws, "افراد مجاز");
+        XLSX.writeFile(wb, `whitelist_${activeSettingsEventId || 'event'}.xlsx`);
+      } catch (err) {
+        console.error(err);
+        alert("خطا در تولید فایل اکسل: " + err.message);
       }
     }
 
@@ -1365,6 +2686,21 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       cloudModal.classList.remove('active');
       alert("تنظیمات دیتابیس PostgreSQL با موفقیت ذخیره شد. در حال همگام‌سازی اطلاعات...");
       await loadData();
+    });
+
+    // بستن مدال با کلیک روی پس‌زمینه تیره
+    window.addEventListener('click', function(e) {
+      const modal = document.getElementById('eventSettingsModal');
+      if (modal && e.target === modal) {
+        closeEventSettingsModal();
+      }
+    });
+
+    // بستن مدال با کلید Esc
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeEventSettingsModal();
+      }
     });
 
     // آغاز اجرای صفحه
