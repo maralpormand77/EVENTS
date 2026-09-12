@@ -102,6 +102,43 @@
       font-size: 0.85rem;
       border: 1px solid #e2e8f0;
     }
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .admin-navbar,
+      .cloud-banner,
+      .event-previews-grid,
+      h2,
+      .stats-grid,
+      .tabs-nav,
+      .filter-bar,
+      .action-btn,
+      .modal-overlay,
+      #loginScreen {
+        display: none !important;
+      }
+      .table-card {
+        box-shadow: none !important;
+        border: none !important;
+      }
+      .table-responsive {
+        overflow: visible !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      th, td {
+        border: 1px solid #cbd5e1 !important;
+        padding: 6px 8px !important;
+        color: #000000 !important;
+      }
+      th:last-child, td:last-child {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -193,9 +230,9 @@
           خروجی اکسل (Excel)
         </button>
 
-        <button type="button" class="btn btn-secondary" onclick="window.print()">
+        <button type="button" class="btn btn-secondary" onclick="printReport()" title="چاپ لیست فیلتر شده پرسنل">
           <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          چاپ
+          چاپ گزارش فیلترشده
         </button>
 
         <!-- دکمه خروج -->
@@ -249,6 +286,35 @@
 ...</div>
             <button class="btn btn-secondary btn-copy" onclick="copySms(1)">کپی متن و لینک</button>
           </div>
+
+          <!-- مدیریت مهلت و وضعیت ثبت‌نام رویداد ۱ -->
+          <div class="event-deadline-box" style="margin-top: 14px; padding: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 0.82rem; font-weight: 700; color: #004b93; display: flex; align-items: center; gap: 5px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                مدیریت مهلت و پایان ثبت‌نام:
+              </span>
+              <span id="deadlineBadge1" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: #dcfce7; color: #166534;">در حال ثبت‌نام</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+              <div>
+                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">تاریخ پایان (شمسی):</label>
+                <input type="text" id="deadlineDate1" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 1405/06/22">
+              </div>
+              <div>
+                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">ساعت پایان:</label>
+                <input type="text" id="deadlineTime1" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 13:00">
+              </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 6px; font-size: 0.78rem;" onclick="saveEventDeadline('sobh-hamdeli', 1)">
+                ذخیره مهلت
+              </button>
+              <button type="button" class="btn btn-decline" id="btnToggleClose1" style="padding: 7px 10px; font-size: 0.78rem;" onclick="toggleEventClosure('sobh-hamdeli', 1)">
+                بستن فوری
+              </button>
+            </div>
+          </div>
         </div>
         <div class="preview-card-footer">
           <a href="https://entekhab-sobh.vercel.app/" id="viewBtn1" target="_blank" class="btn btn-primary" style="flex: 1; font-size: 0.88rem;">
@@ -265,7 +331,7 @@
         <div class="preview-card-header banner-kavir">
           <span class="event-tag" style="background: rgba(255,255,255,0.25);">لینک ۲</span>
           <h3 style="font-size: 1.25rem; font-weight: 800; margin-top: 4px;">تور کویر ورزنه</h3>
-          <p style="font-size: 0.85rem; opacity: 0.9;">ایونت علمی تفریحی گروه انتخاب</p>
+          <p style="font-size: 0.85rem; opacity: 0.9;">رویداد علمی تفریحی گروه انتخاب</p>
         </div>
         <div class="preview-card-body">
           <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 8px;">
@@ -280,6 +346,35 @@
             <div class="sms-box-text" id="smsText2">همکار ارجمند، جهت اطلاع از جزئیات و ثبت‌نام در «تور کویر ورزنه» روی لینک زیر کلیک فرمایید:
 ...</div>
             <button class="btn btn-secondary btn-copy" onclick="copySms(2)">کپی متن و لینک</button>
+          </div>
+
+          <!-- مدیریت مهلت و وضعیت ثبت‌نام رویداد ۲ -->
+          <div class="event-deadline-box" style="margin-top: 14px; padding: 12px; background: #fffbeb; border: 1px solid #fef3c7; border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 0.82rem; font-weight: 700; color: #b45309; display: flex; align-items: center; gap: 5px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                مدیریت مهلت و پایان ثبت‌نام:
+              </span>
+              <span id="deadlineBadge2" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: #dcfce7; color: #166534;">در حال ثبت‌نام</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+              <div>
+                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">تاریخ پایان (شمسی):</label>
+                <input type="text" id="deadlineDate2" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 1405/06/22">
+              </div>
+              <div>
+                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">ساعت پایان:</label>
+                <input type="text" id="deadlineTime2" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 13:00">
+              </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 6px; font-size: 0.78rem;" onclick="saveEventDeadline('kavir-varzaneh', 2)">
+                ذخیره مهلت
+              </button>
+              <button type="button" class="btn btn-decline" id="btnToggleClose2" style="padding: 7px 10px; font-size: 0.78rem;" onclick="toggleEventClosure('kavir-varzaneh', 2)">
+                بستن فوری
+              </button>
+            </div>
           </div>
         </div>
         <div class="preview-card-footer">
@@ -312,6 +407,35 @@
             <div class="sms-box-text" id="smsText3">همکار ارجمند، جهت اطلاع از جزئیات و ثبت‌نام در «تور رفتینگ مارکده» روی لینک زیر کلیک فرمایید:
 ...</div>
             <button class="btn btn-secondary btn-copy" onclick="copySms(3)">کپی متن و لینک</button>
+          </div>
+
+          <!-- مدیریت مهلت و وضعیت ثبت‌نام رویداد ۳ -->
+          <div class="event-deadline-box" style="margin-top: 14px; padding: 12px; background: #f0f9ff; border: 1px solid #e0f2fe; border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 0.82rem; font-weight: 700; color: #0284c7; display: flex; align-items: center; gap: 5px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                مدیریت مهلت و پایان ثبت‌نام:
+              </span>
+              <span id="deadlineBadge3" style="font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: #dcfce7; color: #166534;">در حال ثبت‌نام</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+              <div>
+                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">تاریخ پایان (شمسی):</label>
+                <input type="text" id="deadlineDate3" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 1405/06/22">
+              </div>
+              <div>
+                <label style="font-size: 0.72rem; color: var(--text-secondary); display: block; margin-bottom: 2px;">ساعت پایان:</label>
+                <input type="text" id="deadlineTime3" class="form-input" style="padding: 6px 8px; font-size: 0.82rem; text-align: center;" placeholder="مثال: 13:00">
+              </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 6px; font-size: 0.78rem;" onclick="saveEventDeadline('rafting-markadeh', 3)">
+                ذخیره مهلت
+              </button>
+              <button type="button" class="btn btn-decline" id="btnToggleClose3" style="padding: 7px 10px; font-size: 0.78rem;" onclick="toggleEventClosure('rafting-markadeh', 3)">
+                بستن فوری
+              </button>
+            </div>
           </div>
         </div>
         <div class="preview-card-footer">
@@ -590,6 +714,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         updateSmsTexts();
         checkCloudStatus();
         loadData();
+        initDeadlineControls();
       } else {
         errorBox.style.display = 'block';
         document.getElementById('passwordInput').value = '';
@@ -708,6 +833,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         const res = await StorageService.fetchRegistrations();
         currentRegistrations = res.data;
         renderDashboard();
+        await initDeadlineControls();
       } catch (e) {
         console.error(e);
       } finally {
@@ -738,12 +864,11 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       renderTable();
     }
 
-    function renderTable() {
+    function getFilteredRegistrations() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
       const statusFilter = document.getElementById('statusFilter').value;
-      const tbody = document.getElementById('tableBody');
 
-      let filtered = currentRegistrations.filter(item => {
+      return currentRegistrations.filter(item => {
         if (selectedEventFilter !== 'all' && item.eventId !== selectedEventFilter) {
           return false;
         }
@@ -757,6 +882,11 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         }
         return true;
       });
+    }
+
+    function renderTable() {
+      const filtered = getFilteredRegistrations();
+      const tbody = document.getElementById('tableBody');
 
       if (filtered.length === 0) {
         tbody.innerHTML = `
@@ -820,8 +950,326 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     document.getElementById('statusFilter').addEventListener('change', renderTable);
 
     document.getElementById('btnExportExcel').addEventListener('click', () => {
-      StorageService.exportToExcel(currentRegistrations);
+      const filtered = getFilteredRegistrations();
+      if (filtered.length === 0) {
+        alert("هیچ رکوردی برای خروجی اکسل در وضعیت فیلتر شده فعلی وجود ندارد.");
+        return;
+      }
+      StorageService.exportToExcel(filtered);
     });
+
+    // چاپ گزارش رسمی پرسنل فیلترشده
+    function printReport() {
+      const filtered = getFilteredRegistrations();
+      if (filtered.length === 0) {
+        alert("هیچ رکوردی برای چاپ در وضعیت فیلتر شده فعلی وجود ندارد.");
+        return;
+      }
+
+      let eventLabel = "تمامی رویدادها";
+      if (selectedEventFilter === 'sobh-hamdeli') eventLabel = "صبح همدلی (پیاده روی مدیران)";
+      else if (selectedEventFilter === 'kavir-varzaneh') eventLabel = "رویداد علمی تفریحی کویر ورزنه";
+      else if (selectedEventFilter === 'rafting-markadeh') eventLabel = "تور رفتینگ مارکده";
+
+      const statusFilterVal = document.getElementById('statusFilter').value;
+      let statusLabel = "تمامی وضعیت‌ها";
+      if (statusFilterVal === 'attending') statusLabel = "فقط مایل به شرکت";
+      else if (statusFilterVal === 'declined') statusLabel = "فقط عدم حضور / انصراف";
+
+      const searchVal = document.getElementById('searchInput').value.trim();
+
+      const attendingCount = filtered.filter(r => r.status === 'attending').length;
+      const declinedCount = filtered.filter(r => r.status === 'declined').length;
+
+      const nowJalali = (typeof StorageService !== 'undefined' && StorageService.getJalaliDateTime) 
+        ? StorageService.getJalaliDateTime() 
+        : new Date().toLocaleString('fa-IR');
+
+      const rowsHtml = filtered.map((item, index) => `
+        <tr>
+          <td style="text-align: center; font-weight: bold;">${(index + 1).toLocaleString('fa-IR')}</td>
+          <td><strong>${item.fullName || '-'}</strong></td>
+          <td style="text-align: center; font-family: monospace; font-size: 13px; font-weight: 600;">${item.personnelCode || '-'}</td>
+          <td>${item.eventTitle || item.eventId || '-'}</td>
+          <td style="text-align: center;">
+            ${item.status === 'attending' 
+              ? '<span style="display: inline-block; padding: 3px 8px; border-radius: 6px; background: #dcfce7; color: #166534; font-weight: bold;">مایل به شرکت</span>' 
+              : '<span style="display: inline-block; padding: 3px 8px; border-radius: 6px; background: #fee2e2; color: #991b1b; font-weight: bold;">عدم حضور / انصراف</span>'}
+          </td>
+          <td style="text-align: center; font-size: 11.5px; color: #475569;">${item.jalaliDate || item.timestamp || '-'}</td>
+        </tr>
+      `).join('');
+
+      const reportHtml = `
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>گزارش رسمی ثبت‌نام پرسنل | گروه توسعه سرمایه گذاری انتخاب</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm 10mm; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif;
+      margin: 0;
+      padding: 10px;
+      color: #0f172a;
+      direction: rtl;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2.5px solid #004b93;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .report-title h1 {
+      font-size: 16px;
+      color: #004b93;
+      margin: 0 0 5px 0;
+      font-weight: 800;
+    }
+    .report-title p {
+      font-size: 11.5px;
+      color: #64748b;
+      margin: 0;
+    }
+    .report-meta {
+      font-size: 11.5px;
+      text-align: left;
+      line-height: 1.8;
+      color: #334155;
+    }
+    .summary-card {
+      display: flex;
+      gap: 20px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 14px;
+      font-size: 12px;
+    }
+    .summary-card div strong {
+      color: #004b93;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+      margin-top: 6px;
+    }
+    th, td {
+      border: 1px solid #94a3b8;
+      padding: 7px 8px;
+    }
+    th {
+      background: #f1f5f9 !important;
+      color: #0f172a;
+      font-weight: 700;
+      text-align: center;
+      -webkit-print-color-adjust: exact;
+    }
+    tr:nth-child(even) {
+      background: #f8fafc !important;
+      -webkit-print-color-adjust: exact;
+    }
+    .footer-note {
+      margin-top: 18px;
+      font-size: 10.5px;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="report-header">
+    <div class="report-title">
+      <h1>گزارش رسمی ثبت‌نام پرسنل - گروه توسعه سرمایه گذاری انتخاب</h1>
+      <p>فهرست تفکیکی شرکت‌کنندگان بر اساس فیلترهای انتخابی در پنل مدیریت</p>
+    </div>
+    <div class="report-meta">
+      <div><strong>زمان گزارش:</strong> ${nowJalali}</div>
+      <div><strong>رویداد:</strong> ${eventLabel}</div>
+      <div><strong>فیلتر وضعیت:</strong> ${statusLabel}</div>
+      ${searchVal ? `<div><strong>جستجو:</strong> ${searchVal}</div>` : ''}
+    </div>
+  </div>
+
+  <div class="summary-card">
+    <div>تعداد کل رکوردهای گزارش: <strong>${filtered.length.toLocaleString('fa-IR')} نفر</strong></div>
+    <div>مایل به شرکت: <strong style="color: #166534;">${attendingCount.toLocaleString('fa-IR')} نفر</strong></div>
+    <div>عدم حضور / انصراف: <strong style="color: #991b1b;">${declinedCount.toLocaleString('fa-IR')} نفر</strong></div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 35px;">ردیف</th>
+        <th style="text-align: right;">نام و نام خانوادگی</th>
+        <th style="width: 95px;">شماره پرسنلی</th>
+        <th style="text-align: right;">عنوان رویداد</th>
+        <th style="width: 120px;">وضعیت اعلامی</th>
+        <th style="width: 130px;">زمان ثبت وضعیت</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml}
+    </tbody>
+  </table>
+
+  <div class="footer-note">
+    <span>سامانه رسمی مدیریت رویدادهای گروه توسعه سرمایه گذاری انتخاب</span>
+    <span>صفحه رسمی چاپ گزارشات فیلترشده</span>
+  </div>
+</body>
+</html>
+      `;
+
+      const printWin = window.open('', '_blank', 'width=950,height=750');
+      if (printWin) {
+        printWin.document.write(reportHtml);
+        printWin.document.close();
+        printWin.focus();
+        setTimeout(() => {
+          printWin.print();
+        }, 500);
+      } else {
+        let iframe = document.getElementById('printReportIframe');
+        if (!iframe) {
+          iframe = document.createElement('iframe');
+          iframe.id = 'printReportIframe';
+          iframe.style.position = 'fixed';
+          iframe.style.right = '0';
+          iframe.style.bottom = '0';
+          iframe.style.width = '0';
+          iframe.style.height = '0';
+          iframe.style.border = '0';
+          document.body.appendChild(iframe);
+        }
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(reportHtml);
+        doc.close();
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        }, 500);
+      }
+    }
+
+    // نگاشت شماره به شناسه رویداد
+    const EVENT_MAPPING = {
+      1: 'sobh-hamdeli',
+      2: 'kavir-varzaneh',
+      3: 'rafting-markadeh'
+    };
+
+    // مقداردهی اولیه و بارگذاری مهلت‌های رویدادها در پنل مدیریت
+    async function initDeadlineControls() {
+      try {
+        const allSettings = await StorageService.getAllEventSettings();
+        for (let num = 1; num <= 3; num++) {
+          const eventId = EVENT_MAPPING[num];
+          const setting = allSettings[eventId] || StorageService.getDefaultEventSettings(eventId);
+          updateEventDeadlineUI(num, setting);
+        }
+      } catch (e) {
+        console.error("خطا در بارگذاری مهلت رویدادها:", e);
+      }
+    }
+
+    // به‌روزرسانی ظاهر کادرهای مدیریت مهلت در هر کارت
+    function updateEventDeadlineUI(num, setting) {
+      const eventId = EVENT_MAPPING[num];
+      const dateInput = document.getElementById('deadlineDate' + num);
+      const timeInput = document.getElementById('deadlineTime' + num);
+      const badge = document.getElementById('deadlineBadge' + num);
+      const toggleBtn = document.getElementById('btnToggleClose' + num);
+
+      if (!dateInput || !timeInput || !badge || !toggleBtn) return;
+
+      dateInput.value = setting.deadlineDate || '';
+      timeInput.value = setting.deadlineTime || '';
+
+      const isClosed = StorageService.isEventClosed(eventId, { [eventId]: setting });
+
+      if (setting.isClosed) {
+        badge.textContent = "بسته (دستی)";
+        badge.style.background = "#fee2e2";
+        badge.style.color = "#991b1b";
+        toggleBtn.textContent = "بازگشایی ثبت‌نام";
+        toggleBtn.className = "btn btn-primary";
+        toggleBtn.style.fontSize = "0.78rem";
+        toggleBtn.style.padding = "7px 10px";
+      } else if (isClosed) {
+        badge.textContent = "مهلت پایان یافته";
+        badge.style.background = "#ffedd5";
+        badge.style.color = "#9a3412";
+        toggleBtn.textContent = "بستن فوری";
+        toggleBtn.className = "btn btn-decline";
+        toggleBtn.style.fontSize = "0.78rem";
+        toggleBtn.style.padding = "7px 10px";
+      } else {
+        badge.textContent = "در حال ثبت‌نام";
+        badge.style.background = "#dcfce7";
+        badge.style.color = "#166534";
+        toggleBtn.textContent = "بستن فوری";
+        toggleBtn.className = "btn btn-decline";
+        toggleBtn.style.fontSize = "0.78rem";
+        toggleBtn.style.padding = "7px 10px";
+      }
+    }
+
+    // ذخیره تاریخ و ساعت پایان ثبت‌نام توسط ادمین
+    async function saveEventDeadline(eventId, num) {
+      const dateInput = document.getElementById('deadlineDate' + num);
+      const timeInput = document.getElementById('deadlineTime' + num);
+      const rawDate = (dateInput.value || '').trim();
+      const rawTime = (timeInput.value || '').trim() || '23:59';
+
+      const dateNorm = toStandardDigits(rawDate);
+      const timeNorm = toStandardDigits(rawTime);
+
+      try {
+        const res = await StorageService.saveEventSettings(eventId, {
+          deadlineDate: dateNorm,
+          deadlineTime: timeNorm
+        });
+        updateEventDeadlineUI(num, res.settings);
+        alert(`تنظیمات مهلت ثبت‌نام رویداد با موفقیت ذخیره شد.\nمهلت ثبت‌نام: ${dateNorm || 'نامحدود'} ساعت ${timeNorm}`);
+      } catch (err) {
+        console.error(err);
+        alert("خطا در ذخیره مهلت رویداد: " + (err.message || err));
+      }
+    }
+
+    // بستن فوری یا بازگشایی ثبت‌نام رویداد توسط ادمین
+    async function toggleEventClosure(eventId, num) {
+      try {
+        const current = await StorageService.getEventSettings(eventId);
+        const newStatus = !current.isClosed;
+        const confirmMsg = newStatus 
+          ? "آیا مطمئن هستید که می‌خواهید ثبت‌نام و انصراف در این رویداد را فوراً مسدود کنید؟ کاربران دیگر قادر به ثبت‌نام جدید یا انصراف نخواهند بود."
+          : "آیا مطمئن هستید که می‌خواهید ثبت‌نام این رویداد را بازگشایی نمایید؟";
+
+        if (!confirm(confirmMsg)) return;
+
+        const res = await StorageService.saveEventSettings(eventId, {
+          isClosed: newStatus
+        });
+        updateEventDeadlineUI(num, res.settings);
+        alert(newStatus ? "ثبت‌نام این رویداد فوراً مسدود شد." : "ثبت‌نام این رویداد بازگشایی شد.");
+      } catch (err) {
+        console.error(err);
+        alert("خطا در تغییر وضعیت رویداد: " + (err.message || err));
+      }
+    }
 
     document.getElementById('btnRefresh').addEventListener('click', loadData);
 
@@ -916,6 +1364,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       updateSmsTexts();
       checkCloudStatus();
       loadData();
+      initDeadlineControls();
     }
   </script>
 </body>

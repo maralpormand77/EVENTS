@@ -55,6 +55,251 @@ const StorageService = {
         }
     },
 
+    // کلید ذخیره‌سازی تنظیمات مهلت رویدادها در لوکال استوریج
+    DEADLINES_KEY: "entekhab_events_deadlines_config",
+
+    // تنظیمات پیش‌فرض رویدادها
+    getDefaultEventSettings: function(eventId) {
+        if (eventId === 'kavir-varzaneh') {
+            return {
+                eventId: 'kavir-varzaneh',
+                isClosed: false,
+                deadlineDate: '1405/06/22',
+                deadlineTime: '13:00',
+                deadlineTimestamp: 1789291800000, // 2026-09-13T13:00:00+03:30 (۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰)
+                deadlineJalali: '۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰'
+            };
+        }
+        if (eventId === 'sobh-hamdeli') {
+            return {
+                eventId: 'sobh-hamdeli',
+                isClosed: false,
+                deadlineDate: '',
+                deadlineTime: '',
+                deadlineTimestamp: 0,
+                deadlineJalali: ''
+            };
+        }
+        if (eventId === 'rafting-markadeh') {
+            return {
+                eventId: 'rafting-markadeh',
+                isClosed: false,
+                deadlineDate: '',
+                deadlineTime: '',
+                deadlineTimestamp: 0,
+                deadlineJalali: ''
+            };
+        }
+        return {
+            eventId: eventId,
+            isClosed: false,
+            deadlineDate: '',
+            deadlineTime: '',
+            deadlineTimestamp: 0,
+            deadlineJalali: ''
+        };
+    },
+
+    // تبدیل تاریخ جلالی و ساعت به تایم‌استمپ میلی‌ثانیه با تایم‌زون ایران (+03:30)
+    jalaliToTimestamp: function(dateStr, timeStr = "23:59") {
+        try {
+            if (!dateStr || !dateStr.trim()) return 0;
+            const cleanDate = dateStr.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).trim();
+            const cleanTime = (timeStr || "23:59").replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).trim();
+
+            const dParts = cleanDate.split(/[\/\-\.]/).map(p => parseInt(p, 10));
+            if (dParts.length < 3) return 0;
+            const jy = dParts[0];
+            const jm = dParts[1];
+            const jd = dParts[2];
+
+            const tParts = cleanTime.split(/[:]/).map(p => parseInt(p, 10));
+            const hour = tParts.length > 0 && !isNaN(tParts[0]) ? tParts[0] : 23;
+            const min = tParts.length > 1 && !isNaN(tParts[1]) ? tParts[1] : 59;
+
+            let gy;
+            let remJy = jy;
+            if (remJy > 979) {
+                gy = 1600;
+                remJy -= 979;
+            } else {
+                gy = 621;
+            }
+            let days = (365 * remJy) + (Math.floor(remJy / 33) * 8) + Math.floor(((remJy % 33) + 3) / 4) + 78 + jd + ((jm < 7) ? (jm - 1) * 31 : (((jm - 7) * 30) + 186));
+            gy += 400 * Math.floor(days / 146097);
+            days %= 146097;
+            if (days > 36524) {
+                gy += 100 * Math.floor(--days / 36524);
+                days %= 36524;
+                if (days >= 365) days++;
+            }
+            gy += 4 * Math.floor(days / 1461);
+            days %= 1461;
+            if (days > 365) {
+                gy += Math.floor((days - 1) / 365);
+                days = (days - 1) % 365;
+            }
+            let gd = days + 1;
+            const sal_a = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            let gm;
+            for (gm = 0; gm < 13 && gd > sal_a[gm]; gm++) gd -= sal_a[gm];
+
+            const pad = n => String(n).padStart(2, '0');
+            const isoStr = `${gy}-${pad(gm)}-${pad(gd)}T${pad(hour)}:${pad(min)}:00+03:30`;
+            const ts = Date.parse(isoStr);
+            return isNaN(ts) ? 0 : ts;
+        } catch (e) {
+            console.warn("خطا در تبدیل تاریخ شمسی به تایم‌استمپ:", e);
+            return 0;
+        }
+    },
+
+    // دریافت تنظیمات ثبت‌نام تمام رویدادها (با همگام‌سازی از دیتابیس متمرکز)
+    getAllEventSettings: async function() {
+        let settings = {};
+        try {
+            const raw = localStorage.getItem(this.DEADLINES_KEY);
+            if (raw) settings = JSON.parse(raw);
+        } catch (e) {}
+
+        const eventIds = ['sobh-hamdeli', 'kavir-varzaneh', 'rafting-markadeh'];
+        for (const id of eventIds) {
+            if (!settings[id]) {
+                settings[id] = this.getDefaultEventSettings(id);
+            }
+        }
+
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+            try {
+                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.__settings__&select=*`;
+                const res = await fetch(fetchUrl, {
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (res.ok) {
+                    const rows = await res.json();
+                    if (Array.isArray(rows)) {
+                        for (const row of rows) {
+                            try {
+                                const parsed = JSON.parse(row.status_text || '{}');
+                                if (parsed && parsed.eventId) {
+                                    settings[parsed.eventId] = Object.assign({}, settings[parsed.eventId], parsed);
+                                }
+                            } catch (err) {}
+                        }
+                        localStorage.setItem(this.DEADLINES_KEY, JSON.stringify(settings));
+                    }
+                }
+            } catch (e) {
+                console.warn("خطا در همگام‌سازی تنظیمات از Supabase:", e);
+            }
+        }
+
+        return settings;
+    },
+
+    // دریافت تنظیمات یک رویداد
+    getEventSettings: async function(eventId) {
+        const all = await this.getAllEventSettings();
+        return all[eventId] || this.getDefaultEventSettings(eventId);
+    },
+
+    // بررسی اینکه آیا ثبت‌نام یک رویداد به پایان رسیده یا بسته است
+    isEventClosed: function(eventId, cachedSettings = null) {
+        let setting = null;
+        if (cachedSettings && cachedSettings[eventId]) {
+            setting = cachedSettings[eventId];
+        } else {
+            try {
+                const raw = localStorage.getItem(this.DEADLINES_KEY);
+                if (raw) {
+                    const all = JSON.parse(raw);
+                    setting = all[eventId];
+                }
+            } catch (e) {}
+        }
+        if (!setting) {
+            setting = this.getDefaultEventSettings(eventId);
+        }
+
+        if (setting.isClosed === true) return true;
+        if (setting.deadlineTimestamp && setting.deadlineTimestamp > 0) {
+            if (Date.now() > setting.deadlineTimestamp) return true;
+        }
+        return false;
+    },
+
+    // ذخیره تنظیمات مهلت و وضعیت ثبت‌نام توسط ادمین
+    saveEventSettings: async function(eventId, newSetting) {
+        let all = {};
+        try {
+            const raw = localStorage.getItem(this.DEADLINES_KEY);
+            if (raw) all = JSON.parse(raw);
+        } catch (e) {}
+
+        const merged = Object.assign({}, this.getDefaultEventSettings(eventId), all[eventId], newSetting);
+        merged.eventId = eventId;
+        merged.updatedAt = new Date().toISOString();
+
+        if (merged.deadlineDate && merged.deadlineDate.trim()) {
+            merged.deadlineTimestamp = this.jalaliToTimestamp(merged.deadlineDate, merged.deadlineTime || "23:59");
+            merged.deadlineJalali = `${merged.deadlineDate} ساعت ${merged.deadlineTime || '۲۳:۵۹'}`;
+        } else if (!merged.isClosed) {
+            merged.deadlineTimestamp = 0;
+            merged.deadlineJalali = '';
+        }
+
+        all[eventId] = merged;
+        localStorage.setItem(this.DEADLINES_KEY, JSON.stringify(all));
+
+        // ذخیره در Supabase PostgreSQL
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+            try {
+                const recordId = `__config_event_${eventId}`;
+                await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(recordId)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`
+                    }
+                });
+
+                const payload = {
+                    id: recordId,
+                    event_id: '__settings__',
+                    event_title: `CONFIG_${eventId}`,
+                    personnel_code: '__CONFIG__',
+                    full_name: `تنظیمات رویداد ${eventId}`,
+                    status: merged.isClosed ? 'closed' : 'open',
+                    status_text: JSON.stringify(merged),
+                    timestamp: new Date().toISOString(),
+                    jalali_date: this.toJalaliString(new Date()),
+                    user_agent: 'Admin Panel Config'
+                };
+
+                await fetch(`${spConfig.url}/rest/v1/${spConfig.table}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.warn("خطا در ذخیره تنظیمات در دیتابیس:", err);
+            }
+        }
+
+        return merged;
+    },
+
     // بررسی وضعیت و تست اتصال به دیتابیس Supabase PostgreSQL
     testSupabaseConnection: async function(url, anonKey, table = "registrations") {
         try {
@@ -127,19 +372,10 @@ const StorageService = {
 
     // ثبت یا به‌روزرسانی اطلاعات پرسنل (اعلام حضور یا انصراف)
     saveRegistration: async function(formData) {
-        // بررسی مهلت ثبت‌نام برای تور کویر ورزنه (پایان مهلت: ۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰)
-        if (formData && formData.eventId === 'kavir-varzaneh') {
-            const deadline = 1789291800000; // 2026-09-13T13:00:00+03:30 (۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰)
-            if (Date.now() > deadline) {
-                throw new Error("مهلت ثبت‌نام و انصراف در رویداد تور کویر ورزنه در تاریخ ۱۴۰۵/۰۶/۲۲ ساعت ۱۳:۰۰ به پایان رسیده است.");
-            }
-        }
-
-        // بررسی مهلت ثبت‌نام برای صبح همدلی (پایان مهلت: ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰)
-        if (formData && formData.eventId === 'sobh-hamdeli') {
-            const deadline = 1789203600000; // 2026-09-12T12:30:00+03:30 (۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰)
-            if (Date.now() > deadline) {
-                throw new Error("مهلت ثبت‌نام و انصراف در رویداد صبح همدلی در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است.");
+        // بررسی هوشمند وضعیت پایان مهلت یا مسدودی ثبت‌نام بر اساس تنظیمات ادمین و دیتابیس
+        if (formData && formData.eventId) {
+            if (this.isEventClosed(formData.eventId)) {
+                throw new Error("مهلت ثبت‌نام یا انصراف در این رویداد به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.");
             }
         }
 
@@ -276,7 +512,7 @@ const StorageService = {
 
     // دریافت داده‌ها برای پنل ادمین
     fetchRegistrations: async function() {
-        let localData = this.getLocalRegistrations();
+        let localData = (this.getLocalRegistrations() || []).filter(r => r.eventId !== '__settings__' && r.personnelCode !== '__CONFIG__');
 
         // ۱. اولویت نخست: خواندن از دیتابیس متمرکز PostgreSQL (Supabase)
         const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
@@ -295,7 +531,9 @@ const StorageService = {
                 if (response.ok) {
                     const rows = await response.json();
                     if (Array.isArray(rows)) {
-                        const formatted = rows.map(r => ({
+                        const formatted = rows
+                            .filter(r => (r.event_id || r.eventId) !== '__settings__' && (r.personnel_code || r.personnelCode) !== '__CONFIG__')
+                            .map(r => ({
                             id: r.id,
                             eventId: r.event_id || r.eventId || '',
                             eventTitle: r.event_title || r.eventTitle || '',

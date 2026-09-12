@@ -145,7 +145,6 @@
             نکات مهم حضور در برنامه:
           </div>
           <ul class="notes-list">
-            <li>مهلت ثبت‌نام و انصراف تا تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ می‌باشد.</li>
             <li>لطفاً با لباس و کفش مناسب جهت پیاده‌روی و نرمش صبحگاهی حضور به‌هم رسانید.</li>
             <li>جهت برنامه‌ریزی هرچه بهتر پذیرایی و امور هماهنگی، خواهشمند است تمایل یا عدم تمایل خود به حضور را از طریق فرم زیر ثبت فرمایید.</li>
           </ul>
@@ -167,7 +166,7 @@
             </div>
             <h3 style="font-size: 1.15rem; font-weight: 800; color: #1e40af; margin-bottom: 8px;">مهلت ثبت‌نام به پایان رسیده است</h3>
             <p style="font-size: 0.9rem; color: #1e3a8a; line-height: 1.7; margin: 0;">
-              همکار گرامی، مهلت اعلام حضور و ثبت‌نام در رویداد «صبح همدلی» در تاریخ <strong>۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰</strong> به پایان رسیده است و در حال حاضر امکان ثبت‌نام جدید وجود ندارد.
+              همکار گرامی، مهلت اعلام حضور و ثبت‌نام در رویداد «صبح همدلی» به پایان رسیده است و در حال حاضر امکان ثبت‌نام جدید وجود ندارد.
             </p>
           </div>
 
@@ -214,7 +213,7 @@
             </div>
             <div id="cancelExpiredNotice" style="display: none; margin-top: 16px; border-top: 1px solid #bbf7d0; padding-top: 12px; font-size: 0.84rem; color: #1e40af; line-height: 1.6;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 5px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              مهلت انصراف از این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است و امکان لغو حضور یا تغییر وضعیت وجود ندارد.
+              مهلت انصراف از این برنامه به پایان رسیده است و امکان لغو حضور یا تغییر وضعیت وجود ندارد.
             </div>
           </div>
 
@@ -241,7 +240,7 @@
             </div>
             <div id="reAttendExpiredNotice" style="display: none; margin-top: 16px; border-top: 1px solid #fecaca; padding-top: 12px; font-size: 0.84rem; color: #991b1b; line-height: 1.6;">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 5px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.
+              مهلت ثبت‌نام در این رویداد به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.
             </div>
           </div>
 
@@ -299,46 +298,11 @@
     const EVENT_TITLE = "صبح همدلی";
     const SESSION_KEY = "entekhab_user_session_" + EVENT_ID;
 
-    // مهلت ثبت‌نام و انصراف: ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ (2026-09-12T12:30:00+03:30)
-    const REGISTRATION_DEADLINE_MS = 1789203600000;
-
-    // تابع بررسی انقضای مهلت ثبت‌نام یا انصراف
+    // تابع بررسی انقضای مهلت یا مسدودی ثبت‌نام (پشتیبانی از تنظیمات متمرکز ادمین)
     function isRegistrationExpired() {
-      // ۱. بررسی بر اساس میلی‌ثانیه زمان UTC
-      if (Date.now() > REGISTRATION_DEADLINE_MS) return true;
-
-      // ۲. بررسی تکمیلی بر اساس تقویم جلالی رسمی
-      try {
-        const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian-nu-latn', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false,
-          timeZone: 'Asia/Tehran'
-        });
-        const parts = formatter.formatToParts(new Date());
-        const getPart = type => parseInt(parts.find(p => p.type === type)?.value || '0', 10);
-        const pYear = getPart('year');
-        const pMonth = getPart('month');
-        const pDay = getPart('day');
-        const pHour = getPart('hour');
-        const pMin = getPart('minute');
-        
-        if (pYear > 1405) return true;
-        if (pYear === 1405) {
-          if (pMonth > 6) return true;
-          if (pMonth === 6) {
-            if (pDay > 21) return true;
-            if (pDay === 21) {
-              if (pHour > 12) return true;
-              if (pHour === 12 && pMin >= 30) return true;
-            }
-          }
-        }
-      } catch (e) {}
-
+      if (typeof StorageService !== 'undefined' && StorageService.isEventClosed) {
+        return StorageService.isEventClosed(EVENT_ID);
+      }
       return false;
     }
 
@@ -389,6 +353,13 @@
       attendingCard.style.display = 'none';
       declinedCard.style.display = 'none';
       if (deadlineExpired) deadlineExpired.style.display = 'none';
+
+      // دریافت آخرین تنظیمات مهلت و مسدودی از سرور
+      try {
+        if (typeof StorageService !== 'undefined' && StorageService.getEventSettings) {
+          await StorageService.getEventSettings(EVENT_ID);
+        }
+      } catch (e) {}
 
       const isExpired = isRegistrationExpired();
 
@@ -443,7 +414,7 @@
 
       // جلوگیری از ثبت یا انصراف پس از پایان مهلت
       if (isRegistrationExpired()) {
-        alert("مهلت ثبت‌نام و انصراف در رویداد صبح همدلی در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است و در حال حاضر امکان انجام این عملیات وجود ندارد.");
+        alert("مهلت ثبت‌نام یا انصراف در این رویداد به پایان رسیده است و در حال حاضر امکان انجام این عملیات وجود ندارد.");
         await loadUserStatus();
         return;
       }
@@ -563,7 +534,7 @@
     // دکمه‌های اعلام حضور / عدم حضور اولیه
     document.getElementById('btnAttend').addEventListener('click', () => {
       if (isRegistrationExpired()) {
-        alert("مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است.");
+        alert("مهلت ثبت‌نام در این رویداد به پایان رسیده است.");
         loadUserStatus();
         return;
       }
@@ -572,7 +543,7 @@
 
     document.getElementById('btnDecline').addEventListener('click', () => {
       if (isRegistrationExpired()) {
-        alert("مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است.");
+        alert("مهلت ثبت‌نام در این رویداد به پایان رسیده است.");
         loadUserStatus();
         return;
       }
@@ -582,7 +553,7 @@
     // دکمه انصراف از شرکت در رویداد
     document.getElementById('btnCancelAttendance').addEventListener('click', () => {
       if (isRegistrationExpired()) {
-        alert("مهلت انصراف از این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است و امکان انصراف وجود ندارد.");
+        alert("مهلت انصراف از این رویداد به پایان رسیده است و امکان انصراف وجود ندارد.");
         loadUserStatus();
         return;
       }
@@ -594,7 +565,7 @@
     // دکمه تغییر نظر و حضور مجدد
     document.getElementById('btnReAttend').addEventListener('click', () => {
       if (isRegistrationExpired()) {
-        alert("مهلت ثبت‌نام در این رویداد در تاریخ ۱۴۰۵/۰۶/۲۱ ساعت ۱۲:۳۰ به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.");
+        alert("مهلت ثبت‌نام در این رویداد به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.");
         loadUserStatus();
         return;
       }
