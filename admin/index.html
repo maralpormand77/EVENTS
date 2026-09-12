@@ -1207,10 +1207,10 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           loginAt: Date.now()
         }));
         checkAuth();
-        updateSmsTexts();
-        checkCloudStatus();
+        try { updateSmsTexts(); } catch (e) { console.warn(e); }
+        try { checkCloudStatus(); } catch (e) { console.warn(e); }
+        try { initDeadlineControls(); } catch (e) { console.warn(e); }
         loadData();
-        initDeadlineControls();
       } else {
         errorBox.style.display = 'block';
         document.getElementById('passwordInput').value = '';
@@ -1242,6 +1242,12 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
     // سایر کدهای پنل ادمین
     let currentRegistrations = [];
+    try {
+      const initCached = StorageService.getLocalRegistrations();
+      if (Array.isArray(initCached) && initCached.length > 0) {
+        currentRegistrations = initCached.filter(r => r.eventId !== '__settings__' && r.personnelCode !== '__CONFIG__');
+      }
+    } catch (e) {}
     let selectedEventFilter = 'all';
 
     function getEventUrl(num) {
@@ -1258,30 +1264,33 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       return '../' + num + '/';
     }
 
+    function getSmsText(num) {
+      const link = getEventUrl(num);
+      const name = EVENT_NAMES[num] || `رویداد شماره ${num}`;
+      return `همکار ارجمند، جهت اطلاع از جزئیات و اعلام حضور / ثبت‌نام در رویداد «${name}» روی لینک زیر کلیک فرمایید:\n${link}`;
+    }
+
     function updateSmsTexts() {
-      const link1 = getEventUrl(1);
-      const link2 = getEventUrl(2);
-      const link3 = getEventUrl(3);
-
-      const b1 = document.getElementById('viewBtn1');
-      const b2 = document.getElementById('viewBtn2');
-      const b3 = document.getElementById('viewBtn3');
-      if (b1) b1.href = link1;
-      if (b2) b2.href = link2;
-      if (b3) b3.href = link3;
-
-      document.getElementById('smsText1').innerText = `همکار ارجمند، جهت اطلاع از جزئیات و اعلام حضور در «پیاده روی صبح همدلی» روی لینک زیر کلیک فرمایید:\n${link1}`;
-      document.getElementById('smsText2').innerText = `همکار ارجمند، جهت اطلاع از جزئیات و ثبت‌نام در «تور کویر ورزنه» روی لینک زیر کلیک فرمایید:\n${link2}`;
-      document.getElementById('smsText3').innerText = `همکار ارجمند، جهت اطلاع از جزئیات و ثبت‌نام در «تور رفتینگ مارکده» روی لینک زیر کلیک فرمایید:\n${link3}`;
+      for (let num = 1; num <= 3; num++) {
+        const link = getEventUrl(num);
+        const btn = document.getElementById('viewBtn' + num);
+        if (btn) btn.href = link;
+        const smsEl = document.getElementById('smsText' + num);
+        if (smsEl) smsEl.innerText = getSmsText(num);
+      }
     }
 
     function copySms(num) {
-      const text = document.getElementById('smsText' + num).innerText;
-      navigator.clipboard.writeText(text).then(() => {
-        alert("متن پیامک به همراه لینک کوتاه در کلیپ‌بورد کپی شد.");
-      }).catch(() => {
-        alert("متن کپی شد:\n" + text);
-      });
+      const text = getSmsText(num);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          alert("متن پیامک به همراه لینک اختصاصی رویداد در حافظه (کلیپ‌بورد) کپی شد.");
+        }).catch(() => {
+          alert("متن پیامک:\n" + text);
+        });
+      } else {
+        alert("متن پیامک:\n" + text);
+      }
     }
 
     function openPreviewModal(url, title) {
@@ -1299,12 +1308,19 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       const sp = getActiveSupabaseConfig();
       const banner = document.getElementById('cloudStatusBanner');
       const text = document.getElementById('cloudStatusText');
+      const btn = document.getElementById('btnQuickConfig');
+
+      if (!banner || !text) return;
 
       if (sp && sp.url && sp.anonKey) {
         banner.style.background = "#dcfce7";
         banner.style.borderColor = "#86efac";
         text.style.color = "#166534";
         text.innerHTML = `<strong>اتصال به دیتابیس متمرکز PostgreSQL فعال است (Supabase):</strong> تمام ثبت‌نام‌های پرسنل از هر دستگاه به صورت آنلاین در PostgreSQL ذخیره و بلادرنگ همگام می‌شوند.`;
+        if (btn) {
+          btn.textContent = "تنظیمات دیتابیس";
+          btn.className = "btn btn-outline";
+        }
       } else {
         const legacy = getActiveScriptUrl();
         if (legacy) {
@@ -1318,22 +1334,40 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           text.style.color = "#1e40af";
           text.innerHTML = `سامانه در حالت حافظه محلی (آفلاین) فعال است. جهت ذخیره دائمی و همگام‌سازی واقعی بین پرسنل و پنل، دیتابیس PostgreSQL را متصل فرمایید.`;
         }
+        if (btn) {
+          btn.textContent = "اتصال به دیتابیس PostgreSQL";
+          btn.className = "btn btn-secondary";
+        }
       }
     }
 
     async function loadData() {
       const refreshBtn = document.getElementById('btnRefresh');
-      refreshBtn.disabled = true;
+      if (refreshBtn) refreshBtn.disabled = true;
 
+      // ۱. نمایش بلادرنگ داده‌های ذخیره‌شده محلی (0 میلی‌ثانیه بدون انتظار شبکه)
+      try {
+        const cached = StorageService.getLocalRegistrations();
+        if (Array.isArray(cached) && cached.length > 0 && currentRegistrations.length === 0) {
+          currentRegistrations = cached.filter(r => r.eventId !== '__settings__' && r.personnelCode !== '__CONFIG__');
+          renderDashboard();
+        }
+      } catch (err) {}
+
+      // ۲. دریافت جدیدترین اطلاعات آنلاین از دیتابیس PostgreSQL
       try {
         const res = await StorageService.fetchRegistrations();
-        currentRegistrations = res.data;
+        if (res && Array.isArray(res.data)) {
+          currentRegistrations = res.data;
+        }
         renderDashboard();
-        await initDeadlineControls();
       } catch (e) {
-        console.error(e);
+        console.error("خطا در همگام‌سازی ثبت‌نام‌ها:", e);
       } finally {
-        refreshBtn.disabled = false;
+        if (refreshBtn) refreshBtn.disabled = false;
+        try {
+          await initDeadlineControls();
+        } catch (err) {}
       }
     }
 
@@ -1680,6 +1714,20 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     // مقداردهی اولیه و بارگذاری مهلت‌ها، متون و آمار رویدادها در کارت‌های صفحه اصلی
     async function initDeadlineControls() {
       try {
+        // ۱. ابتدا نمایش فوری از حافظه لوکال / مقادیر پیش‌فرض (بدون تاخیر شبکه)
+        let localSettings = {};
+        try {
+          const raw = localStorage.getItem(StorageService.DEADLINES_KEY);
+          if (raw) localSettings = JSON.parse(raw);
+        } catch (e) {}
+
+        for (let num = 1; num <= 3; num++) {
+          const eventId = EVENT_MAPPING[num];
+          const setting = localSettings[eventId] || StorageService.getDefaultEventSettings(eventId);
+          updateEventCardUI(num, setting);
+        }
+
+        // ۲. دریافت جدیدترین تنظیمات از دیتابیس در پس‌زمینه
         const allSettings = await StorageService.getAllEventSettings();
         for (let num = 1; num <= 3; num++) {
           const eventId = EVENT_MAPPING[num];
@@ -2705,10 +2753,10 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
     // آغاز اجرای صفحه
     if (checkAuth()) {
-      updateSmsTexts();
-      checkCloudStatus();
+      try { updateSmsTexts(); } catch (e) { console.warn(e); }
+      try { checkCloudStatus(); } catch (e) { console.warn(e); }
+      try { initDeadlineControls(); } catch (e) { console.warn(e); }
       loadData();
-      initDeadlineControls();
     }
   </script>
 </body>
