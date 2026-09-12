@@ -326,9 +326,14 @@
           تنظیمات دیتابیس PostgreSQL
         </button>
 
-        <button type="button" class="btn btn-attend" id="btnExportExcel">
+        <button type="button" class="btn btn-attend" id="btnExportExcel" title="دریافت فایل اکسل از ثبت‌نام‌های انجام‌شده">
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          خروجی اکسل (Excel)
+          خروجی اکسل ثبت‌نام‌ها
+        </button>
+
+        <button type="button" class="btn btn-primary" id="btnExportAllPersonnel" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="exportAllPersonnelExcel()" title="دریافت فایل اکسل کامل بانک اطلاعات کلیه پرسنل سازمان (۱۵,۵۴۱ نفر)">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          خروجی کل پرسنل سازمان
         </button>
 
         <button type="button" class="btn btn-secondary" onclick="printReport()" title="چاپ لیست فیلتر شده پرسنل">
@@ -2254,6 +2259,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         renderLivePreview();
 
         alert(`مشخصات، متون، تصویر و مهلت رویداد «${EVENT_NAMES[activeSettingsNum]}» با موفقیت ذخیره و در سامانه منتشر شد.`);
+        closeEventSettingsModal();
       } catch (err) {
         console.error(err);
         alert("خطا در ذخیره و انتشار تنظیمات رویداد: " + (err.message || err));
@@ -2648,6 +2654,73 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       }
     }
 
+    // دریافت خروجی اکسل کامل از تمام پرسنل سازمان (بانک ۱۵,۵۴۱ نفری)
+    function exportAllPersonnelExcel() {
+      if (typeof XLSX === 'undefined') {
+        alert("کتابخانه اکسل در دسترس نیست. لطفاً صفحه را رفرش نمایید یا اتصال اینترنت را بررسی فرمایید.");
+        return;
+      }
+      if (!window.PERSONNEL_MAP || Object.keys(window.PERSONNEL_MAP).length === 0) {
+        alert("بانک اطلاعات پرسنل بارگذاری نشده است.");
+        return;
+      }
+
+      const btn = document.getElementById('btnExportAllPersonnel');
+      const originalHTML = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" style="animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-left: 6px; width: 16px; height: 16px;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" opacity="0.25"></circle><path fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg> در حال ایجاد فایل اکسل...`;
+      }
+
+      setTimeout(() => {
+        try {
+          const wb = XLSX.utils.book_new();
+          const rows = [
+            ["ردیف", "شماره پرسنلی", "نام و نام خانوادگی", "کد ملی"]
+          ];
+
+          const pCodes = Object.keys(window.PERSONNEL_MAP).sort((a, b) => {
+            const numA = parseInt(a, 10);
+            const numB = parseInt(b, 10);
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            return a.localeCompare(b);
+          });
+
+          let counter = 1;
+          for (let i = 0; i < pCodes.length; i++) {
+            const code = pCodes[i];
+            const info = window.PERSONNEL_MAP[code];
+            const name = Array.isArray(info) ? info[0] : (info?.name || '');
+            const natCode = Array.isArray(info) ? info[1] : (info?.nationalCode || '');
+            rows.push([
+              counter++,
+              code,
+              name,
+              natCode
+            ]);
+          }
+
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          ws['!cols'] = [
+            { wch: 8 },  // ردیف
+            { wch: 16 }, // شماره پرسنلی
+            { wch: 32 }, // نام و نام خانوادگی
+            { wch: 18 }  // کد ملی
+          ];
+          XLSX.utils.book_append_sheet(wb, ws, "کل پرسنل سازمان");
+          XLSX.writeFile(wb, "بانک_پرسنل_گروه_انتخاب.xlsx");
+        } catch (err) {
+          console.error(err);
+          alert("خطا در تولید فایل اکسل کل پرسنل: " + err.message);
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+          }
+        }
+      }, 60);
+    }
+
     document.getElementById('btnRefresh').addEventListener('click', loadData);
 
     const cloudModal = document.getElementById('cloudModal');
@@ -2736,20 +2809,8 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       await loadData();
     });
 
-    // بستن مدال با کلیک روی پس‌زمینه تیره
-    window.addEventListener('click', function(e) {
-      const modal = document.getElementById('eventSettingsModal');
-      if (modal && e.target === modal) {
-        closeEventSettingsModal();
-      }
-    });
-
-    // بستن مدال با کلید Esc
-    window.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        closeEventSettingsModal();
-      }
-    });
+    // توجه: بستن پنجره تنظیمات رویداد صرفاً با دکمه‌های «ذخیره تغییرات» یا «انصراف و بستن» انجام می‌شود
+    // و کلیک روی پس‌زمینه یا کلید Esc به دلیل جلوگیری از پریدن ناخواسته تنظیمات غیرفعال شده است.
 
     // آغاز اجرای صفحه
     if (checkAuth()) {
