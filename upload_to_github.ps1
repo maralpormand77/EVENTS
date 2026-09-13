@@ -23,12 +23,24 @@ if (Test-Path "$baseDir\EVENTS-main\index.html") {
     $baseDir = "$baseDir\EVENTS-main"
 }
 
+# گام خودکار: به‌روزرسانی خودکار دیتابیس پرسنل از روی فایل اکسل قبل از ارسال
+$converterScript = "$baseDir\convert_excel.ps1"
+if (-not (Test-Path $converterScript)) {
+    $converterScript = "$PSScriptRoot\convert_excel.ps1"
+}
+if (Test-Path $converterScript) {
+    Write-Host "[*] در حال بررسی و به‌روزرسانی خودکار پروژه بر اساس فایل اکسل..." -ForegroundColor Cyan
+    & $converterScript
+    Write-Host ""
+}
+
 # فایلهایی که نباید آپلود شوند
 $excludeNames = @(
     ".git",
     "push_to_git.bat",
     "upload_to_github.bat",
-    "upload_to_github.ps1"
+    "upload_to_github.ps1",
+    "convert_excel.bat"
 )
 
 Write-Host "راهنمای دریافت یا ورود توکن گیت‌هاب (Personal Access Token):" -ForegroundColor Yellow
@@ -124,8 +136,9 @@ try {
     $newTree = Invoke-RestMethod -Uri "https://api.github.com/repos/$repoOwner/$repoName/git/trees" -Headers $headers -Method Post -Body $treeBody -ContentType "application/json"
 
     Write-Host "[4/4] ثبت کامیت و به‌روزرسانی شاخه main..." -ForegroundColor Yellow
+    $commitMsg = "Auto-sync personnel database from Excel and update project"
     $commitBody = @{
-        message = "Update Kavir Varzaneh event: update poster, address, notes, and deadline enforcement"
+        message = $commitMsg
         tree    = $newTree.sha
         parents = @($latestCommitSha)
     } | ConvertTo-Json -Compress

@@ -8,7 +8,7 @@ import glob, json, openpyxl, os, sys
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
-files = glob.glob('*.xlsx')
+files = [f for f in glob.glob('*.xlsx') if not os.path.basename(f).startswith('~$')]
 if not files:
     print('فایل xlsx در پوشه یافت نشد!')
     exit(1)
@@ -24,9 +24,13 @@ for row in sheet.iter_rows(values_only=True, min_row=2):
     if not row or not row[0]:
         continue
     p_code = str(row[0]).strip()
+    if p_code.endswith('.0'):
+        p_code = p_code[:-2]
     fname = str(row[1]).strip() if len(row) > 1 and row[1] is not None else ''
     lname = str(row[2]).strip() if len(row) > 2 and row[2] is not None else ''
     nat_code = str(row[3]).strip() if len(row) > 3 and row[3] is not None else ''
+    if nat_code.endswith('.0'):
+        nat_code = nat_code[:-2]
     full_name = f'{fname} {lname}'.strip()
     
     if p_code:

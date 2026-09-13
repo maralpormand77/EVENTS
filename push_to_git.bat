@@ -37,11 +37,18 @@ if not exist ".git" (
 git config user.name "maralpormand77"
 git config user.email "maralpormand77@users.noreply.github.com"
 
+echo [*] Auto-updating project from Excel file...
+if exist "convert_excel.ps1" (
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "convert_excel.ps1"
+) else if exist "%~dp0convert_excel.ps1" (
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0convert_excel.ps1"
+)
+
 echo [2/4] Staging files (git add)...
 git add -A
 
 echo [3/4] Creating commit...
-git commit -m "Add export master personnel bank to Excel and disable modal backdrop dismiss"
+git commit -m "Auto-sync personnel database from Excel and update project"
 
 echo [4/4] Pushing to GitHub main branch...
 git push -u origin main
