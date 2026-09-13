@@ -791,7 +791,7 @@ const StorageService = {
         const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
         if (spConfig && spConfig.url && spConfig.anonKey) {
             try {
-                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?select=*&order=created_at.desc`;
+                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=not.in.(__settings__,__master_personnel__)&personnel_code=not.in.(__CONFIG__,__BANK__)&select=id,event_id,event_title,personnel_code,full_name,status,status_text,timestamp,jalali_date,user_agent,created_at&order=created_at.desc`;
                 const response = await fetch(fetchUrl, {
                     method: 'GET',
                     headers: {
@@ -885,25 +885,34 @@ const StorageService = {
             const headers = {
                 'apikey': spConfig.anonKey,
                 'Authorization': `Bearer ${spConfig.anonKey}`,
-                'Prefer': 'return=representation'
+                'Prefer': 'return=minimal'
             };
 
             let deleteError = null;
             try {
+                const deletePromises = [];
                 // الف) حذف بر اساس id
                 if (id) {
-                    await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(id)}`, {
-                        method: 'DELETE',
-                        headers: headers
-                    });
+                    deletePromises.push(
+                        fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(id)}`, {
+                            method: 'DELETE',
+                            headers: headers
+                        })
+                    );
                 }
 
                 // ب) حذف مضاعف بر اساس ترکیب event_id و personnel_code جهت تضمین ۱۰۰٪ پاک شدن در دیتابیس
                 if (targetEventId && targetPCode) {
-                    await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.${encodeURIComponent(targetEventId)}&personnel_code=eq.${encodeURIComponent(targetPCode)}`, {
-                        method: 'DELETE',
-                        headers: headers
-                    });
+                    deletePromises.push(
+                        fetch(`${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.${encodeURIComponent(targetEventId)}&personnel_code=eq.${encodeURIComponent(targetPCode)}`, {
+                            method: 'DELETE',
+                            headers: headers
+                        })
+                    );
+                }
+
+                if (deletePromises.length > 0) {
+                    await Promise.all(deletePromises);
                 }
             } catch (e) {
                 console.error("خطا در حذف از Supabase PostgreSQL:", e);
@@ -1078,6 +1087,27 @@ const StorageService = {
         if (!spConfig || !spConfig.url || !spConfig.anonKey) return;
 
         try {
+            const cachedTime = localStorage.getItem(this.PERSONNEL_CACHE_TIME_KEY);
+            // بررسی سریع با دریافت تنها فیلد timestamp جهت جلوگیری از دانلود مجدد ۸۰۰ کیلوبایت داده در هر لود صفحه
+            const headUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.__master_personnel__&select=id,timestamp&order=id.asc&limit=1`;
+            const headRes = await fetch(headUrl, {
+                headers: {
+                    'apikey': spConfig.anonKey,
+                    'Authorization': `Bearer ${spConfig.anonKey}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (headRes.ok) {
+                const headRows = await headRes.json();
+                if (Array.isArray(headRows) && headRows.length > 0) {
+                    const serverTimestamp = headRows[0].timestamp;
+                    if (serverTimestamp && cachedTime && serverTimestamp === cachedTime && window.PERSONNEL_MAP && Object.keys(window.PERSONNEL_MAP).length > 100) {
+                        return window.PERSONNEL_MAP;
+                    }
+                }
+            }
+
             const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.__master_personnel__&select=id,status_text,timestamp&order=id.asc`;
             const res = await fetch(fetchUrl, {
                 headers: {

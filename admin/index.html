@@ -1527,13 +1527,11 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       const refreshBtn = document.getElementById('btnRefresh');
       if (refreshBtn) refreshBtn.disabled = true;
 
-      const savedScroll = window.scrollY || document.documentElement.scrollTop;
-
       // ۱. نمایش بلادرنگ داده‌های ذخیره‌شده محلی (0 میلی‌ثانیه بدون انتظار شبکه)
       try {
         const cached = StorageService.getLocalRegistrations();
         if (Array.isArray(cached) && cached.length > 0 && currentRegistrations.length === 0) {
-          currentRegistrations = cached.filter(r => r.eventId !== '__settings__' && r.personnelCode !== '__CONFIG__');
+          currentRegistrations = cached.filter(r => r.eventId !== '__settings__' && r.personnelCode !== '__CONFIG__' && r.personnelCode !== '__BANK__');
           renderDashboard();
         }
       } catch (err) {}
@@ -1542,22 +1540,27 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       try {
         const res = await StorageService.fetchRegistrations();
         if (res && Array.isArray(res.data)) {
-          // در صورتی که دیتابیس حاوی داده باشد یا لوکال هم خالی باشد داده‌ها را بنشان
-          if (res.data.length > 0 || currentRegistrations.length === 0) {
-            currentRegistrations = res.data;
+          const newRegistrations = res.data;
+          // اگر سرور داده دارد یا داده‌های محلی خالی هستند، مقایسه و به‌روزرسانی هوشمند
+          if (newRegistrations.length > 0 || currentRegistrations.length === 0) {
+            const isSame = currentRegistrations.length === newRegistrations.length &&
+              currentRegistrations.every((item, idx) => item.id === newRegistrations[idx].id && item.status === newRegistrations[idx].status);
+            
+            if (!isSame) {
+              const currentY = window.scrollY || document.documentElement.scrollTop;
+              currentRegistrations = newRegistrations;
+              lastRenderedTableKey = '';
+              renderDashboard();
+              if (currentY > 0) {
+                window.scrollTo({ top: currentY, behavior: 'instant' });
+              }
+            }
           }
         }
-        renderDashboard();
       } catch (e) {
         console.error("خطا در همگام‌سازی ثبت‌نام‌ها:", e);
       } finally {
         if (refreshBtn) refreshBtn.disabled = false;
-        try {
-          await initDeadlineControls();
-        } catch (err) {}
-        if (savedScroll > 100) {
-          window.scrollTo({ top: savedScroll, behavior: 'instant' });
-        }
       }
     }
 
@@ -1617,6 +1620,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         allBtn.classList.add('active');
         selectedEventFilter = 'all';
+        lastRenderedTableKey = '';
         renderTable();
       }
     }
@@ -1643,11 +1647,15 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       });
     }
 
+    let lastRenderedTableKey = '';
+
     function renderTable() {
-      const savedScroll = window.scrollY || document.documentElement.scrollTop;
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
       const filtered = getFilteredRegistrations();
       const tbody = document.getElementById('tableBody');
       if (!tbody) return;
+
+      const currentKey = filtered.map(item => `${item.id}_${item.status}_${item.personnelCode}`).join('|');
 
       if (filtered.length === 0) {
         let emptyMsg = "هیچ رکوردی برای نمایش وجود ندارد.";
@@ -1661,6 +1669,12 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
             </td>
           </tr>
         `;
+        lastRenderedTableKey = '__empty__';
+        return;
+      }
+
+      // اگر جدول قبلاً با همین رکوردها رندر شده، DOM را دستکاری نکن تا هیچ پرش یا فلیکری رخ ندهد
+      if (currentKey === lastRenderedTableKey && tbody.children.length > 0 && lastRenderedTableKey !== '__empty__') {
         return;
       }
 
@@ -1694,8 +1708,10 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         `;
       }).join('');
 
-      if (savedScroll > 100) {
-        window.scrollTo({ top: savedScroll, behavior: 'instant' });
+      lastRenderedTableKey = currentKey;
+
+      if (currentScrollY > 0) {
+        window.scrollTo({ top: currentScrollY, behavior: 'instant' });
       }
     }
 
@@ -1725,21 +1741,29 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         // حذف بسیار نرم و روان ردیف از DOM بدون بازسازی کل جدول تا اسکرول و دید کاربر هرگز نپرد
         const tr = btn ? btn.closest('tr') : document.querySelector(`tr[data-row-id="${id}"]`);
         if (tr) {
-          tr.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+          tr.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
           tr.style.opacity = '0';
           tr.style.transform = 'translateX(20px)';
           setTimeout(() => {
             if (tr && tr.parentNode) tr.parentNode.removeChild(tr);
-            const remaining = document.getElementById('tableBody')?.querySelectorAll('tr');
+            const remaining = document.getElementById('tableBody')?.querySelectorAll('tr[data-row-id]');
             if (!remaining || remaining.length === 0) {
+              lastRenderedTableKey = '';
               renderTable();
+            } else {
+              // به‌روزرسانی نرم شماره ردیف‌ها بدون رندر مجدد جدول
+              remaining.forEach((row, idx) => {
+                const firstCol = row.querySelector('td:first-child');
+                if (firstCol) firstCol.textContent = (idx + 1).toLocaleString('fa-IR');
+              });
+              lastRenderedTableKey = getFilteredRegistrations().map(item => `${item.id}_${item.status}_${item.personnelCode}`).join('|');
             }
-          }, 260);
+          }, 220);
         }
 
         updateDashboardCounters();
 
-        if (savedScrollY > 100) {
+        if (savedScrollY > 0) {
           window.scrollTo({ top: savedScrollY, behavior: 'instant' });
         }
       } catch (err) {
@@ -1756,12 +1780,19 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         selectedEventFilter = btn.dataset.event;
+        lastRenderedTableKey = '';
         renderTable();
       });
     });
 
-    document.getElementById('searchInput').addEventListener('input', renderTable);
-    document.getElementById('statusFilter').addEventListener('change', renderTable);
+    document.getElementById('searchInput').addEventListener('input', () => {
+      lastRenderedTableKey = '';
+      renderTable();
+    });
+    document.getElementById('statusFilter').addEventListener('change', () => {
+      lastRenderedTableKey = '';
+      renderTable();
+    });
 
     document.getElementById('btnExportExcel').addEventListener('click', () => {
       const filtered = getFilteredRegistrations();
@@ -2149,6 +2180,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         document.querySelectorAll('.event-tabs .tab-btn').forEach(b => b.classList.remove('active'));
         tabBtn.classList.add('active');
         selectedEventFilter = eventId;
+        lastRenderedTableKey = '';
         renderTable();
         const tableWrapper = document.querySelector('.table-wrapper') || document.querySelector('.control-bar');
         if (tableWrapper) {
