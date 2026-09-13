@@ -780,18 +780,17 @@ const StorageService = {
 
     // دریافت داده‌ها برای پنل ادمین
     fetchRegistrations: async function() {
-        let localData = (this.getLocalRegistrations() || []).filter(r => 
-            r.eventId !== '__settings__' && 
-            r.eventId !== '__master_personnel__' && 
-            r.personnelCode !== '__CONFIG__' && 
-            r.personnelCode !== '__BANK__'
-        );
+        let localData = (this.getLocalRegistrations() || []).filter(r => {
+            const ev = r.eventId || r.event_id || '';
+            const pc = r.personnelCode || r.personnel_code || '';
+            return ev !== '__settings__' && ev !== '__master_personnel__' && pc !== '__CONFIG__' && pc !== '__BANK__';
+        });
 
         // ۱. اولویت نخست: خواندن از دیتابیس متمرکز PostgreSQL (Supabase)
         const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
         if (spConfig && spConfig.url && spConfig.anonKey) {
             try {
-                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=not.in.(__settings__,__master_personnel__)&personnel_code=not.in.(__CONFIG__,__BANK__)&select=id,event_id,event_title,personnel_code,full_name,status,status_text,timestamp,jalali_date,user_agent,created_at&order=created_at.desc`;
+                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=in.(sobh-hamdeli,kavir-varzaneh,rafting-markadeh)&select=id,event_id,event_title,personnel_code,full_name,status,status_text,timestamp,jalali_date,user_agent,created_at&order=created_at.desc`;
                 const response = await fetch(fetchUrl, {
                     method: 'GET',
                     headers: {
@@ -805,24 +804,29 @@ const StorageService = {
                     const rows = await response.json();
                     if (Array.isArray(rows)) {
                         const formatted = rows
-                            .filter(r => 
-                                (r.event_id || r.eventId) !== '__settings__' && 
-                                (r.event_id || r.eventId) !== '__master_personnel__' && 
-                                (r.personnel_code || r.personnelCode) !== '__CONFIG__' && 
-                                (r.personnel_code || r.personnelCode) !== '__BANK__'
-                            )
+                            .filter(r => {
+                                const ev = r.event_id || r.eventId || '';
+                                const pc = r.personnel_code || r.personnelCode || '';
+                                return ev !== '__settings__' && ev !== '__master_personnel__' && pc !== '__CONFIG__' && pc !== '__BANK__';
+                            })
                             .map(r => ({
-                            id: r.id,
-                            eventId: r.event_id || r.eventId || '',
-                            eventTitle: r.event_title || r.eventTitle || '',
-                            personnelCode: r.personnel_code || r.personnelCode || '',
-                            fullName: r.full_name || r.fullName || '',
-                            status: r.status || '',
-                            statusText: r.status_text || r.statusText || (r.status === 'attending' ? 'مایل به شرکت در این برنامه هستم' : 'تمایلی به حضور ندارم'),
-                            timestamp: r.timestamp || r.created_at || '',
-                            jalaliDate: r.jalali_date || r.jalaliDate || (r.timestamp ? this.toJalaliString(r.timestamp) : ''),
-                            userAgent: r.user_agent || r.userAgent || ''
-                        }));
+                                id: r.id,
+                                eventId: r.event_id || r.eventId || '',
+                                event_id: r.event_id || r.eventId || '',
+                                eventTitle: r.event_title || r.eventTitle || '',
+                                event_title: r.event_title || r.eventTitle || '',
+                                personnelCode: r.personnel_code || r.personnelCode || '',
+                                personnel_code: r.personnel_code || r.personnelCode || '',
+                                fullName: r.full_name || r.fullName || '',
+                                full_name: r.full_name || r.fullName || '',
+                                status: r.status || '',
+                                statusText: r.status_text || r.statusText || (r.status === 'attending' ? 'مایل به شرکت در این برنامه هستم' : 'تمایلی به حضور ندارم'),
+                                status_text: r.status_text || r.statusText || '',
+                                timestamp: r.timestamp || r.created_at || '',
+                                jalaliDate: r.jalali_date || r.jalaliDate || (r.timestamp ? this.toJalaliString(r.timestamp) : ''),
+                                jalali_date: r.jalali_date || r.jalaliDate || '',
+                                userAgent: r.user_agent || r.userAgent || ''
+                            }));
 
                         this.setLocalRegistrations(formatted);
                         return { data: formatted, source: 'supabase_postgres' };
@@ -1041,14 +1045,22 @@ const StorageService = {
         csvContent += headers.join(",") + "\r\n";
 
         list.forEach((item, index) => {
+            const evId = item.eventId || item.event_id || '';
+            const evTitle = item.eventTitle || item.event_title || '';
+            const pCode = item.personnelCode || item.personnel_code || '';
+            const fName = item.fullName || item.full_name || '';
+            const stText = item.status === 'attending' 
+                ? 'مایل به شرکت' 
+                : (item.status === 'declined' ? 'عدم حضور' : (item.statusText || item.status_text || item.status || ''));
+            const jDate = item.jalaliDate || item.jalali_date || item.timestamp || '';
             const row = [
                 index + 1,
-                `"${(item.eventId || '').replace(/"/g, '""')}"`,
-                `"${(item.eventTitle || '').replace(/"/g, '""')}"`,
-                `="${item.personnelCode || ''}"`,
-                `"${(item.fullName || '').replace(/"/g, '""')}"`,
-                `"${(item.status === 'attending' ? 'مایل به شرکت' : 'عدم حضور')}"`,
-                `"${(item.jalaliDate || item.timestamp || '').replace(/"/g, '""')}"`
+                `"${String(evId).replace(/"/g, '""')}"`,
+                `"${String(evTitle).replace(/"/g, '""')}"`,
+                `="${String(pCode).replace(/"/g, '""')}"`,
+                `"${String(fName).replace(/"/g, '""')}"`,
+                `"${String(stText).replace(/"/g, '""')}"`,
+                `"${String(jDate).replace(/"/g, '""')}"`
             ];
             csvContent += row.join(",") + "\r\n";
         });

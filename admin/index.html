@@ -640,9 +640,10 @@
 
     <!-- نوار جستجو و فیلتر جدول -->
     <div class="control-bar">
-      <div class="search-box">
+      <div class="search-box" style="position: relative;">
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="searchInput" class="search-input" placeholder="جستجو بر اساس نام یا شماره پرسنلی..." autocomplete="off" autocorrect="off" spellcheck="false">
+        <input type="search" id="searchInput" name="admin_search_filter_unq" class="search-input" placeholder="جستجو بر اساس نام یا شماره پرسنلی..." autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" style="padding-left: 32px;">
+        <button type="button" id="btnClearSearch" onclick="clearSearchBox()" style="display: none; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; color: #94a3b8; font-size: 16px; font-weight: bold; padding: 2px 6px; line-height: 1;" title="پاک کردن فیلتر جستجو">✕</button>
       </div>
 
       <div class="filter-group">
@@ -1389,6 +1390,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           loginAt: Date.now()
         }));
         checkAuth();
+        try { resetFiltersOnLoad(); } catch (e) {}
         try { updateSmsTexts(); } catch (e) { console.warn(e); }
         try { checkCloudStatus(); } catch (e) { console.warn(e); }
         try { initDeadlineControls(); } catch (e) { console.warn(e); }
@@ -1427,10 +1429,55 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     try {
       const initCached = StorageService.getLocalRegistrations();
       if (Array.isArray(initCached) && initCached.length > 0) {
-        currentRegistrations = initCached.filter(r => r.eventId !== '__settings__' && r.personnelCode !== '__CONFIG__');
+        currentRegistrations = initCached.filter(r => {
+          const ev = r.eventId || r.event_id || '';
+          const pc = r.personnelCode || r.personnel_code || '';
+          return ev !== '__settings__' && ev !== '__master_personnel__' && pc !== '__CONFIG__' && pc !== '__BANK__';
+        });
       }
     } catch (e) {}
     let selectedEventFilter = 'all';
+
+    function clearSearchBox() {
+      const input = document.getElementById('searchInput');
+      if (input) input.value = '';
+      const btnClear = document.getElementById('btnClearSearch');
+      if (btnClear) btnClear.style.display = 'none';
+      lastRenderedTableKey = '';
+      renderTable();
+    }
+
+    function resetAllTableFilters() {
+      const input = document.getElementById('searchInput');
+      if (input) input.value = '';
+      const btnClear = document.getElementById('btnClearSearch');
+      if (btnClear) btnClear.style.display = 'none';
+      const statusFilterEl = document.getElementById('statusFilter');
+      if (statusFilterEl) statusFilterEl.value = 'all';
+      selectedEventFilter = 'all';
+      document.querySelectorAll('.event-tabs .tab-btn').forEach(b => {
+        if (b.dataset.event === 'all') b.classList.add('active');
+        else b.classList.remove('active');
+      });
+      lastRenderedTableKey = '';
+      renderTable();
+    }
+
+    function resetFiltersOnLoad() {
+      const input = document.getElementById('searchInput');
+      if (input) {
+        input.value = '';
+        const btnClear = document.getElementById('btnClearSearch');
+        if (btnClear) btnClear.style.display = 'none';
+      }
+      const statusFilterEl = document.getElementById('statusFilter');
+      if (statusFilterEl) statusFilterEl.value = 'all';
+      selectedEventFilter = 'all';
+      document.querySelectorAll('.event-tabs .tab-btn').forEach(b => {
+        if (b.dataset.event === 'all') b.classList.add('active');
+        else b.classList.remove('active');
+      });
+    }
 
     function getEventUrl(num) {
       const host = window.location.hostname;
@@ -1531,7 +1578,11 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       try {
         const cached = StorageService.getLocalRegistrations();
         if (Array.isArray(cached) && cached.length > 0) {
-          currentRegistrations = cached.filter(r => r.eventId !== '__settings__' && r.personnelCode !== '__CONFIG__' && r.personnelCode !== '__BANK__');
+          currentRegistrations = cached.filter(r => {
+            const ev = r.eventId || r.event_id || '';
+            const pc = r.personnelCode || r.personnel_code || '';
+            return ev !== '__settings__' && ev !== '__master_personnel__' && pc !== '__CONFIG__' && pc !== '__BANK__';
+          });
         }
       } catch (err) {}
       renderDashboard();
@@ -1539,7 +1590,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       // ۲. دریافت جدیدترین اطلاعات آنلاین از دیتابیس متمرکز PostgreSQL (Supabase)
       try {
         const res = await StorageService.fetchRegistrations();
-        if (res && Array.isArray(res.data) && res.data.length > 0) {
+        if (res && Array.isArray(res.data)) {
           currentRegistrations = res.data;
           renderDashboard();
         }
@@ -1566,9 +1617,9 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       if (statDeclinedEl) statDeclinedEl.textContent = declined.toLocaleString('fa-IR');
       if (statRateEl) statRateEl.textContent = rate.toLocaleString('fa-IR') + '٪';
 
-      const countSobh = currentRegistrations.filter(r => r.eventId === 'sobh-hamdeli').length;
-      const countKavir = currentRegistrations.filter(r => r.eventId === 'kavir-varzaneh').length;
-      const countRafting = currentRegistrations.filter(r => r.eventId === 'rafting-markadeh').length;
+      const countSobh = currentRegistrations.filter(r => (r.eventId || r.event_id) === 'sobh-hamdeli').length;
+      const countKavir = currentRegistrations.filter(r => (r.eventId || r.event_id) === 'kavir-varzaneh').length;
+      const countRafting = currentRegistrations.filter(r => (r.eventId || r.event_id) === 'rafting-markadeh').length;
 
       const countAllEl = document.getElementById('countAll');
       const countSobhEl = document.getElementById('countSobh');
@@ -1583,8 +1634,8 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       // به‌روزرسانی آمارهای ۳ کارت رویداد
       for (let num = 1; num <= 3; num++) {
         const evId = EVENT_MAPPING[num];
-        const attCount = currentRegistrations.filter(r => r.eventId === evId && r.status === 'attending').length;
-        const decCount = currentRegistrations.filter(r => r.eventId === evId && r.status === 'declined').length;
+        const attCount = currentRegistrations.filter(r => (r.eventId || r.event_id) === evId && r.status === 'attending').length;
+        const decCount = currentRegistrations.filter(r => (r.eventId || r.event_id) === evId && r.status === 'declined').length;
         const totCount = attCount + decCount;
         const attEl = document.getElementById('cardAttendingCount' + num);
         const decEl = document.getElementById('cardDeclinedCount' + num);
@@ -1618,16 +1669,21 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       const statusFilter = statusFilterEl ? statusFilterEl.value : 'all';
 
       return currentRegistrations.filter(item => {
-        if (selectedEventFilter !== 'all' && item.eventId !== selectedEventFilter) {
+        const evId = item.eventId || item.event_id || '';
+        if (selectedEventFilter !== 'all' && evId !== selectedEventFilter) {
           return false;
         }
-        if (statusFilter !== 'all' && item.status !== statusFilter) {
+        const st = item.status || '';
+        if (statusFilter !== 'all' && st !== statusFilter) {
           return false;
         }
         if (searchTerm) {
-          const matchName = (item.fullName || '').toLowerCase().includes(searchTerm);
-          const matchCode = (item.personnelCode || '').toLowerCase().includes(searchTerm);
-          if (!matchName && !matchCode) return false;
+          const pName = (item.fullName || item.full_name || '').toLowerCase();
+          const pCode = (item.personnelCode || item.personnel_code || '').toLowerCase();
+          const eTitle = (item.eventTitle || item.event_title || '').toLowerCase();
+          if (!pName.includes(searchTerm) && !pCode.includes(searchTerm) && !eTitle.includes(searchTerm)) {
+            return false;
+          }
         }
         return true;
       });
@@ -1636,21 +1692,48 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     let lastRenderedTableKey = '';
 
     function renderTable() {
-      const filtered = getFilteredRegistrations();
       const tbody = document.getElementById('tableBody');
       if (!tbody) return;
 
-      const currentKey = filtered.map(item => `${item.id}_${item.status}_${item.personnelCode}`).join('|');
+      const filtered = getFilteredRegistrations();
 
       if (filtered.length === 0) {
-        let emptyMsg = "هیچ رکوردی برای نمایش وجود ندارد.";
-        if (selectedEventFilter !== 'all') {
-          emptyMsg = `هیچ رکوردی برای این رویداد وجود ندارد. (<a href="javascript:void(0)" onclick="resetEventTabFilter()" style="color: #0284c7; text-decoration: underline; font-weight: bold;">مشاهده همه رویدادها</a>)`;
+        if (currentRegistrations.length > 0) {
+          const sInput = document.getElementById('searchInput');
+          const sVal = sInput ? sInput.value.trim() : '';
+          const stFilter = document.getElementById('statusFilter');
+          const stVal = stFilter ? stFilter.value : 'all';
+
+          let reasons = [];
+          if (selectedEventFilter !== 'all') reasons.push('رویداد انتخابی');
+          if (stVal !== 'all') reasons.push(stVal === 'attending' ? 'فقط حاضران' : 'فقط انصرافی‌ها');
+          if (sVal) reasons.push(`جستجوی «${sVal}»`);
+
+          const filterDesc = reasons.length > 0 ? reasons.join(' + ') : 'فیلتر فعلی';
+
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 36px 16px; color: var(--text-muted);">
+                <div style="font-size: 1.05rem; font-weight: 700; color: #1e293b; margin-bottom: 6px;">
+                  هیچ رکوردی با (${filterDesc}) یافت نشد.
+                </div>
+                <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 14px;">
+                  در کل سامانه <strong>${currentRegistrations.length.toLocaleString('fa-IR')} رکورد ثبت‌نام</strong> موجود است.
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="resetAllTableFilters()" style="padding: 7px 18px; font-size: 0.85rem; font-weight: 700; color: #0284c7; border: 1px solid #bae6fd; background: #f0f9ff; border-radius: 8px; cursor: pointer;">
+                  🔄 پاک کردن فیلترها و مشاهده کل لیست (${currentRegistrations.length.toLocaleString('fa-IR')} نفر)
+                </button>
+              </td>
+            </tr>
+          `;
+          lastRenderedTableKey = '__filtered_empty__';
+          return;
         }
+
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);">
-              ${emptyMsg}
+            <td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted); font-size: 0.95rem;">
+              هنوز هیچ رکوردی در سامانه ثبت نشده است.
             </td>
           </tr>
         `;
@@ -1658,33 +1741,41 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         return;
       }
 
-      // اگر جدول قبلاً با همین رکوردها رندر شده، DOM را دستکاری نکن تا هیچ پرش یا فلیکری رخ ندهد
-      if (currentKey === lastRenderedTableKey && tbody.children.length > 0 && lastRenderedTableKey !== '__empty__') {
+      const currentKey = filtered.map(item => `${item.id || item.cloudId}_${item.status}_${item.personnelCode || item.personnel_code}`).join('|');
+
+      if (currentKey === lastRenderedTableKey && tbody.children.length > 0 && !lastRenderedTableKey.startsWith('__')) {
         return;
       }
 
       tbody.innerHTML = filtered.map((item, index) => {
+        const evId = item.eventId || item.event_id || '';
         const eventBadgeColor = 
-          item.eventId === 'sobh-hamdeli' ? '#004b93' :
-          item.eventId === 'kavir-varzaneh' ? '#b45309' : '#0284c7';
+          evId === 'sobh-hamdeli' ? '#004b93' :
+          evId === 'kavir-varzaneh' ? '#b45309' : '#0284c7';
 
         const statusHtml = item.status === 'attending'
           ? `<span class="status-badge status-badge-attending">مایل به شرکت</span>`
           : `<span class="status-badge status-badge-declined">عدم حضور / انصراف</span>`;
 
+        const rowId = item.id || `row_${index}`;
+        const pCode = item.personnelCode || item.personnel_code || '';
+        const fName = item.fullName || item.full_name || '';
+        const eTitle = item.eventTitle || item.event_title || evId;
+        const jDate = item.jalaliDate || item.jalali_date || item.timestamp || '-';
+
         return `
-          <tr data-row-id="${item.id}">
+          <tr data-row-id="${rowId}">
             <td>${(index + 1).toLocaleString('fa-IR')}</td>
             <td>
               <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${eventBadgeColor}; margin-left: 6px;"></span>
-              <strong>${item.eventTitle || item.eventId}</strong>
+              <strong>${eTitle}</strong>
             </td>
-            <td><code style="font-size: 0.95rem; font-weight: 600;">${item.personnelCode}</code></td>
-            <td><strong>${item.fullName}</strong></td>
+            <td><code style="font-size: 0.95rem; font-weight: 600;">${pCode}</code></td>
+            <td><strong>${fName}</strong></td>
             <td>${statusHtml}</td>
-            <td style="font-size: 0.84rem; color: var(--text-secondary);">${item.jalaliDate || item.timestamp || '-'}</td>
+            <td style="font-size: 0.84rem; color: var(--text-secondary);">${jDate}</td>
             <td>
-              <button type="button" class="action-btn action-btn-del" onclick="deleteItem(event, '${item.id}', '${item.eventId}', '${item.personnelCode}', this)" title="حذف این رکورد">
+              <button type="button" class="action-btn action-btn-del" onclick="deleteItem(event, '${rowId}', '${evId}', '${pCode}', this)" title="حذف این رکورد">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 حذف
               </button>
@@ -1713,7 +1804,9 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         await StorageService.deleteRegistration(id, eventId, personnelCode);
         currentRegistrations = currentRegistrations.filter(r => {
           if (r.id === id) return false;
-          if (eventId && personnelCode && r.eventId === eventId && String(r.personnelCode).trim() === String(personnelCode).trim()) return false;
+          const ev = r.eventId || r.event_id;
+          const pc = String(r.personnelCode || r.personnel_code || '').trim();
+          if (eventId && personnelCode && ev === eventId && pc === String(personnelCode).trim()) return false;
           return true;
         });
 
@@ -1735,7 +1828,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
                 const firstCol = row.querySelector('td:first-child');
                 if (firstCol) firstCol.textContent = (idx + 1).toLocaleString('fa-IR');
               });
-              lastRenderedTableKey = getFilteredRegistrations().map(item => `${item.id}_${item.status}_${item.personnelCode}`).join('|');
+              lastRenderedTableKey = getFilteredRegistrations().map(item => `${item.id || item.cloudId}_${item.status}_${item.personnelCode || item.personnel_code}`).join('|');
             }
           }, 220);
         } else {
@@ -1763,19 +1856,34 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       });
     });
 
-    document.getElementById('searchInput').addEventListener('input', () => {
-      lastRenderedTableKey = '';
-      renderTable();
-    });
-    document.getElementById('statusFilter').addEventListener('change', () => {
-      lastRenderedTableKey = '';
-      renderTable();
-    });
+    const searchInputEl = document.getElementById('searchInput');
+    if (searchInputEl) {
+      searchInputEl.addEventListener('input', () => {
+        const btnClear = document.getElementById('btnClearSearch');
+        if (btnClear) {
+          btnClear.style.display = searchInputEl.value.trim() ? 'block' : 'none';
+        }
+        lastRenderedTableKey = '';
+        renderTable();
+      });
+    }
+
+    const statusFilterEl = document.getElementById('statusFilter');
+    if (statusFilterEl) {
+      statusFilterEl.addEventListener('change', () => {
+        lastRenderedTableKey = '';
+        renderTable();
+      });
+    }
 
     document.getElementById('btnExportExcel').addEventListener('click', () => {
-      const filtered = getFilteredRegistrations();
+      let filtered = getFilteredRegistrations();
+      if (filtered.length === 0 && currentRegistrations.length > 0) {
+        // تضمین دریافت اکسل: اگر به دلیل فیلتر رکوردی انتخاب نشده، کل لیست صادر شود
+        filtered = currentRegistrations;
+      }
       if (filtered.length === 0) {
-        alert("هیچ رکوردی برای خروجی اکسل در وضعیت فیلتر شده فعلی وجود ندارد.");
+        alert("هیچ رکوردی برای خروجی اکسل در سیستم وجود ندارد.");
         return;
       }
       StorageService.exportToExcel(filtered);
@@ -3707,11 +3815,16 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
     // آغاز اجرای صفحه
     if (checkAuth()) {
+      try { resetFiltersOnLoad(); } catch (e) {}
       try { updateSmsTexts(); } catch (e) { console.warn(e); }
       try { checkCloudStatus(); } catch (e) { console.warn(e); }
       try { initDeadlineControls(); } catch (e) { console.warn(e); }
       loadData();
     }
+
+    window.addEventListener('pageshow', () => {
+      try { resetFiltersOnLoad(); } catch (e) {}
+    });
   </script>
 </body>
 </html>
