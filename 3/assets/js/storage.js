@@ -64,6 +64,7 @@ const StorageService = {
             'sobh-hamdeli': {
                 eventId: 'sobh-hamdeli',
                 isClosed: false,
+                capacity: 0,
                 deadlineDate: '',
                 deadlineTime: '',
                 deadlineTimestamp: 0,
@@ -93,6 +94,7 @@ const StorageService = {
             'kavir-varzaneh': {
                 eventId: 'kavir-varzaneh',
                 isClosed: false,
+                capacity: 0,
                 deadlineDate: '1405/06/22',
                 deadlineTime: '13:00',
                 deadlineTimestamp: 1789291800000,
@@ -122,6 +124,7 @@ const StorageService = {
             'rafting-markadeh': {
                 eventId: 'rafting-markadeh',
                 isClosed: false,
+                capacity: 0,
                 deadlineDate: '',
                 deadlineTime: '',
                 deadlineTimestamp: 0,
@@ -153,6 +156,7 @@ const StorageService = {
         return defaults[eventId] || {
             eventId: eventId,
             isClosed: false,
+            capacity: 0,
             deadlineDate: '',
             deadlineTime: '',
             deadlineTimestamp: 0,
@@ -416,11 +420,16 @@ const StorageService = {
             ? Boolean(newSetting.isClosed)
             : (existing.isClosed === true);
 
+        const capacity = (newSetting.capacity !== undefined)
+            ? Math.max(0, parseInt(newSetting.capacity, 10) || 0)
+            : Math.max(0, parseInt(existing.capacity, 10) || 0);
+
         const merged = Object.assign({}, def, existing, newSetting);
         merged.eventId = eventId;
         merged.isRestricted = isRestricted;
         merged.allowedPersonnel = allowedPersonnel;
         merged.isClosed = isClosed;
+        merged.capacity = capacity;
         merged.updatedAt = new Date().toISOString();
 
         if (newSetting.customTexts || existing.customTexts || def.customTexts) {
@@ -543,6 +552,11 @@ const StorageService = {
                             userAgent: r.user_agent || r.userAgent
                         };
                     } else {
+                        // اگر در دیتابیس آنلاین رکوردی نبود ولی در حافظه محلی ذخیره شده بود (مثلاً توسط ادمین حذف شده)، کش محلی را پاکسازی می‌کنیم
+                        if (localRec) {
+                            const updatedList = localList.filter(r => !(r.eventId === eventId && String(r.personnelCode).trim() === cleanCode));
+                            this.setLocalRegistrations(updatedList);
+                        }
                         return null; // رکوردی برای این کاربر ثبت نشده است
                     }
                 }
@@ -554,12 +568,79 @@ const StorageService = {
         return localRec || null;
     },
 
+    // دریافت تعداد افراد مایل به شرکت (attending) در یک رویداد خاص
+    getEventAttendingCount: async function(eventId, excludePersonnelCode = null) {
+        let cleanExclude = excludePersonnelCode ? String(excludePersonnelCode).trim() : null;
+
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+            try {
+                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.${encodeURIComponent(eventId)}&status=eq.attending&select=personnel_code`;
+                const res = await fetch(fetchUrl, {
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (res.ok) {
+                    const rows = await res.json();
+                    if (Array.isArray(rows)) {
+                        const filtered = cleanExclude 
+                            ? rows.filter(r => String(r.personnel_code || '').trim() !== cleanExclude)
+                            : rows;
+                        return filtered.length;
+                    }
+                }
+            } catch (e) {
+                console.warn("خطا در شمارش افراد حاضر از دیتابیس:", e);
+            }
+        }
+
+        const localList = this.getLocalRegistrations();
+        const attendingList = localList.filter(r => 
+            r.eventId === eventId && 
+            r.status === 'attending' &&
+            (!cleanExclude || String(r.personnelCode).trim() !== cleanExclude)
+        );
+        return attendingList.length;
+    },
+
+    // بررسی تکمیل بودن حد نصاب رویداد
+    // نکته کلیدی: فقط و فقط تعداد افراد "attending" (مایل به شرکت) شمارش می‌شود
+    isEventCapacityFull: async function(eventId, userPersonnelCode = null) {
+        try {
+            const setting = await this.getEventSettings(eventId);
+            const cap = parseInt(setting.capacity, 10) || 0;
+            if (cap <= 0) {
+                return { isFull: false, capacity: 0, currentCount: 0 };
+            }
+            const currentCount = await this.getEventAttendingCount(eventId, userPersonnelCode);
+            return {
+                isFull: currentCount >= cap,
+                capacity: cap,
+                currentCount: currentCount
+            };
+        } catch (e) {
+            return { isFull: false, capacity: 0, currentCount: 0 };
+        }
+    },
+
     // ثبت یا به‌روزرسانی اطلاعات پرسنل (اعلام حضور یا انصراف)
     saveRegistration: async function(formData) {
-        // بررسی هوشمند وضعیت پایان مهلت یا مسدودی ثبت‌نام بر اساس تنظیمات ادمین و دیتابیس
+        // ۱. بررسی هوشمند وضعیت پایان مهلت یا مسدودی ثبت‌نام بر اساس تنظیمات ادمین و دیتابیس
         if (formData && formData.eventId) {
             if (this.isEventClosed(formData.eventId)) {
                 throw new Error("مهلت ثبت‌نام یا انصراف در این رویداد به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.");
+            }
+
+            // ۲. بررسی حد نصاب رویداد: فقط و فقط اگر کاربر «مایل به شرکت» باشد بررسی می‌شود
+            // افرادی که گزینه «عدم حضور / انصراف» را انتخاب کرده‌اند هرگز مسدود نمی‌شوند و در حد نصاب شمارش نخواهند شد
+            if (formData.status === 'attending') {
+                const capCheck = await this.isEventCapacityFull(formData.eventId, formData.personnelCode);
+                if (capCheck.isFull) {
+                    throw new Error(`ظرفیت ثبت‌نام در این رویداد به حد نصاب رسید و امکان ثبت‌نام جدید وجود ندارد.`);
+                }
             }
         }
 
@@ -779,26 +860,55 @@ const StorageService = {
         return { data: localData, source: 'local' };
     },
 
-    // حذف یک رکورد
-    deleteRegistration: async function(id) {
+    // حذف یک رکورد (پشتیبانی جامع از شناسه رکورد، شناسه رویداد و شماره پرسنلی)
+    deleteRegistration: async function(id, eventId = null, personnelCode = null) {
         let list = this.getLocalRegistrations();
         const target = list.find(item => item.id === id || String(item.cloudId) === String(id));
-        list = list.filter(item => item.id !== id && String(item.cloudId) !== String(id));
+
+        const targetEventId = eventId || (target ? target.eventId : null);
+        const targetPCode = personnelCode ? String(personnelCode).trim() : (target ? String(target.personnelCode).trim() : null);
+
+        // ۱. حذف از حافظه محلی
+        list = list.filter(item => {
+            if (item.id === id || String(item.cloudId) === String(id)) return false;
+            if (targetEventId && targetPCode && item.eventId === targetEventId && String(item.personnelCode).trim() === targetPCode) return false;
+            return true;
+        });
         this.setLocalRegistrations(list);
 
-        // ۱. حذف از Supabase PostgreSQL
+        // ۲. حذف از Supabase PostgreSQL
         const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
         if (spConfig && spConfig.url && spConfig.anonKey) {
+            const headers = {
+                'apikey': spConfig.anonKey,
+                'Authorization': `Bearer ${spConfig.anonKey}`,
+                'Prefer': 'return=representation'
+            };
+
+            let deleteError = null;
             try {
-                await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(id)}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'apikey': spConfig.anonKey,
-                        'Authorization': `Bearer ${spConfig.anonKey}`
-                    }
-                });
+                // الف) حذف بر اساس id
+                if (id) {
+                    await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(id)}`, {
+                        method: 'DELETE',
+                        headers: headers
+                    });
+                }
+
+                // ب) حذف مضاعف بر اساس ترکیب event_id و personnel_code جهت تضمین ۱۰۰٪ پاک شدن در دیتابیس
+                if (targetEventId && targetPCode) {
+                    await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.${encodeURIComponent(targetEventId)}&personnel_code=eq.${encodeURIComponent(targetPCode)}`, {
+                        method: 'DELETE',
+                        headers: headers
+                    });
+                }
             } catch (e) {
                 console.error("خطا در حذف از Supabase PostgreSQL:", e);
+                deleteError = e;
+            }
+
+            if (deleteError) {
+                throw new Error("خطا در برقراری ارتباط با دیتابیس ابری جهت حذف رکورد: " + (deleteError.message || deleteError));
             }
             return true;
         }

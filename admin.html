@@ -104,11 +104,12 @@
 
     .event-stats-strip {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: var(--radius-md);
-      padding: 10px;
+      padding: 10px 8px;
       text-align: center;
     }
     .event-stats-strip-item span {
@@ -392,12 +393,15 @@
           <p style="font-size: 0.82rem; opacity: 0.9; margin: 0;" id="cardSubtitle1">پیاده روی مدیران گروه توسعه سرمایه گذاری انتخاب</p>
         </div>
         <div class="event-overview-body">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
             <span style="font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 5px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               وضعیت مهلت:
             </span>
-            <span id="cardStatusBadge1" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <span id="cardCapacityBadge1" class="event-badge-pill" style="display: none;"></span>
+              <span id="cardStatusBadge1" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
+            </div>
           </div>
 
           <div style="font-size: 0.82rem; color: #475569; line-height: 1.7; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
@@ -410,6 +414,10 @@
             <div class="event-stats-strip-item">
               <span>حاضرین</span>
               <strong style="color: #166534;" id="cardAttendingCount1">۰</strong>
+            </div>
+            <div class="event-stats-strip-item">
+              <span>حد نصاب</span>
+              <strong style="color: #6366f1;" id="cardCapacity1">نامحدود</strong>
             </div>
             <div class="event-stats-strip-item">
               <span>انصرافی‌ها</span>
@@ -453,12 +461,15 @@
           <p style="font-size: 0.82rem; opacity: 0.9; margin: 0;" id="cardSubtitle2">رویداد علمی تفریحی گروه انتخاب</p>
         </div>
         <div class="event-overview-body">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
             <span style="font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 5px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               وضعیت مهلت:
             </span>
-            <span id="cardStatusBadge2" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <span id="cardCapacityBadge2" class="event-badge-pill" style="display: none;"></span>
+              <span id="cardStatusBadge2" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
+            </div>
           </div>
 
           <div style="font-size: 0.82rem; color: #475569; line-height: 1.7; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
@@ -471,6 +482,10 @@
             <div class="event-stats-strip-item">
               <span>حاضرین</span>
               <strong style="color: #166534;" id="cardAttendingCount2">۰</strong>
+            </div>
+            <div class="event-stats-strip-item">
+              <span>حد نصاب</span>
+              <strong style="color: #6366f1;" id="cardCapacity2">نامحدود</strong>
             </div>
             <div class="event-stats-strip-item">
               <span>انصرافی‌ها</span>
@@ -514,12 +529,15 @@
           <p style="font-size: 0.82rem; opacity: 0.9; margin: 0;" id="cardSubtitle3">ایونت تفریحی گروه انتخاب</p>
         </div>
         <div class="event-overview-body">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px;">
             <span style="font-size: 0.8rem; color: #64748b; display: flex; align-items: center; gap: 5px;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               وضعیت مهلت:
             </span>
-            <span id="cardStatusBadge3" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <span id="cardCapacityBadge3" class="event-badge-pill" style="display: none;"></span>
+              <span id="cardStatusBadge3" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
+            </div>
           </div>
 
           <div style="font-size: 0.82rem; color: #475569; line-height: 1.7; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
@@ -532,6 +550,10 @@
             <div class="event-stats-strip-item">
               <span>حاضرین</span>
               <strong style="color: #166534;" id="cardAttendingCount3">۰</strong>
+            </div>
+            <div class="event-stats-strip-item">
+              <span>حد نصاب</span>
+              <strong style="color: #6366f1;" id="cardCapacity3">نامحدود</strong>
             </div>
             <div class="event-stats-strip-item">
               <span>انصرافی‌ها</span>
@@ -921,15 +943,33 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
             </div>
           </div>
 
-          <!-- بخش ۶: مهلت و وضعیت ثبت‌نام -->
+          <!-- بخش ۶: حد نصاب ظرفیت و مهلت ثبت‌نام -->
           <div style="background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
               <span style="font-size: 0.88rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                مهلت پایان ثبت‌نام و مسدودی رویداد:
+                حد نصاب ظرفیت، مهلت و وضعیت ثبت‌نام رویداد:
               </span>
               <span id="cfgDeadlineStatusBadge" class="event-badge-pill badge-status-open">در حال ثبت‌نام</span>
             </div>
+
+            <!-- تنظیم حد نصاب رویداد -->
+            <div style="background: #fff; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <label for="cfgCapacity" style="font-size: 0.84rem; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                  <span>🎯</span> حد نصاب ظرفیت رویداد (حداکثر تعداد مجاز «تمایل دارم»):
+                </label>
+                <span id="cfgCapacityCurrentCount" style="font-size: 0.78rem; font-weight: 700; color: #166534; background: #dcfce7; padding: 2px 8px; border-radius: 6px;">
+                  تعداد حاضرین فعلی: ۰ نفر
+                </span>
+              </div>
+              <input type="number" id="cfgCapacity" class="form-input" min="0" placeholder="مثال: ۵۰ (جهت ثبت‌نام نامحدود عدد ۰ بگذارید یا خالی بگذارید)" style="text-align: center; font-size: 0.95rem; font-weight: 800; color: #1e293b;">
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 10px; margin-top: 8px; font-size: 0.76rem; color: #166534; line-height: 1.6;">
+                ⚠️ <strong>قانون حد نصاب:</strong> حد نصاب رویداد فقط و فقط بر اساس تعداد ثبت‌نامی‌های <strong>«مایل به شرکت»</strong> محاسبه می‌شود. افرادی که <strong>«عدم حضور / انصراف»</strong> را انتخاب کنند، در این ظرفیت شمارش نمی‌شوند و هرگز مسدود نخواهند شد. اگر تعداد افراد مایل به شرکت به این عدد برسد، سیستم از ثبت‌نام جدید با تمایل به حضور ممانعت کرده و خطای <em>«ظرفیت ثبت‌نام در این رویداد به حد نصاب رسید»</em> می‌دهد.
+              </div>
+            </div>
+
+            <!-- مهلت زمانی -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
               <div>
                 <label style="font-size: 0.76rem; color: #475569; display: block; margin-bottom: 4px;">تاریخ پایان ثبت‌نام (شمسی):</label>
@@ -1592,7 +1632,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
             <td>${statusHtml}</td>
             <td style="font-size: 0.84rem; color: var(--text-secondary);">${item.jalaliDate || item.timestamp || '-'}</td>
             <td>
-              <button class="action-btn action-btn-del" onclick="deleteItem('${item.id}')" title="حذف این رکورد">
+              <button class="action-btn action-btn-del" onclick="deleteItem('${item.id}', '${item.eventId}', '${item.personnelCode}', this)" title="حذف این رکورد">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 حذف
               </button>
@@ -1602,11 +1642,31 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       }).join('');
     }
 
-    async function deleteItem(id) {
+    async function deleteItem(id, eventId, personnelCode, btn) {
       if (!confirm("آیا از حذف این رکورد اطمینان دارید؟")) return;
-      await StorageService.deleteRegistration(id);
-      currentRegistrations = currentRegistrations.filter(r => r.id !== id);
-      renderDashboard();
+
+      let origHtml = '';
+      if (btn) {
+        origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<span style="display:inline-block; animation: spin 1s infinite linear;">⏳</span> در حال حذف...`;
+      }
+
+      try {
+        await StorageService.deleteRegistration(id, eventId, personnelCode);
+        currentRegistrations = currentRegistrations.filter(r => {
+          if (r.id === id) return false;
+          if (eventId && personnelCode && r.eventId === eventId && String(r.personnelCode).trim() === String(personnelCode).trim()) return false;
+          return true;
+        });
+        renderDashboard();
+      } catch (err) {
+        alert("خطا در حذف رکورد از دیتابیس: " + (err.message || err));
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origHtml;
+        }
+      }
     }
 
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1939,10 +1999,40 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       const attEl = document.getElementById('cardAttendingCount' + num);
       const decEl = document.getElementById('cardDeclinedCount' + num);
       const totEl = document.getElementById('cardTotalCount' + num);
+      const capEl = document.getElementById('cardCapacity' + num);
 
       if (attEl) attEl.textContent = attendingCount.toLocaleString('fa-IR');
       if (decEl) decEl.textContent = declinedCount.toLocaleString('fa-IR');
       if (totEl) totEl.textContent = totalCount.toLocaleString('fa-IR');
+
+      const capacity = parseInt(setting.capacity, 10) || 0;
+      if (capEl) {
+        if (capacity > 0) {
+          capEl.textContent = capacity.toLocaleString('fa-IR') + ' نفر';
+          capEl.style.color = (attendingCount >= capacity) ? '#dc2626' : '#6366f1';
+        } else {
+          capEl.textContent = 'نامحدود';
+          capEl.style.color = '#64748b';
+        }
+      }
+
+      // وضعیت حد نصاب و ظرفیت در نشانگر بالای کارت
+      const capBadge = document.getElementById('cardCapacityBadge' + num);
+      if (capBadge) {
+        if (capacity > 0) {
+          capBadge.style.display = 'inline-flex';
+          if (attendingCount >= capacity) {
+            capBadge.textContent = '🔴 تکمیل حد نصاب';
+            capBadge.className = 'event-badge-pill badge-status-closed';
+          } else {
+            const rem = capacity - attendingCount;
+            capBadge.textContent = `🟢 باقی‌مانده: ${rem.toLocaleString('fa-IR')}`;
+            capBadge.className = 'event-badge-pill badge-status-open';
+          }
+        } else {
+          capBadge.style.display = 'none';
+        }
+      }
     }
 
     // هدایت به جدول شرکت‌کنندگان یک رویداد خاص
@@ -2249,6 +2339,15 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       setVal('cfgDeadlineDate', setting.deadlineDate || '');
       setVal('cfgDeadlineTime', setting.deadlineTime || '');
 
+      const cap = setting.capacity !== undefined ? setting.capacity : ((def && def.capacity) || 0);
+      setVal('cfgCapacity', cap > 0 ? cap : '');
+
+      const attendingCount = currentRegistrations.filter(r => r.eventId === eventId && r.status === 'attending').length;
+      const countEl = document.getElementById('cfgCapacityCurrentCount');
+      if (countEl) {
+        countEl.textContent = `تعداد حاضرین فعلی: ${attendingCount.toLocaleString('fa-IR')} نفر`;
+      }
+
       // بارگذاری پوستر اختصاصی
       currentUploadedPoster = custom.posterUrl || (def && def.customTexts && def.customTexts.posterUrl) || '';
       updatePosterPreviewUI(currentUploadedPoster);
@@ -2359,9 +2458,11 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
       const rawDate = (document.getElementById('cfgDeadlineDate').value || '').trim();
       const rawTime = (document.getElementById('cfgDeadlineTime').value || '').trim() || '23:59';
+      const rawCapacity = (document.getElementById('cfgCapacity').value || '').trim();
 
       const dateNorm = toStandardDigits(rawDate);
       const timeNorm = toStandardDigits(rawTime);
+      const capacity = Math.max(0, parseInt(toStandardDigits(rawCapacity), 10) || 0);
 
       const customTexts = {
         title: (document.getElementById('cfgTitle').value || '').trim(),
@@ -2387,6 +2488,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         const res = await StorageService.saveEventSettings(activeSettingsEventId, {
           deadlineDate: dateNorm,
           deadlineTime: timeNorm,
+          capacity: capacity,
           customTexts: customTexts
         });
 

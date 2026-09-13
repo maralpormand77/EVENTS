@@ -558,6 +558,39 @@
             notDecided.style.display = 'none';
           } else {
             notDecided.style.display = 'block';
+
+            // بررسی حد نصاب ظرفیت رویداد
+            try {
+              if (typeof StorageService !== 'undefined' && StorageService.isEventCapacityFull) {
+                const capCheck = await StorageService.isEventCapacityFull(EVENT_ID, currentUser.personnelCode);
+                let capNotice = document.getElementById('statusCapacityNotice');
+                const btnAttendEl = document.getElementById('btnAttend');
+                if (capCheck.isFull) {
+                  if (!capNotice) {
+                    capNotice = document.createElement('div');
+                    capNotice.id = 'statusCapacityNotice';
+                    capNotice.style.cssText = 'background: #fef2f2; border: 1.5px solid #fecaca; color: #991b1b; padding: 12px 16px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; text-align: center; margin-bottom: 14px;';
+                    notDecided.insertBefore(capNotice, notDecided.firstChild);
+                  }
+                  capNotice.innerHTML = `⚠️ ظرفیت ثبت‌نام در این رویداد به حد نصاب (${capCheck.capacity.toLocaleString('fa-IR')} نفر) رسید و امکان اعلام حضور جدید وجود ندارد. در صورت تمایل می‌توانید گزینه «عدم حضور» را ثبت فرمایید.`;
+                  capNotice.style.display = 'block';
+                  if (btnAttendEl) {
+                    btnAttendEl.disabled = true;
+                    btnAttendEl.style.opacity = '0.5';
+                    btnAttendEl.style.cursor = 'not-allowed';
+                    btnAttendEl.title = 'به حد نصاب رسید';
+                  }
+                } else {
+                  if (capNotice) capNotice.style.display = 'none';
+                  if (btnAttendEl) {
+                    btnAttendEl.disabled = false;
+                    btnAttendEl.style.opacity = '1';
+                    btnAttendEl.style.cursor = 'pointer';
+                    btnAttendEl.title = '';
+                  }
+                }
+              }
+            } catch (errCap) {}
           }
         } else if (record.status === 'attending') {
           document.getElementById('attendingTimeText').textContent = record.jalaliDate || record.timestamp;
@@ -578,7 +611,30 @@
             if (reAttendSection) reAttendSection.style.display = 'none';
             if (reAttendExpiredNotice) reAttendExpiredNotice.style.display = 'block';
           } else {
-            if (reAttendSection) reAttendSection.style.display = 'flex';
+            // بررسی حد نصاب رویداد جهت حضور مجدد
+            let isCapFull = false;
+            try {
+              if (typeof StorageService !== 'undefined' && StorageService.isEventCapacityFull) {
+                const capCheck = await StorageService.isEventCapacityFull(EVENT_ID, currentUser.personnelCode);
+                isCapFull = capCheck.isFull;
+              }
+            } catch (e) {}
+
+            let reAttendCapNotice = document.getElementById('reAttendCapacityNotice');
+            if (isCapFull) {
+              if (reAttendSection) reAttendSection.style.display = 'none';
+              if (!reAttendCapNotice) {
+                reAttendCapNotice = document.createElement('div');
+                reAttendCapNotice.id = 'reAttendCapacityNotice';
+                reAttendCapNotice.style.cssText = 'background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-top: 10px; text-align: center; font-weight: 600;';
+                declinedCard.appendChild(reAttendCapNotice);
+              }
+              reAttendCapNotice.textContent = 'ظرفیت ثبت‌نام در این رویداد به حد نصاب رسید و در حال حاضر امکان تغییر وضعیت به حضور وجود ندارد.';
+              reAttendCapNotice.style.display = 'block';
+            } else {
+              if (reAttendCapNotice) reAttendCapNotice.style.display = 'none';
+              if (reAttendSection) reAttendSection.style.display = 'flex';
+            }
             if (reAttendExpiredNotice) reAttendExpiredNotice.style.display = 'none';
           }
         }
@@ -609,6 +665,16 @@
         alert(`همکار گرامی، شماره پرسنلی شما در لیست افراد مجاز رویداد «${EVENT_TITLE}» قرار ندارد.`);
         await loadUserStatus();
         return;
+      }
+
+      // بررسی تکمیل حد نصاب ظرفیت رویداد (فقط در صورت تمایل به حضور)
+      if (status === 'attending' && typeof StorageService !== 'undefined' && StorageService.isEventCapacityFull) {
+        const capCheck = await StorageService.isEventCapacityFull(EVENT_ID, currentUser.personnelCode);
+        if (capCheck.isFull) {
+          alert(`ظرفیت ثبت‌نام در این رویداد به حد نصاب رسید و امکان ثبت‌نام جدید وجود ندارد.`);
+          await loadUserStatus();
+          return;
+        }
       }
 
       const btnAttend = document.getElementById('btnAttend');
