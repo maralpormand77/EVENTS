@@ -342,9 +342,9 @@
           آپلود اکسل کل پرسنل
         </button>
 
-        <button type="button" class="btn btn-secondary" onclick="printReport()" title="چاپ لیست فیلتر شده پرسنل">
+        <button type="button" class="btn btn-secondary" onclick="printReport()" title="چاپ گزارش">
           <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          چاپ گزارش فیلترشده
+          چاپ گزارش
         </button>
 
         <!-- دکمه خروج -->
@@ -632,17 +632,17 @@
 
     <!-- تب‌های فیلتر بر اساس ایونت -->
     <div class="event-tabs">
-      <button class="tab-btn active" data-event="all">همه رویدادها (<span id="countAll">۰</span>)</button>
-      <button class="tab-btn" data-event="sobh-hamdeli">صبح همدلی (<span id="countSobh">۰</span>)</button>
-      <button class="tab-btn" data-event="kavir-varzaneh">کویر ورزنه (<span id="countKavir">۰</span>)</button>
-      <button class="tab-btn" data-event="rafting-markadeh">رفتینگ مارکده (<span id="countRafting">۰</span>)</button>
+      <button type="button" class="tab-btn active" data-event="all">همه رویدادها (<span id="countAll">۰</span>)</button>
+      <button type="button" class="tab-btn" data-event="sobh-hamdeli">صبح همدلی (<span id="countSobh">۰</span>)</button>
+      <button type="button" class="tab-btn" data-event="kavir-varzaneh">کویر ورزنه (<span id="countKavir">۰</span>)</button>
+      <button type="button" class="tab-btn" data-event="rafting-markadeh">رفتینگ مارکده (<span id="countRafting">۰</span>)</button>
     </div>
 
     <!-- نوار جستجو و فیلتر جدول -->
     <div class="control-bar">
       <div class="search-box">
         <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="searchInput" class="search-input" placeholder="جستجو بر اساس نام یا شماره پرسنلی...">
+        <input type="text" id="searchInput" class="search-input" placeholder="جستجو بر اساس نام یا شماره پرسنلی..." autocomplete="off" autocorrect="off" spellcheck="false">
       </div>
 
       <div class="filter-group">
@@ -1527,6 +1527,8 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       const refreshBtn = document.getElementById('btnRefresh');
       if (refreshBtn) refreshBtn.disabled = true;
 
+      const savedScroll = window.scrollY || document.documentElement.scrollTop;
+
       // ۱. نمایش بلادرنگ داده‌های ذخیره‌شده محلی (0 میلی‌ثانیه بدون انتظار شبکه)
       try {
         const cached = StorageService.getLocalRegistrations();
@@ -1540,7 +1542,10 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       try {
         const res = await StorageService.fetchRegistrations();
         if (res && Array.isArray(res.data)) {
-          currentRegistrations = res.data;
+          // در صورتی که دیتابیس حاوی داده باشد یا لوکال هم خالی باشد داده‌ها را بنشان
+          if (res.data.length > 0 || currentRegistrations.length === 0) {
+            currentRegistrations = res.data;
+          }
         }
         renderDashboard();
       } catch (e) {
@@ -1550,35 +1555,77 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         try {
           await initDeadlineControls();
         } catch (err) {}
+        if (savedScroll > 100) {
+          window.scrollTo({ top: savedScroll, behavior: 'instant' });
+        }
       }
     }
 
-    function renderDashboard() {
+    function updateDashboardCounters() {
       const total = currentRegistrations.length;
       const attending = currentRegistrations.filter(r => r.status === 'attending').length;
       const declined = currentRegistrations.filter(r => r.status === 'declined').length;
       const rate = total > 0 ? Math.round((attending / total) * 100) : 0;
 
-      document.getElementById('statTotal').textContent = total.toLocaleString('fa-IR');
-      document.getElementById('statAttending').textContent = attending.toLocaleString('fa-IR');
-      document.getElementById('statDeclined').textContent = declined.toLocaleString('fa-IR');
-      document.getElementById('statRate').textContent = rate.toLocaleString('fa-IR') + '٪';
+      const statTotalEl = document.getElementById('statTotal');
+      const statAttendingEl = document.getElementById('statAttending');
+      const statDeclinedEl = document.getElementById('statDeclined');
+      const statRateEl = document.getElementById('statRate');
+
+      if (statTotalEl) statTotalEl.textContent = total.toLocaleString('fa-IR');
+      if (statAttendingEl) statAttendingEl.textContent = attending.toLocaleString('fa-IR');
+      if (statDeclinedEl) statDeclinedEl.textContent = declined.toLocaleString('fa-IR');
+      if (statRateEl) statRateEl.textContent = rate.toLocaleString('fa-IR') + '٪';
 
       const countSobh = currentRegistrations.filter(r => r.eventId === 'sobh-hamdeli').length;
       const countKavir = currentRegistrations.filter(r => r.eventId === 'kavir-varzaneh').length;
       const countRafting = currentRegistrations.filter(r => r.eventId === 'rafting-markadeh').length;
 
-      document.getElementById('countAll').textContent = total.toLocaleString('fa-IR');
-      document.getElementById('countSobh').textContent = countSobh.toLocaleString('fa-IR');
-      document.getElementById('countKavir').textContent = countKavir.toLocaleString('fa-IR');
-      document.getElementById('countRafting').textContent = countRafting.toLocaleString('fa-IR');
+      const countAllEl = document.getElementById('countAll');
+      const countSobhEl = document.getElementById('countSobh');
+      const countKavirEl = document.getElementById('countKavir');
+      const countRaftingEl = document.getElementById('countRafting');
 
+      if (countAllEl) countAllEl.textContent = total.toLocaleString('fa-IR');
+      if (countSobhEl) countSobhEl.textContent = countSobh.toLocaleString('fa-IR');
+      if (countKavirEl) countKavirEl.textContent = countKavir.toLocaleString('fa-IR');
+      if (countRaftingEl) countRaftingEl.textContent = countRafting.toLocaleString('fa-IR');
+
+      // به‌روزرسانی آمارهای ۳ کارت رویداد
+      for (let num = 1; num <= 3; num++) {
+        const evId = EVENT_MAPPING[num];
+        const attCount = currentRegistrations.filter(r => r.eventId === evId && r.status === 'attending').length;
+        const decCount = currentRegistrations.filter(r => r.eventId === evId && r.status === 'declined').length;
+        const totCount = attCount + decCount;
+        const attEl = document.getElementById('cardAttendingCount' + num);
+        const decEl = document.getElementById('cardDeclinedCount' + num);
+        const totEl = document.getElementById('cardTotalCount' + num);
+        if (attEl) attEl.textContent = attCount.toLocaleString('fa-IR');
+        if (decEl) decEl.textContent = decCount.toLocaleString('fa-IR');
+        if (totEl) totEl.textContent = totCount.toLocaleString('fa-IR');
+      }
+    }
+
+    function renderDashboard() {
+      updateDashboardCounters();
       renderTable();
     }
 
+    function resetEventTabFilter() {
+      const allBtn = document.querySelector('.event-tabs .tab-btn[data-event="all"]');
+      if (allBtn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        allBtn.classList.add('active');
+        selectedEventFilter = 'all';
+        renderTable();
+      }
+    }
+
     function getFilteredRegistrations() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-      const statusFilter = document.getElementById('statusFilter').value;
+      const searchInput = document.getElementById('searchInput');
+      const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+      const statusFilterEl = document.getElementById('statusFilter');
+      const statusFilter = statusFilterEl ? statusFilterEl.value : 'all';
 
       return currentRegistrations.filter(item => {
         if (selectedEventFilter !== 'all' && item.eventId !== selectedEventFilter) {
@@ -1597,14 +1644,20 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     }
 
     function renderTable() {
+      const savedScroll = window.scrollY || document.documentElement.scrollTop;
       const filtered = getFilteredRegistrations();
       const tbody = document.getElementById('tableBody');
+      if (!tbody) return;
 
       if (filtered.length === 0) {
+        let emptyMsg = "هیچ رکوردی برای نمایش وجود ندارد.";
+        if (selectedEventFilter !== 'all') {
+          emptyMsg = `هیچ رکوردی برای این رویداد وجود ندارد. (<a href="javascript:void(0)" onclick="resetEventTabFilter()" style="color: #0284c7; text-decoration: underline; font-weight: bold;">مشاهده همه رویدادها</a>)`;
+        }
         tbody.innerHTML = `
           <tr>
             <td colspan="7" style="text-align: center; padding: 36px; color: var(--text-muted);">
-              هیچ رکوردی برای نمایش وجود ندارد.
+              ${emptyMsg}
             </td>
           </tr>
         `;
@@ -1621,7 +1674,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           : `<span class="status-badge status-badge-declined">عدم حضور / انصراف</span>`;
 
         return `
-          <tr>
+          <tr data-row-id="${item.id}">
             <td>${(index + 1).toLocaleString('fa-IR')}</td>
             <td>
               <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${eventBadgeColor}; margin-left: 6px;"></span>
@@ -1632,7 +1685,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
             <td>${statusHtml}</td>
             <td style="font-size: 0.84rem; color: var(--text-secondary);">${item.jalaliDate || item.timestamp || '-'}</td>
             <td>
-              <button class="action-btn action-btn-del" onclick="deleteItem('${item.id}', '${item.eventId}', '${item.personnelCode}', this)" title="حذف این رکورد">
+              <button type="button" class="action-btn action-btn-del" onclick="deleteItem(event, '${item.id}', '${item.eventId}', '${item.personnelCode}', this)" title="حذف این رکورد">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 حذف
               </button>
@@ -1640,10 +1693,19 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           </tr>
         `;
       }).join('');
+
+      if (savedScroll > 100) {
+        window.scrollTo({ top: savedScroll, behavior: 'instant' });
+      }
     }
 
-    async function deleteItem(id, eventId, personnelCode, btn) {
+    async function deleteItem(e, id, eventId, personnelCode, btn) {
+      if (e) {
+        try { e.preventDefault(); e.stopPropagation(); } catch(_) {}
+      }
       if (!confirm("آیا از حذف این رکورد اطمینان دارید؟")) return;
+
+      const savedScrollY = window.scrollY || document.documentElement.scrollTop;
 
       let origHtml = '';
       if (btn) {
@@ -1659,7 +1721,27 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           if (eventId && personnelCode && r.eventId === eventId && String(r.personnelCode).trim() === String(personnelCode).trim()) return false;
           return true;
         });
-        renderDashboard();
+
+        // حذف بسیار نرم و روان ردیف از DOM بدون بازسازی کل جدول تا اسکرول و دید کاربر هرگز نپرد
+        const tr = btn ? btn.closest('tr') : document.querySelector(`tr[data-row-id="${id}"]`);
+        if (tr) {
+          tr.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+          tr.style.opacity = '0';
+          tr.style.transform = 'translateX(20px)';
+          setTimeout(() => {
+            if (tr && tr.parentNode) tr.parentNode.removeChild(tr);
+            const remaining = document.getElementById('tableBody')?.querySelectorAll('tr');
+            if (!remaining || remaining.length === 0) {
+              renderTable();
+            }
+          }, 260);
+        }
+
+        updateDashboardCounters();
+
+        if (savedScrollY > 100) {
+          window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+        }
       } catch (err) {
         alert("خطا در حذف رکورد از دیتابیس: " + (err.message || err));
         if (btn) {
@@ -1690,11 +1772,33 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       StorageService.exportToExcel(filtered);
     });
 
-    // چاپ گزارش رسمی پرسنل فیلترشده
+    // چاپ گزارش رسمی پرسنل
     function printReport() {
-      const filtered = getFilteredRegistrations();
-      if (filtered.length === 0) {
-        alert("هیچ رکوردی برای چاپ در وضعیت فیلتر شده فعلی وجود ندارد.");
+      const searchInput = document.getElementById('searchInput');
+      const searchTerm = searchInput ? searchInput.value.trim() : '';
+      const statusFilterEl = document.getElementById('statusFilter');
+      const statusFilterVal = statusFilterEl ? statusFilterEl.value : 'all';
+      const hasFilter = (selectedEventFilter !== 'all') || (statusFilterVal !== 'all') || (searchTerm !== '');
+
+      let filtered = [];
+      let isFilteredReport = false;
+
+      if (hasFilter) {
+        filtered = getFilteredRegistrations();
+        isFilteredReport = true;
+        if (filtered.length === 0 && currentRegistrations.length > 0) {
+          // اگر در حالت فیلتر رکوردی نبود ولی کل لیست رکورد دارد، کل لیست را چاپ کن
+          filtered = currentRegistrations;
+          isFilteredReport = false;
+        }
+      } else {
+        // در صورت عدم وجود فیلتر، کل لیست پرسنل چاپ می‌شود
+        filtered = currentRegistrations;
+        isFilteredReport = false;
+      }
+
+      if (!filtered || filtered.length === 0) {
+        alert("هیچ رکوردی برای چاپ وجود ندارد.");
         return;
       }
 
@@ -1703,12 +1807,11 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       else if (selectedEventFilter === 'kavir-varzaneh') eventLabel = "رویداد علمی تفریحی کویر ورزنه";
       else if (selectedEventFilter === 'rafting-markadeh') eventLabel = "تور رفتینگ مارکده";
 
-      const statusFilterVal = document.getElementById('statusFilter').value;
       let statusLabel = "تمامی وضعیت‌ها";
       if (statusFilterVal === 'attending') statusLabel = "فقط مایل به شرکت";
       else if (statusFilterVal === 'declined') statusLabel = "فقط عدم حضور / انصراف";
 
-      const searchVal = document.getElementById('searchInput').value.trim();
+      const searchVal = searchTerm;
 
       const attendingCount = filtered.filter(r => r.status === 'attending').length;
       const declinedCount = filtered.filter(r => r.status === 'declined').length;
@@ -1731,6 +1834,10 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           <td style="text-align: center; font-size: 11.5px; color: #475569;">${item.jalaliDate || item.timestamp || '-'}</td>
         </tr>
       `).join('');
+
+      const reportSubtitle = isFilteredReport
+        ? 'فهرست شرکت‌کنندگان بر اساس فیلترهای انتخابی در پنل مدیریت'
+        : 'فهرست جامع و کامل کلیه ثبت‌نام‌های انجام‌شده در رویدادها';
 
       const reportHtml = `
 <!DOCTYPE html>
@@ -1823,7 +1930,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
   <div class="report-header">
     <div class="report-title">
       <h1>گزارش رسمی ثبت‌نام پرسنل - گروه توسعه سرمایه گذاری انتخاب</h1>
-      <p>فهرست تفکیکی شرکت‌کنندگان بر اساس فیلترهای انتخابی در پنل مدیریت</p>
+      <p>${reportSubtitle}</p>
     </div>
     <div class="report-meta">
       <div><strong>زمان گزارش:</strong> ${nowJalali}</div>
@@ -1857,7 +1964,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
   <div class="footer-note">
     <span>سامانه رسمی مدیریت رویدادهای گروه توسعه سرمایه گذاری انتخاب</span>
-    <span>صفحه رسمی چاپ گزارشات فیلترشده</span>
+    <span>گزارش رسمی ثبت‌نام رویدادها</span>
   </div>
 </body>
 </html>

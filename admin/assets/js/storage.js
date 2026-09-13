@@ -639,7 +639,7 @@ const StorageService = {
             if (formData.status === 'attending') {
                 const capCheck = await this.isEventCapacityFull(formData.eventId, formData.personnelCode);
                 if (capCheck.isFull) {
-                    throw new Error(`ظرفیت ثبت‌نام در این رویداد به حد نصاب رسید و امکان ثبت‌نام جدید وجود ندارد.`);
+                    throw new Error("تعداد ثبت نام نفرات به حد نصاب رسیده است");
                 }
             }
         }

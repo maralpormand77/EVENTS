@@ -572,13 +572,13 @@
                     capNotice.style.cssText = 'background: #fef2f2; border: 1.5px solid #fecaca; color: #991b1b; padding: 12px 16px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; text-align: center; margin-bottom: 14px;';
                     notDecided.insertBefore(capNotice, notDecided.firstChild);
                   }
-                  capNotice.innerHTML = `⚠️ ظرفیت ثبت‌نام در این رویداد به حد نصاب (${capCheck.capacity.toLocaleString('fa-IR')} نفر) رسید و امکان اعلام حضور جدید وجود ندارد. در صورت تمایل می‌توانید گزینه «عدم حضور» را ثبت فرمایید.`;
+                  capNotice.textContent = "تعداد ثبت نام نفرات به حد نصاب رسیده است";
                   capNotice.style.display = 'block';
                   if (btnAttendEl) {
                     btnAttendEl.disabled = true;
                     btnAttendEl.style.opacity = '0.5';
                     btnAttendEl.style.cursor = 'not-allowed';
-                    btnAttendEl.title = 'به حد نصاب رسید';
+                    btnAttendEl.title = 'تعداد ثبت نام نفرات به حد نصاب رسیده است';
                   }
                 } else {
                   if (capNotice) capNotice.style.display = 'none';
@@ -629,7 +629,7 @@
                 reAttendCapNotice.style.cssText = 'background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-top: 10px; text-align: center; font-weight: 600;';
                 declinedCard.appendChild(reAttendCapNotice);
               }
-              reAttendCapNotice.textContent = 'ظرفیت ثبت‌نام در این رویداد به حد نصاب رسید و در حال حاضر امکان تغییر وضعیت به حضور وجود ندارد.';
+              reAttendCapNotice.textContent = 'تعداد ثبت نام نفرات به حد نصاب رسیده است';
               reAttendCapNotice.style.display = 'block';
             } else {
               if (reAttendCapNotice) reAttendCapNotice.style.display = 'none';
@@ -671,7 +671,7 @@
       if (status === 'attending' && typeof StorageService !== 'undefined' && StorageService.isEventCapacityFull) {
         const capCheck = await StorageService.isEventCapacityFull(EVENT_ID, currentUser.personnelCode);
         if (capCheck.isFull) {
-          alert(`ظرفیت ثبت‌نام در این رویداد به حد نصاب رسید و امکان ثبت‌نام جدید وجود ندارد.`);
+          alert("تعداد ثبت نام نفرات به حد نصاب رسیده است");
           await loadUserStatus();
           return;
         }
