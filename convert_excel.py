@@ -45,6 +45,17 @@ if '980253' not in personnel_map:
 js_content = '/**\n * دیتابیس پرسنل گروه انتخاب استخراج‌شده از اطلاعات.xlsx\n * تعداد پرسنل: ' + str(len(personnel_map)) + '\n */\n'
 js_content += 'window.PERSONNEL_MAP = ' + json.dumps(personnel_map, ensure_ascii=False, separators=(',', ':')) + ';\n\n'
 js_content += '''
+// کش به‌روزرسانی‌شده از پنل ادمین (در صورت وجود)
+try {
+    var _cachedMap = localStorage.getItem('entekhab_custom_personnel_map');
+    if (_cachedMap) {
+        var _parsed = JSON.parse(_cachedMap);
+        if (_parsed && typeof _parsed === 'object' && Object.keys(_parsed).length > 0) {
+            window.PERSONNEL_MAP = _parsed;
+        }
+    }
+} catch(e) {}
+
 function normalizeInputDigits(str) {
     if (!str) return '';
     return String(str).trim()

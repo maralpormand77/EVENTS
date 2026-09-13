@@ -389,16 +389,38 @@ const StorageService = {
 
     // ذخیره تنظیمات مهلت و وضعیت ثبت‌نام توسط ادمین
     saveEventSettings: async function(eventId, newSetting) {
+        // ۱. دریافت آخرین تنظیمات کامل متمرکز از دیتابیس ابری (جهت جلوگیری از پاک شدن ناخواسته لیست افراد مجاز یا تنظیمات قبلی)
         let all = {};
         try {
-            const raw = localStorage.getItem(this.DEADLINES_KEY);
-            if (raw) all = JSON.parse(raw);
-        } catch (e) {}
+            all = await this.getAllEventSettings();
+        } catch (e) {
+            try {
+                const raw = localStorage.getItem(this.DEADLINES_KEY);
+                if (raw) all = JSON.parse(raw);
+            } catch (err) {}
+        }
 
         const def = this.getDefaultEventSettings(eventId);
-        const existing = all[eventId] || {};
+        const existing = (all && all[eventId]) ? all[eventId] : def;
+
+        // حفظ حتمی محدودیت دسترسی و افراد مجاز در صورت عدم ارسال در newSetting
+        const isRestricted = (newSetting.isRestricted !== undefined) 
+            ? Boolean(newSetting.isRestricted) 
+            : (existing.isRestricted === true);
+
+        const allowedPersonnel = (newSetting.allowedPersonnel !== undefined) 
+            ? (Array.isArray(newSetting.allowedPersonnel) ? newSetting.allowedPersonnel : [])
+            : (Array.isArray(existing.allowedPersonnel) ? existing.allowedPersonnel : []);
+
+        const isClosed = (newSetting.isClosed !== undefined)
+            ? Boolean(newSetting.isClosed)
+            : (existing.isClosed === true);
+
         const merged = Object.assign({}, def, existing, newSetting);
         merged.eventId = eventId;
+        merged.isRestricted = isRestricted;
+        merged.allowedPersonnel = allowedPersonnel;
+        merged.isClosed = isClosed;
         merged.updatedAt = new Date().toISOString();
 
         if (newSetting.customTexts || existing.customTexts || def.customTexts) {
@@ -414,7 +436,9 @@ const StorageService = {
         }
 
         all[eventId] = merged;
-        localStorage.setItem(this.DEADLINES_KEY, JSON.stringify(all));
+        try {
+            localStorage.setItem(this.DEADLINES_KEY, JSON.stringify(all));
+        } catch (e) {}
 
         // ذخیره در Supabase PostgreSQL
         const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
@@ -672,7 +696,12 @@ const StorageService = {
 
     // دریافت داده‌ها برای پنل ادمین
     fetchRegistrations: async function() {
-        let localData = (this.getLocalRegistrations() || []).filter(r => r.eventId !== '__settings__' && r.personnelCode !== '__CONFIG__');
+        let localData = (this.getLocalRegistrations() || []).filter(r => 
+            r.eventId !== '__settings__' && 
+            r.eventId !== '__master_personnel__' && 
+            r.personnelCode !== '__CONFIG__' && 
+            r.personnelCode !== '__BANK__'
+        );
 
         // ۱. اولویت نخست: خواندن از دیتابیس متمرکز PostgreSQL (Supabase)
         const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
@@ -692,7 +721,12 @@ const StorageService = {
                     const rows = await response.json();
                     if (Array.isArray(rows)) {
                         const formatted = rows
-                            .filter(r => (r.event_id || r.eventId) !== '__settings__' && (r.personnel_code || r.personnelCode) !== '__CONFIG__')
+                            .filter(r => 
+                                (r.event_id || r.eventId) !== '__settings__' && 
+                                (r.event_id || r.eventId) !== '__master_personnel__' && 
+                                (r.personnel_code || r.personnelCode) !== '__CONFIG__' && 
+                                (r.personnel_code || r.personnelCode) !== '__BANK__'
+                            )
                             .map(r => ({
                             id: r.id,
                             eventId: r.event_id || r.eventId || '',
@@ -907,5 +941,180 @@ const StorageService = {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+    },
+
+    // کلیدهای ذخیره‌سازی بانک اطلاعات پرسنل در کش مرورگر
+    PERSONNEL_CACHE_KEY: "entekhab_custom_personnel_map",
+    PERSONNEL_CACHE_TIME_KEY: "entekhab_custom_personnel_time",
+
+    // همگام‌سازی بانک پرسنل از دیتابیس ابری Supabase در تمامی صفحات (بدون نیاز به گیت)
+    syncMasterPersonnelBank: async function() {
+        // ۱. مقداردهی فوری از کش محلی
+        try {
+            const cached = localStorage.getItem(this.PERSONNEL_CACHE_KEY);
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                    window.PERSONNEL_MAP = Object.assign({}, window.PERSONNEL_MAP || {}, parsed);
+                }
+            }
+        } catch(e) {}
+
+        // ۲. دریافت از دیتابیس متمرکز ابری Supabase
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (!spConfig || !spConfig.url || !spConfig.anonKey) return;
+
+        try {
+            const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.__master_personnel__&select=id,status_text,timestamp&order=id.asc`;
+            const res = await fetch(fetchUrl, {
+                headers: {
+                    'apikey': spConfig.anonKey,
+                    'Authorization': `Bearer ${spConfig.anonKey}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (res.ok) {
+                const rows = await res.json();
+                if (Array.isArray(rows) && rows.length > 0) {
+                    let mergedMap = {};
+                    for (const row of rows) {
+                        if (row.status_text) {
+                            try {
+                                const chunk = JSON.parse(row.status_text);
+                                if (chunk && typeof chunk === 'object') {
+                                    Object.assign(mergedMap, chunk);
+                                }
+                            } catch(err) {}
+                        }
+                    }
+
+                    if (Object.keys(mergedMap).length > 0) {
+                        window.PERSONNEL_MAP = Object.assign({}, window.PERSONNEL_MAP || {}, mergedMap);
+                        try {
+                            localStorage.setItem(this.PERSONNEL_CACHE_KEY, JSON.stringify(mergedMap));
+                            if (rows[0].timestamp) {
+                                localStorage.setItem(this.PERSONNEL_CACHE_TIME_KEY, rows[0].timestamp);
+                            }
+                        } catch(e) {}
+                        return mergedMap;
+                    }
+                }
+            }
+        } catch(err) {
+            console.warn("همگام‌سازی ابری بانک پرسنل:", err);
+        }
+    },
+
+    // ذخیره و انتشار بانک پرسنل در دیتابیس ابری متمرکز (توسط هر ادمینی، بدون نیاز به گیت)
+    saveMasterPersonnelBank: async function(personnelMap, onProgress = null) {
+        if (!personnelMap || typeof personnelMap !== 'object') {
+            throw new Error("داده‌های پرسنل نامعتبر است.");
+        }
+
+        const totalCount = Object.keys(personnelMap).length;
+        if (totalCount === 0) {
+            throw new Error("لیست پرسنل خالی است.");
+        }
+
+        // اطمینان از دسترسی ادمین‌ها
+        if (!personnelMap['992113']) personnelMap['992113'] = ['مارال پورمند', '1272744868'];
+        if (!personnelMap['980253']) personnelMap['980253'] = ['حسن لندی', '1272126803'];
+
+        // ۱. اعمال فوری در حافظه جاری مرورگر
+        window.PERSONNEL_MAP = personnelMap;
+        const nowIso = new Date().toISOString();
+        try {
+            localStorage.setItem(this.PERSONNEL_CACHE_KEY, JSON.stringify(personnelMap));
+            localStorage.setItem(this.PERSONNEL_CACHE_TIME_KEY, nowIso);
+        } catch(e) {}
+
+        // ۲. ذخیره در Supabase
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (!spConfig || !spConfig.url || !spConfig.anonKey) {
+            throw new Error("تنظیمات دیتابیس ابری Supabase یافت نشد.");
+        }
+
+        const headers = {
+            'apikey': spConfig.anonKey,
+            'Authorization': `Bearer ${spConfig.anonKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+        };
+
+        const entries = Object.entries(personnelMap);
+        const CHUNK_SIZE = 5000;
+        const totalChunks = Math.ceil(entries.length / CHUNK_SIZE);
+
+        for (let c = 0; c < totalChunks; c++) {
+            const chunkSlice = entries.slice(c * CHUNK_SIZE, (c + 1) * CHUNK_SIZE);
+            const chunkObj = Object.fromEntries(chunkSlice);
+            const chunkId = `__master_personnel_part_${c + 1}`;
+
+            if (onProgress) {
+                onProgress(c + 1, totalChunks, `در حال ذخیره بخش ${c + 1} از ${totalChunks} در فضای ابری (${chunkSlice.length} رکورد)...`);
+            }
+
+            // ۱. حذف رکورد قبلی با شناسه مشخص (سریع و ایمن)
+            try {
+                await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(chunkId)}`, {
+                    method: 'DELETE',
+                    headers
+                });
+            } catch(e) {}
+
+            // ۲. درج رکورد بخش جدید
+            const payload = {
+                id: chunkId,
+                event_id: '__master_personnel__',
+                event_title: `بانک پرسنل سازمان (بخش ${c + 1} از ${totalChunks})`,
+                personnel_code: '__BANK__',
+                full_name: `تعداد پرسنل: ${totalCount}`,
+                status: 'active',
+                status_text: JSON.stringify(chunkObj),
+                timestamp: nowIso,
+                jalali_date: this.toJalaliString(new Date()),
+                user_agent: navigator.userAgent.substring(0, 100)
+            };
+
+            const postRes = await fetch(`${spConfig.url}/rest/v1/${spConfig.table}`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(payload)
+            });
+
+            if (!postRes.ok) {
+                const errText = await postRes.text();
+                throw new Error(`خطا در ذخیره بخش ${c + 1}: ${errText}`);
+            }
+        }
+
+        // پاکسازی بخش‌های اضافی قبلی در صورت کاهش تعداد چانک‌ها (تا ۱۰ بخش)
+        for (let extra = totalChunks + 1; extra <= 10; extra++) {
+            const extraId = `__master_personnel_part_${extra}`;
+            try {
+                await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(extraId)}`, {
+                    method: 'DELETE',
+                    headers
+                });
+            } catch(e) {}
+        }
+
+        if (onProgress) {
+            onProgress(totalChunks, totalChunks, `بانک اطلاعاتی شامل ${totalCount.toLocaleString('fa-IR')} پرسنل با موفقیت در فضای ابری ذخیره و در تمام صفحات اعمال شد!`, true);
+        }
+
+        return {
+            success: true,
+            totalCount: totalCount,
+            updatedAt: nowIso
+        };
     }
 };
+
+// همگام‌سازی خودکار و پس‌زمینه بانک اطلاعات پرسنل در تمامی صفحات
+if (typeof StorageService !== 'undefined' && StorageService.syncMasterPersonnelBank) {
+    try {
+        StorageService.syncMasterPersonnelBank();
+    } catch(e) {}
+}

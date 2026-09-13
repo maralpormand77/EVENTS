@@ -693,7 +693,16 @@
       const rawNat = document.getElementById('inputNationalCode').value.trim();
       const errBox = document.getElementById('loginError');
 
-      const auth = authenticatePersonnel(rawCode, rawNat);
+      let auth = authenticatePersonnel(rawCode, rawNat);
+      if ((!auth || !auth.success) && typeof StorageService !== 'undefined' && StorageService.syncMasterPersonnelBank) {
+        try {
+          await StorageService.syncMasterPersonnelBank();
+          auth = authenticatePersonnel(rawCode, rawNat);
+        } catch (syncErr) {
+          console.warn("همگام‌سازی ابری اطلاعات پرسنل:", syncErr);
+        }
+      }
+
       if (auth && auth.success) {
         // همگام‌سازی و بررسی لیست پرسنل مجاز برای این رویداد
         try {

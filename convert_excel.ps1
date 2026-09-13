@@ -151,6 +151,17 @@ foreach ($kvp in $personnelMap.GetEnumerator()) {
 }
 [void]$sb.AppendLine("};")
 [void]$sb.AppendLine()
+[void]$sb.AppendLine("// کش به‌روزرسانی‌شده از پنل ادمین (در صورت وجود)")
+[void]$sb.AppendLine("try {")
+[void]$sb.AppendLine("    var _cachedMap = localStorage.getItem('entekhab_custom_personnel_map');")
+[void]$sb.AppendLine("    if (_cachedMap) {")
+[void]$sb.AppendLine("        var _parsed = JSON.parse(_cachedMap);")
+[void]$sb.AppendLine("        if (_parsed && typeof _parsed === 'object' && Object.keys(_parsed).length > 0) {")
+[void]$sb.AppendLine("            window.PERSONNEL_MAP = _parsed;")
+[void]$sb.AppendLine("        }")
+[void]$sb.AppendLine("    }")
+[void]$sb.AppendLine("} catch(e) {}")
+[void]$sb.AppendLine()
 
 $authJs = @'
 function normalizeInputDigits(str) {

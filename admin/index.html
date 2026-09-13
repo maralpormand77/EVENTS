@@ -331,9 +331,14 @@
           خروجی اکسل ثبت‌نام‌ها
         </button>
 
-        <button type="button" class="btn btn-primary" id="btnExportAllPersonnel" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="exportAllPersonnelExcel()" title="دریافت فایل اکسل کامل بانک اطلاعات کلیه پرسنل سازمان (۱۵,۵۴۱ نفر)">
+        <button type="button" class="btn btn-primary" id="btnExportAllPersonnel" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);" onclick="exportAllPersonnelExcel()" title="دریافت فایل اکسل کامل بانک اطلاعات کلیه پرسنل سازمان (۱۵,۵۴۲ نفر)">
           <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           خروجی کل پرسنل سازمان
+        </button>
+
+        <button type="button" class="btn btn-primary" id="btnUploadAllPersonnel" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);" onclick="openUploadPersonnelModal()" title="آپلود فایل اکسل لیست کلیه پرسنل سازمان و به‌روزرسانی مستقیم پروژه و گیت‌هاب">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          آپلود اکسل کل پرسنل
         </button>
 
         <button type="button" class="btn btn-secondary" onclick="printReport()" title="چاپ لیست فیلتر شده پرسنل">
@@ -1129,6 +1134,138 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       <iframe id="previewIframe" class="preview-iframe" src="about:blank"></iframe>
       <div style="margin-top: 14px; text-align: left;">
         <button type="button" class="btn btn-secondary" onclick="closePreviewModal()">بستن پیش‌نمایش</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال آپلود بانک اطلاعات پرسنل سازمان و ارسال به گیت‌هاب -->
+  <div class="modal-overlay" id="uploadPersonnelModal">
+    <div class="modal-card modal-lg" style="max-width: 880px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 42px; height: 42px; border-radius: 10px; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div>
+            <h3 class="modal-title" style="margin: 0; font-size: 1.15rem; color: #0f172a;">آپلود بانک اطلاعات کلیه پرسنل سازمان</h3>
+            <p style="margin: 3px 0 0 0; font-size: 0.8rem; color: #64748b;">به‌روزرسانی مستقیم دیتابیس پروژه و ارسال خودکار (Push) به مخزن گیت‌هاب</p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="closeUploadPersonnelModal()">✕</button>
+      </div>
+
+      <!-- محتوای مودال -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        
+        <!-- راهنمای ساختار اکسل -->
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px 16px; font-size: 0.85rem; color: #1e40af; line-height: 1.7; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <strong>نحوه تنظیم فایل اکسل:</strong> فایل اکسل باید شامل ستون‌های
+            <code>شماره پرسنلی</code>، <code>نام</code>، <code>نام خانوادگی</code> و <code>کد ملی</code> باشد (مشابه فایل <em>اطلاعات.xlsx</em>).
+          </div>
+          <button type="button" class="btn btn-outline" style="padding: 4px 12px; font-size: 0.8rem; background: #fff; white-space: nowrap;" onclick="exportAllPersonnelExcel()">
+            📥 خروجی نمونه فعلی
+          </button>
+        </div>
+
+        <!-- باکس آپلود فایل با Drag & Drop -->
+        <div id="personnelDropZone" style="border: 2px dashed #94a3b8; border-radius: 12px; padding: 26px 20px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('personnelFileInput').click()">
+          <input type="file" id="personnelFileInput" accept=".xlsx, .xls" style="display: none;" onchange="onPersonnelFileSelected(this.files)">
+          <div style="width: 50px; height: 50px; border-radius: 50%; background: #dcfce7; color: #166534; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="12" y2="12"/><line x1="15" y1="15" x2="12" y2="12"/></svg>
+          </div>
+          <div style="font-weight: 700; font-size: 0.95rem; color: #1e293b; margin-bottom: 4px;">
+            کلیک کنید یا فایل جدید اکسل (اطلاعات.xlsx) را به اینجا بکشید و رها فرمایید
+          </div>
+          <div style="font-size: 0.8rem; color: #64748b;">
+            فرمت‌های مورد تایید: <code>.xlsx</code> و <code>.xls</code>
+          </div>
+        </div>
+
+        <!-- وضعیت پردازش و مشخصات فایل انتخاب شده -->
+        <div id="personnelFileInfoBox" style="display: none; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <strong id="personnelFileName" style="color: #0f172a; font-size: 0.9rem;">اطلاعات.xlsx</strong>
+              <span id="personnelFileSize" style="color: #64748b; font-size: 0.8rem; margin-right: 8px;"></span>
+            </div>
+            <div id="personnelCountBadge" class="event-badge-pill badge-status-open" style="font-size: 0.82rem; padding: 4px 12px;">
+              تعداد پرسنل استخراج‌شده: ۰
+            </div>
+          </div>
+
+          <!-- پیش‌نمایش جدول ۵ رکورد اول -->
+          <div style="margin-top: 12px;">
+            <div style="font-size: 0.8rem; color: #475569; margin-bottom: 6px; font-weight: 600;">
+              پیش‌نمایش ۵ ردیف اول فایل بارگذاری شده:
+            </div>
+            <div style="max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;">
+              <table class="data-table" style="margin: 0; font-size: 0.8rem;">
+                <thead>
+                  <tr>
+                    <th style="width: 40px; text-align: center;">#</th>
+                    <th>شماره پرسنلی</th>
+                    <th>نام و نام خانوادگی</th>
+                    <th>کد ملی</th>
+                  </tr>
+                </thead>
+                <tbody id="personnelPreviewTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- تنظیمات گیت‌هاب جهت نشستن در گیت -->
+        <!-- پیام پیشرفت و لاگ عملیات -->
+        <div id="personnelUploadProgressBox" style="display: none; border-radius: 10px; padding: 12px 14px; font-size: 0.85rem; line-height: 1.8;">
+        </div>
+
+        <!-- تنظیمات اختیاری گیت‌هاب (فقط در صورت تمایل مدیر ارشد) -->
+        <details style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; background: #f8fafc;">
+          <summary style="cursor: pointer; font-weight: 700; font-size: 0.83rem; color: #475569; display: flex; align-items: center; justify-content: space-between; user-select: none;">
+            <span>⚙️ ارسال اختیاری به گیت‌هاب (ویژه مدیر دارای دسترسی Git)</span>
+            <span style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">برای سایر ادمین‌ها نیازی به این بخش نیست</span>
+          </summary>
+          <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #e2e8f0;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+              <div>
+                <label style="font-size: 0.78rem; color: #475569; display: block; margin-bottom: 4px;">مخزن گیت‌هاب:</label>
+                <input type="text" id="gitRepoInput" class="form-input" value="maralpormand77/EVENTS" style="font-size: 0.82rem; padding: 6px 10px; font-family: monospace;" dir="ltr">
+              </div>
+              <div>
+                <label style="font-size: 0.78rem; color: #475569; display: block; margin-bottom: 4px;">شاخه (Branch):</label>
+                <input type="text" id="gitBranchInput" class="form-input" value="main" style="font-size: 0.82rem; padding: 6px 10px; font-family: monospace;" dir="ltr">
+              </div>
+            </div>
+            <div>
+              <label style="font-size: 0.78rem; color: #475569; display: block; margin-bottom: 4px;">توکن شخصی گیت‌هاب (Personal Access Token):</label>
+              <input type="password" id="gitTokenInput" class="form-input" placeholder="ghp_... یا github_pat_..." style="font-size: 0.82rem; padding: 6px 10px; font-family: monospace;" dir="ltr">
+              <label style="font-size: 0.75rem; color: #64748b; display: flex; align-items: center; gap: 5px; margin-top: 6px; cursor: pointer;">
+                <input type="checkbox" id="chkSaveGitToken" checked>
+                ذخیره توکن در این مرورگر
+              </label>
+            </div>
+            <div style="text-align: left; margin-top: 10px;">
+              <button type="button" class="btn btn-outline" id="btnSubmitPersonnelToGit" onclick="submitPersonnelToGit()" style="font-size: 0.82rem; padding: 6px 14px;" disabled>
+                ارسال به مخزن گیت‌هاب (Push)
+              </button>
+            </div>
+          </div>
+        </details>
+
+      </div>
+
+      <!-- فوتر دکمه‌ها -->
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid #e2e8f0; margin-top: 14px; flex-wrap: wrap; gap: 8px;">
+        <button type="button" class="btn btn-secondary" onclick="closeUploadPersonnelModal()">
+          بستن
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-primary" id="btnSavePersonnelCloud" onclick="savePersonnelToCloudAndAllPages()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-weight: 800; font-size: 0.95rem; padding: 11px 24px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);" disabled>
+            ☁️ ذخیره و اعمال در کل سامانه (بدون نیاز به گیت)
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -2809,8 +2946,545 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       await loadData();
     });
 
-    // توجه: بستن پنجره تنظیمات رویداد صرفاً با دکمه‌های «ذخیره تغییرات» یا «انصراف و بستن» انجام می‌شود
-    // و کلیک روی پس‌زمینه یا کلید Esc به دلیل جلوگیری از پریدن ناخواسته تنظیمات غیرفعال شده است.
+    // ==========================================
+    // مدیریت آپلود بانک اطلاعات پرسنل و پوش مستقیم به گیت‌هاب
+    // ==========================================
+    const GITHUB_TOKEN_KEY = "entekhab_github_token";
+    const GITHUB_REPO_KEY = "entekhab_github_repo";
+    const GITHUB_BRANCH_KEY = "entekhab_github_branch";
+
+    let currentUploadedPersonnelMap = null;
+    let currentUploadedXlsxBuffer = null;
+    let currentUploadedFileName = "اطلاعات.xlsx";
+
+    function openUploadPersonnelModal() {
+      const modal = document.getElementById('uploadPersonnelModal');
+      const tokenInput = document.getElementById('gitTokenInput');
+      const repoInput = document.getElementById('gitRepoInput');
+      const branchInput = document.getElementById('gitBranchInput');
+      const progressBox = document.getElementById('personnelUploadProgressBox');
+      const fileInfoBox = document.getElementById('personnelFileInfoBox');
+      const btnSaveCloud = document.getElementById('btnSavePersonnelCloud');
+      const btnSubmitGit = document.getElementById('btnSubmitPersonnelToGit');
+
+      tokenInput.value = localStorage.getItem(GITHUB_TOKEN_KEY) || '';
+      repoInput.value = localStorage.getItem(GITHUB_REPO_KEY) || 'maralpormand77/EVENTS';
+      branchInput.value = localStorage.getItem(GITHUB_BRANCH_KEY) || 'main';
+
+      if (progressBox) progressBox.style.display = 'none';
+      if (fileInfoBox) fileInfoBox.style.display = 'none';
+      if (btnSaveCloud) btnSaveCloud.disabled = true;
+      if (btnSubmitGit) btnSubmitGit.disabled = true;
+
+      currentUploadedPersonnelMap = null;
+      currentUploadedXlsxBuffer = null;
+      document.getElementById('personnelFileInput').value = '';
+
+      modal.classList.add('active');
+    }
+
+    function closeUploadPersonnelModal() {
+      document.getElementById('uploadPersonnelModal').classList.remove('active');
+    }
+
+    // رویدادهای Drag & Drop
+    const dropZone = document.getElementById('personnelDropZone');
+    if (dropZone) {
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.style.borderColor = '#16a34a';
+          dropZone.style.background = '#f0fdf4';
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.style.borderColor = '#94a3b8';
+          dropZone.style.background = '#f8fafc';
+        }, false);
+      });
+
+      dropZone.addEventListener('drop', e => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length > 0) {
+          onPersonnelFileSelected(files);
+        }
+      }, false);
+    }
+
+    // پردازش فایل انتخاب‌شده اکسل
+    function onPersonnelFileSelected(files) {
+      if (!files || files.length === 0) return;
+      const file = files[0];
+      currentUploadedFileName = file.name;
+
+      if (!file.name.match(/\.(xlsx|xls)$/i)) {
+        alert("لطفاً یک فایل با پسوند .xlsx یا .xls انتخاب فرمایید.");
+        return;
+      }
+
+      if (typeof XLSX === 'undefined') {
+        alert("کتابخانه اکسل هنوز بارگذاری نشده است. لطفاً چند لحظه صبر کرده یا صفحه را رفرش فرمایید.");
+        return;
+      }
+
+      const fileInfoBox = document.getElementById('personnelFileInfoBox');
+      const fileNameEl = document.getElementById('personnelFileName');
+      const fileSizeEl = document.getElementById('personnelFileSize');
+      const countBadge = document.getElementById('personnelCountBadge');
+      const previewTbody = document.getElementById('personnelPreviewTableBody');
+      const btnSaveCloud = document.getElementById('btnSavePersonnelCloud');
+      const btnSubmitGit = document.getElementById('btnSubmitPersonnelToGit');
+      const progressBox = document.getElementById('personnelUploadProgressBox');
+
+      if (progressBox) progressBox.style.display = 'none';
+
+      fileNameEl.textContent = file.name;
+      fileSizeEl.textContent = `(${(file.size / 1024).toFixed(1)} کیلوبایت)`;
+      countBadge.textContent = "در حال پردازش سطرها...";
+      fileInfoBox.style.display = 'block';
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          currentUploadedXlsxBuffer = e.target.result;
+          const data = new Uint8Array(currentUploadedXlsxBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[firstSheetName];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+          if (!rows || rows.length <= 1) {
+            alert("فایل اکسل انتخاب شده خالی است یا سطری در آن یافت نشد.");
+            fileInfoBox.style.display = 'none';
+            return;
+          }
+
+          // تشخیص هوشمند ستون‌ها از روی سطر عنوان (هدر)
+          const headerRow = rows[0] || [];
+          let colPCode = -1, colFname = -1, colLname = -1, colFullName = -1, colNat = -1;
+          for (let c = 0; c < headerRow.length; c++) {
+            const h = String(headerRow[c] || '').trim();
+            if (h.includes('پرسنل')) colPCode = c;
+            else if (h.includes('ملی')) colNat = c;
+            else if (h.includes('خانوادگی')) colLname = c;
+            else if (h.includes('نام و نام') || h === 'نام کامل') colFullName = c;
+            else if (h.includes('نام')) colFname = c;
+          }
+
+          const parsedMap = {};
+          let previewRows = [];
+
+          for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length === 0) continue;
+
+            let pCode = '';
+            if (colPCode >= 0 && row[colPCode]) {
+              pCode = toStandardDigits(String(row[colPCode]).trim().replace(/\.0$/, ''));
+            } else if (row[0]) {
+              pCode = toStandardDigits(String(row[0]).trim().replace(/\.0$/, ''));
+            }
+            if (!pCode) continue;
+
+            let fullName = '';
+            let natCode = '';
+
+            // استخراج نام کامل
+            if (colFullName >= 0 && row[colFullName]) {
+              fullName = String(row[colFullName]).trim();
+            } else if (colFname >= 0 && colLname >= 0) {
+              const fname = String(row[colFname] || '').trim();
+              const lname = String(row[colLname] || '').trim();
+              fullName = `${fname} ${lname}`.trim();
+            } else if (colFname >= 0 && row[colFname]) {
+              fullName = String(row[colFname]).trim();
+            } else if (row.length >= 4) {
+              const fname = String(row[1] || '').trim();
+              const lname = String(row[2] || '').trim();
+              fullName = `${fname} ${lname}`.trim();
+            } else if (row.length >= 3) {
+              fullName = String(row[1] || '').trim();
+            } else if (row.length >= 2) {
+              fullName = String(row[1] || '').trim();
+            }
+
+            // استخراج کد ملی
+            if (colNat >= 0 && row[colNat]) {
+              natCode = toStandardDigits(String(row[colNat]).trim().replace(/\.0$/, ''));
+            } else if (row.length >= 4) {
+              natCode = toStandardDigits(String(row[3] || '').trim().replace(/\.0$/, ''));
+            } else if (row.length === 3) {
+              natCode = toStandardDigits(String(row[2] || '').trim().replace(/\.0$/, ''));
+            }
+
+            parsedMap[pCode] = [fullName, natCode];
+
+            if (previewRows.length < 5) {
+              previewRows.push({
+                index: previewRows.length + 1,
+                pCode: pCode,
+                fullName: fullName,
+                natCode: natCode
+              });
+            }
+          }
+
+          // اطمینان از حضور ادمین‌ها
+          if (!parsedMap['992113']) parsedMap['992113'] = ['مارال پورمند', '1272744868'];
+          if (!parsedMap['980253']) parsedMap['980253'] = ['حسن لندی', '1272126803'];
+
+          const totalParsed = Object.keys(parsedMap).length;
+          currentUploadedPersonnelMap = parsedMap;
+
+          countBadge.textContent = `تعداد پرسنل شناسایی‌شده: ${totalParsed.toLocaleString('fa-IR')} نفر`;
+
+          // رندر جدول پیش‌نمایش
+          previewTbody.innerHTML = previewRows.map(r => `
+            <tr>
+              <td style="text-align: center; color: #64748b;">${r.index}</td>
+              <td style="font-family: monospace; font-weight: 700; color: #0284c7;">${r.pCode}</td>
+              <td>${r.fullName || '<span style="color: #94a3b8;">-</span>'}</td>
+              <td style="font-family: monospace;">${r.natCode || '<span style="color: #94a3b8;">-</span>'}</td>
+            </tr>
+          `).join('');
+
+          if (btnSaveCloud) btnSaveCloud.disabled = false;
+          if (btnSubmitGit) btnSubmitGit.disabled = false;
+
+        } catch (err) {
+          console.error("خطا در پردازش اکسل:", err);
+          alert("خطا در خواندن فایل اکسل: " + err.message);
+          fileInfoBox.style.display = 'none';
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    // ذخیره ابری و اعمال آنی در تمام صفحات (بدون نیاز به گیت)
+    async function savePersonnelToCloudAndAllPages() {
+      if (!currentUploadedPersonnelMap) {
+        alert("لطفاً ابتدا فایل اکسل پرسنل را انتخاب فرمایید.");
+        return;
+      }
+
+      const btnSaveCloud = document.getElementById('btnSavePersonnelCloud');
+      const progressBox = document.getElementById('personnelUploadProgressBox');
+      if (btnSaveCloud) btnSaveCloud.disabled = true;
+
+      progressBox.style.display = 'block';
+      progressBox.style.background = '#eff6ff';
+      progressBox.style.border = '1px solid #bfdbfe';
+      progressBox.style.color = '#1e3a8a';
+      progressBox.innerHTML = '<div style="font-weight: 700; margin-bottom: 6px;">در حال ذخیره در دیتابیس ابری متمرکز...</div>';
+
+      try {
+        const totalCount = Object.keys(currentUploadedPersonnelMap).length;
+
+        await StorageService.saveMasterPersonnelBank(currentUploadedPersonnelMap, (current, total, msg, isDone) => {
+          const icon = isDone ? '✅' : '⏳';
+          progressBox.innerHTML += `<div>${icon} [${current}/${total}] ${msg}</div>`;
+          progressBox.scrollTop = progressBox.scrollHeight;
+        });
+
+        // به‌روزرسانی عنوان دکمه خروجی
+        const btnAll = document.getElementById('btnExportAllPersonnel');
+        if (btnAll) btnAll.title = `دریافت فایل اکسل کامل بانک اطلاعات کلیه پرسنل سازمان (${totalCount.toLocaleString('fa-IR')} نفر)`;
+
+        progressBox.style.background = '#f0fdf4';
+        progressBox.style.border = '1px solid #bbf7d0';
+        progressBox.style.color = '#14532d';
+        progressBox.innerHTML += `
+          <div style="margin-top: 10px; padding: 12px; background: #ffffff; border-radius: 8px; border: 1px solid #86efac;">
+            <strong style="color: #166534; font-size: 0.95rem;">🎉 بانک اطلاعاتی با موفقیت در کل سامانه اعمال شد!</strong><br>
+            اطلاعات <strong>${totalCount.toLocaleString('fa-IR')} پرسنل</strong> در دیتابیس ابری ذخیره شد و از هم‌اکنون در تمامی صفحات (صبح همدلی، کویر ورزنه، رفتینگ مارکده و پنل ادمین) فعال است.<br>
+            کلیه همکاران می‌توانند با کد پرسنلی و کد ملی خود فوراً در رویدادها ثبت‌نام نمایند.
+          </div>
+        `;
+
+        // رفرش داده‌های پنل پس از ۱ ثانیه
+        setTimeout(() => {
+          try { loadData(); } catch(e) {}
+        }, 800);
+
+      } catch (err) {
+        console.error("خطا در ذخیره ابری:", err);
+        progressBox.style.background = '#fef2f2';
+        progressBox.style.border = '1px solid #fecaca';
+        progressBox.style.color = '#991b1b';
+        progressBox.innerHTML += `
+          <div style="margin-top: 8px; font-weight: 700;">
+            ❌ خطا در ذخیره ابری: ${err.message}
+          </div>
+        `;
+      } finally {
+        if (btnSaveCloud) btnSaveCloud.disabled = false;
+      }
+    }
+
+    // تبدیل بایت‌ها به Base64 با پشتیبانی از حجم‌های بالا
+    function uint8ArrayToBase64(bytes) {
+      let binary = '';
+      const len = bytes.byteLength;
+      const chunkSz = 8192;
+      for (let i = 0; i < len; i += chunkSz) {
+        const chunk = bytes.subarray(i, Math.min(i + chunkSz, len));
+        binary += String.fromCharCode.apply(null, chunk);
+      }
+      return window.btoa(binary);
+    }
+
+    // ارسال مستقیم به گیت‌هاب و اعمال در کل پروژه
+    async function submitPersonnelToGit() {
+      if (!currentUploadedPersonnelMap || !currentUploadedXlsxBuffer) {
+        alert("لطفاً ابتدا فایل اکسل پرسنل را انتخاب فرمایید.");
+        return;
+      }
+
+      const repo = (document.getElementById('gitRepoInput').value || 'maralpormand77/EVENTS').trim();
+      const branch = (document.getElementById('gitBranchInput').value || 'main').trim();
+      const token = (document.getElementById('gitTokenInput').value || '').trim();
+      const chkSave = document.getElementById('chkSaveGitToken').checked;
+
+      if (!token) {
+        alert("لطفاً توکن شخصی گیت‌هاب (Personal Access Token) را وارد فرمایید.\nجهت ساخت توکن با تیک repo روی لینک راهنما کلیک نمایید.");
+        document.getElementById('gitTokenInput').focus();
+        return;
+      }
+
+      if (chkSave) {
+        localStorage.setItem(GITHUB_TOKEN_KEY, token);
+        localStorage.setItem(GITHUB_REPO_KEY, repo);
+        localStorage.setItem(GITHUB_BRANCH_KEY, branch);
+      } else {
+        localStorage.removeItem(GITHUB_TOKEN_KEY);
+      }
+
+      const progressBox = document.getElementById('personnelUploadProgressBox');
+      const btnSubmit = document.getElementById('btnSubmitPersonnelToGit');
+      const btnLocal = document.getElementById('btnApplyLocalOnly');
+
+      btnSubmit.disabled = true;
+      btnLocal.disabled = true;
+      progressBox.style.display = 'block';
+      progressBox.style.background = '#eff6ff';
+      progressBox.style.border = '1px solid #bfdbfe';
+      progressBox.style.color = '#1e3a8a';
+
+      function logStep(stepNum, totalSteps, text, isDone = false, isErr = false) {
+        const icon = isErr ? '❌' : (isDone ? '✅' : '⏳');
+        progressBox.innerHTML += `<div>${icon} [${stepNum}/${totalSteps}] ${text}</div>`;
+        progressBox.scrollTop = progressBox.scrollHeight;
+      }
+
+      const totalCount = Object.keys(currentUploadedPersonnelMap).length;
+      progressBox.innerHTML = `<div style="font-weight: 700; margin-bottom: 6px; border-bottom: 1px solid #bfdbfe; padding-bottom: 4px;">شروع فرآیند همگام‌سازی (${totalCount.toLocaleString('fa-IR')} پرسنل)...</div>`;
+
+      try {
+        const headers = {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        };
+
+        // ۱. بررسی دسترسی به مخزن
+        logStep(1, 6, `بررسی دسترسی به مخزن ${repo}...`);
+        const testRes = await fetch(`https://api.github.com/repos/${repo}`, { headers });
+        if (!testRes.ok) {
+          if (testRes.status === 401) throw new Error("توکن گیت‌هاب نامعتبر یا منقضی شده است.");
+          if (testRes.status === 404) throw new Error("مخزن گیت‌هاب یافت نشد یا توکن دسترسی repo ندارد.");
+          throw new Error(`خطای اتصال به گیت‌هاب (کد ${testRes.status})`);
+        }
+        logStep(1, 6, "ارتباط با مخزن گیت‌هاب با موفقیت برقرار شد.", true);
+
+        // ۲. دریافت آخرین کامیت شاخه main
+        logStep(2, 6, `دریافت آخرین اطلاعات شاخه ${branch}...`);
+        const refRes = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, { headers });
+        if (!refRes.ok) throw new Error(`شاخه ${branch} در مخزن یافت نشد.`);
+        const refData = await refRes.json();
+        const latestCommitSha = refData.object.sha;
+
+        const commitRes = await fetch(`https://api.github.com/repos/${repo}/git/commits/${latestCommitSha}`, { headers });
+        const commitData = await commitRes.json();
+        const baseTreeSha = commitData.tree.sha;
+        logStep(2, 6, `شاخه ${branch} با آخرین کامیت ${latestCommitSha.substring(0, 7)} آماده است.`, true);
+
+        // ۳. ساخت محتوای personnel-data.js
+        logStep(3, 6, "تولید کدهای بهینه‌شده دیتابیس جاوااسکریپت پرسنل...");
+        const jsonMap = JSON.stringify(currentUploadedPersonnelMap);
+        const jsContent = '/**\n * دیتابیس پرسنل گروه انتخاب استخراج‌شده از اطلاعات.xlsx\n * تعداد پرسنل: ' + totalCount + '\n */\n' +
+          'window.PERSONNEL_MAP = ' + jsonMap + ';\n\n' +
+          '// کش به‌روزرسانی‌شده از پنل ادمین (در صورت وجود)\n' +
+          'try {\n' +
+          '    var _cachedMap = localStorage.getItem("entekhab_custom_personnel_map");\n' +
+          '    if (_cachedMap) {\n' +
+          '        var _parsed = JSON.parse(_cachedMap);\n' +
+          '        if (_parsed && typeof _parsed === "object" && Object.keys(_parsed).length > 0) {\n' +
+          '            window.PERSONNEL_MAP = _parsed;\n' +
+          '        }\n' +
+          '    }\n' +
+          '} catch(e) {}\n\n' +
+          'function normalizeInputDigits(str) {\n' +
+          '    if (!str) return "";\n' +
+          '    return String(str).trim()\n' +
+          '        .replace(/[۰-۹]/g, function(d) { return "۰۱۲۳۴۵۶۷۸۹".indexOf(d); })\n' +
+          '        .replace(/[٠-٩]/g, function(d) { return "٠١٢٣٤٥٦٧٨٩".indexOf(d); })\n' +
+          '        .replace(/\\s+/g, "");\n' +
+          '}\n\n' +
+          'function authenticatePersonnel(personnelCode, nationalCode) {\n' +
+          '    var cleanPCode = normalizeInputDigits(personnelCode);\n' +
+          '    var cleanNatCode = normalizeInputDigits(nationalCode);\n' +
+          '    if (!cleanPCode && !cleanNatCode) return { success: false, message: "لطفاً شماره پرسنلی و کد ملی را وارد فرمایید." };\n' +
+          '    if (!cleanPCode) return { success: false, message: "لطفاً شماره پرسنلی خود را وارد فرمایید." };\n' +
+          '    if (!cleanNatCode) return { success: false, message: "لطفاً کد ملی خود را وارد فرمایید." };\n' +
+          '    if (!window.PERSONNEL_MAP) return { success: false, message: "خطا در بارگذاری سامانه. لطفاً صفحه را رفرش فرمایید." };\n' +
+          '    var record = window.PERSONNEL_MAP[cleanPCode];\n' +
+          '    if (!record) return { success: false, message: "شماره پرسنلی وارد شده در سامانه یافت نشد. لطفاً دقت فرمایید." };\n' +
+          '    var fullName = record[0];\n' +
+          '    var registeredNatCode = normalizeInputDigits(record[1]);\n' +
+          '    var isMatch = false;\n' +
+          '    if (registeredNatCode) {\n' +
+          '        if (registeredNatCode === cleanNatCode) {\n' +
+          '            isMatch = true;\n' +
+          '        } else {\n' +
+          '            var regTrim = registeredNatCode.replace(/^0+/, "");\n' +
+          '            var inputTrim = cleanNatCode.replace(/^0+/, "");\n' +
+          '            if (regTrim && regTrim === inputTrim) {\n' +
+          '                isMatch = true;\n' +
+          '            } else if (cleanNatCode.padStart(10, "0") === registeredNatCode.padStart(10, "0")) {\n' +
+          '                isMatch = true;\n' +
+          '            }\n' +
+          '        }\n' +
+          '    } else {\n' +
+          '        if (cleanNatCode === cleanPCode || cleanNatCode.length >= 4) isMatch = true;\n' +
+          '    }\n' +
+          '    if (isMatch) {\n' +
+          '        return {\n' +
+          '            success: true,\n' +
+          '            personnelCode: cleanPCode,\n' +
+          '            fullName: fullName,\n' +
+          '            nationalCode: registeredNatCode || cleanNatCode,\n' +
+          '            user: { personnelCode: cleanPCode, fullName: fullName, nationalCode: registeredNatCode || cleanNatCode }\n' +
+          '        };\n' +
+          '    } else {\n' +
+          '        return { success: false, message: "کد ملی وارد شده با شماره پرسنلی مطابقت ندارد. لطفاً مجدداً بررسی فرمایید." };\n' +
+          '    }\n' +
+          '}\n';
+
+        logStep(3, 6, "فایل‌های جاوااسکریپت دیتابیس آماده‌سازی شد.", true);
+
+        // ۴. ایجاد Blobs در گیت‌هاب
+        logStep(4, 6, "در حال ایجاد Blobs برای فایل اکسل و ۵ فایل پروژه در گیت‌هاب...");
+
+        const xlsxBase64 = uint8ArrayToBase64(new Uint8Array(currentUploadedXlsxBuffer));
+        const xlsxBlobRes = await fetch(`https://api.github.com/repos/${repo}/git/blobs`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ content: xlsxBase64, encoding: 'base64' })
+        });
+        if (!xlsxBlobRes.ok) throw new Error("خطا در ایجاد Blob اکسل در گیت‌هاب");
+        const xlsxBlob = await xlsxBlobRes.json();
+
+        const utf8Bytes = new TextEncoder().encode(jsContent);
+        const jsBase64 = uint8ArrayToBase64(utf8Bytes);
+
+        const jsBlobRes = await fetch(`https://api.github.com/repos/${repo}/git/blobs`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ content: jsBase64, encoding: 'base64' })
+        });
+        if (!jsBlobRes.ok) throw new Error("خطا در ایجاد Blob جاوااسکریپت در گیت‌هاب");
+        const jsBlob = await jsBlobRes.json();
+
+        logStep(4, 6, "فایل‌های Blob با موفقیت در فضای ابری گیت‌هاب ثبت شدند.", true);
+
+        // ۵. ساخت Tree جدید و ثبت کامیت
+        logStep(5, 6, "در حال ثبت ساختار درختی و ایجاد کامیت در گیت‌هاب...");
+        const treeEntries = [
+          { path: 'اطلاعات.xlsx', mode: '100644', type: 'blob', sha: xlsxBlob.sha },
+          { path: 'assets/js/personnel-data.js', mode: '100644', type: 'blob', sha: jsBlob.sha },
+          { path: '1/assets/js/personnel-data.js', mode: '100644', type: 'blob', sha: jsBlob.sha },
+          { path: '2/assets/js/personnel-data.js', mode: '100644', type: 'blob', sha: jsBlob.sha },
+          { path: '3/assets/js/personnel-data.js', mode: '100644', type: 'blob', sha: jsBlob.sha },
+          { path: 'admin/assets/js/personnel-data.js', mode: '100644', type: 'blob', sha: jsBlob.sha }
+        ];
+
+        const treeRes = await fetch(`https://api.github.com/repos/${repo}/git/trees`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ base_tree: baseTreeSha, tree: treeEntries })
+        });
+        if (!treeRes.ok) throw new Error("خطا در ساخت Tree در گیت‌هاب");
+        const newTree = await treeRes.json();
+
+        const commitMessage = `Update master personnel database from admin panel (${totalCount.toLocaleString('fa-IR')} پرسنل) [skip ci]`;
+        const newCommitRes = await fetch(`https://api.github.com/repos/${repo}/git/commits`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            message: commitMessage,
+            tree: newTree.sha,
+            parents: [latestCommitSha]
+          })
+        });
+        if (!newCommitRes.ok) throw new Error("خطا در ثبت کامیت در گیت‌هاب");
+        const newCommit = await newCommitRes.json();
+        logStep(5, 6, `کامیت با شناسه ${newCommit.sha.substring(0, 7)} با موفقیت ایجاد شد.`, true);
+
+        // ۶. به‌روزرسانی شاخه main (Push نهایی)
+        logStep(6, 6, `به‌روزرسانی شاخه ${branch} در گیت‌هاب...`);
+        const updateRefRes = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
+          method: 'PATCH',
+          headers,
+          body: JSON.stringify({ sha: newCommit.sha, force: true })
+        });
+        if (!updateRefRes.ok) throw new Error("خطا در به‌روزرسانی شاخه در گیت‌هاب");
+        logStep(6, 6, `شاخه ${branch} با موفقیت به کامیت جدید هدایت گردید!`, true);
+
+        // به‌روزرسانی کش محلی مرورگر
+        window.PERSONNEL_MAP = currentUploadedPersonnelMap;
+        localStorage.setItem('entekhab_custom_personnel_map', JSON.stringify(currentUploadedPersonnelMap));
+
+        const btnAll = document.getElementById('btnExportAllPersonnel');
+        if (btnAll) btnAll.title = `دریافت فایل اکسل کامل بانک اطلاعات کلیه پرسنل سازمان (${totalCount.toLocaleString('fa-IR')} نفر)`;
+
+        progressBox.style.background = '#f0fdf4';
+        progressBox.style.border = '1px solid #bbf7d0';
+        progressBox.style.color = '#14532d';
+        progressBox.innerHTML += `
+          <div style="margin-top: 10px; padding: 10px; background: #ffffff; border-radius: 8px; border: 1px solid #86efac;">
+            <strong style="color: #166534; font-size: 0.92rem;">🎉 عملیات با موفقیت ۱۰۰٪ به پایان رسید!</strong><br>
+            بانک اطلاعاتی شامل <strong>${totalCount.toLocaleString('fa-IR')} پرسنل</strong> هم در سامانه و هم مستقیماً در گیت‌هاب پوش (Push) شد.<br>
+            <a href="https://github.com/${repo}/commit/${newCommit.sha}" target="_blank" style="color: #0284c7; font-weight: 700; text-decoration: underline; margin-top: 4px; display: inline-block;">
+              مشاهده کامیت در گیت‌هاب (${newCommit.sha.substring(0, 7)}) &rarr;
+            </a>
+          </div>
+        `;
+
+      } catch (err) {
+        console.error("خطا در ارسال به گیت‌هاب:", err);
+        progressBox.style.background = '#fef2f2';
+        progressBox.style.border = '1px solid #fecaca';
+        progressBox.style.color = '#991b1b';
+        progressBox.innerHTML += `
+          <div style="margin-top: 8px; font-weight: 700;">
+            ❌ خطا در فرآیند ارسال به گیت‌هاب: ${err.message}
+          </div>
+          <div style="font-size: 0.8rem; margin-top: 4px; color: #b91c1c;">
+            نکته: در صورت تمایل می‌توانید روی دکمه «فقط ذخیره در این مرورگر» کلیک فرمایید تا تغییرات موقتاً در سیستم شما اعمال گردد.
+          </div>
+        `;
+      } finally {
+        btnSubmit.disabled = false;
+        btnLocal.disabled = false;
+      }
+    }
 
     // آغاز اجرای صفحه
     if (checkAuth()) {
