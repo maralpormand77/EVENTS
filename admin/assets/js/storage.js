@@ -634,11 +634,14 @@ const StorageService = {
                 throw new Error("مهلت ثبت‌نام یا انصراف در این رویداد به پایان رسیده است و امکان تغییر وضعیت وجود ندارد.");
             }
 
-            // ۲. بررسی حد نصاب رویداد: فقط و فقط اگر کاربر «مایل به شرکت» باشد بررسی می‌شود
-            // افرادی که گزینه «عدم حضور / انصراف» را انتخاب کرده‌اند هرگز مسدود نمی‌شوند و در حد نصاب شمارش نخواهند شد
-            if (formData.status === 'attending') {
-                const capCheck = await this.isEventCapacityFull(formData.eventId, formData.personnelCode);
-                if (capCheck.isFull) {
+            // ۲. بررسی حد نصاب رویداد: در صورت تکمیل حد نصاب، ثبت تمایل یا عدم تمایل جدید امکان‌پذیر نیست
+            const capCheck = await this.isEventCapacityFull(formData.eventId, formData.personnelCode);
+            if (capCheck.isFull) {
+                const localListCheck = this.getLocalRegistrations() || [];
+                const existing = localListCheck.find(r => 
+                    r.eventId === formData.eventId && String(r.personnelCode).trim() === pCode
+                );
+                if (!existing || existing.status !== 'attending' || formData.status === 'attending') {
                     throw new Error("تعداد ثبت نام نفرات به حد نصاب رسیده است");
                 }
             }

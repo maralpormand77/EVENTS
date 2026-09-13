@@ -173,6 +173,14 @@
             </p>
           </div>
 
+          <!-- پیام تکمیل حد نصاب ظرفیت رویداد (در صورت تکمیل ظرفیت و عدم ثبت‌نام قبلی) -->
+          <div id="statusCapacityFull" style="display: none; background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 12px; padding: 24px 20px; text-align: center;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <h3 style="font-size: 1.15rem; font-weight: 800; color: #991b1b; margin: 0;">تعداد ثبت نام نفرات به حد نصاب رسیده است</h3>
+          </div>
+
           <!-- حالت ۱: هنوز تصمیمی اعلام نشده -->
           <div id="statusNotDecided" style="display: none;">
             <div class="form-header">
@@ -494,6 +502,7 @@
       const attendingCard = document.getElementById('statusAttendingCard');
       const declinedCard = document.getElementById('statusDeclinedCard');
       const deadlineExpired = document.getElementById('statusDeadlineExpired');
+      const capacityFull = document.getElementById('statusCapacityFull');
       const cancelSection = document.getElementById('cancelAttendanceSection');
       const cancelExpiredNotice = document.getElementById('cancelExpiredNotice');
       const reAttendSection = document.getElementById('reAttendSection');
@@ -504,6 +513,7 @@
       attendingCard.style.display = 'none';
       declinedCard.style.display = 'none';
       if (deadlineExpired) deadlineExpired.style.display = 'none';
+      if (capacityFull) capacityFull.style.display = 'none';
 
       // دریافت آخرین تنظیمات مهلت و متون رویداد از سرور
       try {
@@ -522,6 +532,7 @@
           if (attendingCard) attendingCard.style.display = 'none';
           if (declinedCard) declinedCard.style.display = 'none';
           if (deadlineExpired) deadlineExpired.style.display = 'none';
+          if (capacityFull) capacityFull.style.display = 'none';
 
           let notAllowedCard = document.getElementById('statusNotAllowedCard');
           if (!notAllowedCard) {
@@ -553,44 +564,28 @@
         loading.style.display = 'none';
 
         if (!record) {
-          if (isExpired) {
-            if (deadlineExpired) deadlineExpired.style.display = 'block';
-            notDecided.style.display = 'none';
-          } else {
-            notDecided.style.display = 'block';
+          // بررسی حد نصاب رویداد
+          let isCapFull = false;
+          try {
+            if (typeof StorageService !== 'undefined' && StorageService.isEventCapacityFull) {
+              const capCheck = await StorageService.isEventCapacityFull(EVENT_ID, currentUser.personnelCode);
+              isCapFull = capCheck.isFull;
+            }
+          } catch (e) {}
 
-            // بررسی حد نصاب ظرفیت رویداد
-            try {
-              if (typeof StorageService !== 'undefined' && StorageService.isEventCapacityFull) {
-                const capCheck = await StorageService.isEventCapacityFull(EVENT_ID, currentUser.personnelCode);
-                let capNotice = document.getElementById('statusCapacityNotice');
-                const btnAttendEl = document.getElementById('btnAttend');
-                if (capCheck.isFull) {
-                  if (!capNotice) {
-                    capNotice = document.createElement('div');
-                    capNotice.id = 'statusCapacityNotice';
-                    capNotice.style.cssText = 'background: #fef2f2; border: 1.5px solid #fecaca; color: #991b1b; padding: 12px 16px; border-radius: 10px; font-size: 0.88rem; font-weight: 700; text-align: center; margin-bottom: 14px;';
-                    notDecided.insertBefore(capNotice, notDecided.firstChild);
-                  }
-                  capNotice.textContent = "تعداد ثبت نام نفرات به حد نصاب رسیده است";
-                  capNotice.style.display = 'block';
-                  if (btnAttendEl) {
-                    btnAttendEl.disabled = true;
-                    btnAttendEl.style.opacity = '0.5';
-                    btnAttendEl.style.cursor = 'not-allowed';
-                    btnAttendEl.title = 'تعداد ثبت نام نفرات به حد نصاب رسیده است';
-                  }
-                } else {
-                  if (capNotice) capNotice.style.display = 'none';
-                  if (btnAttendEl) {
-                    btnAttendEl.disabled = false;
-                    btnAttendEl.style.opacity = '1';
-                    btnAttendEl.style.cursor = 'pointer';
-                    btnAttendEl.title = '';
-                  }
-                }
-              }
-            } catch (errCap) {}
+          if (isCapFull) {
+            // وقتی تعداد به حد نصاب رسیده، شخص نباید تمایل یا عدم تمایل اعلام کند و گزینه‌ها اصلاً نمایش داده نمی‌شوند
+            notDecided.style.display = 'none';
+            if (deadlineExpired) deadlineExpired.style.display = 'none';
+            if (capacityFull) capacityFull.style.display = 'block';
+          } else if (isExpired) {
+            if (capacityFull) capacityFull.style.display = 'none';
+            notDecided.style.display = 'none';
+            if (deadlineExpired) deadlineExpired.style.display = 'block';
+          } else {
+            if (capacityFull) capacityFull.style.display = 'none';
+            if (deadlineExpired) deadlineExpired.style.display = 'none';
+            notDecided.style.display = 'block';
           }
         } else if (record.status === 'attending') {
           document.getElementById('attendingTimeText').textContent = record.jalaliDate || record.timestamp;
@@ -667,13 +662,16 @@
         return;
       }
 
-      // بررسی تکمیل حد نصاب ظرفیت رویداد (فقط در صورت تمایل به حضور)
-      if (status === 'attending' && typeof StorageService !== 'undefined' && StorageService.isEventCapacityFull) {
+      // بررسی تکمیل حد نصاب ظرفیت رویداد
+      if (typeof StorageService !== 'undefined' && StorageService.isEventCapacityFull) {
         const capCheck = await StorageService.isEventCapacityFull(EVENT_ID, currentUser.personnelCode);
         if (capCheck.isFull) {
-          alert("تعداد ثبت نام نفرات به حد نصاب رسیده است");
-          await loadUserStatus();
-          return;
+          const existing = await StorageService.getUserRegistration(EVENT_ID, currentUser.personnelCode);
+          if (!existing || existing.status !== 'attending' || status === 'attending') {
+            alert("تعداد ثبت نام نفرات به حد نصاب رسیده است");
+            await loadUserStatus();
+            return;
+          }
         }
       }
 
