@@ -4226,7 +4226,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       currentAdminSection = section;
     }
 
-    // تنظیمات و سوالات پیش‌فرض نظرسنجی اختصاصی هر رویداد
+    // تنظیمات و سوالات پیش‌فرض نظرسنجی اختصاصی هر رویداد متصل به دامنه‌های Vercel
     const EVENT_SURVEY_DEFAULTS = {
       'sobh-hamdeli': {
         id: 'survey_sobh-hamdeli',
@@ -4234,6 +4234,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         eventNum: 1,
         folder: 'survey1',
         title: 'نظرسنجی کیفیت برگزاری رویداد صبح همدلی',
+        vercelUrl: 'https://sobh-survey.vercel.app/',
         description: 'همکار گرامی، خواهشمند است با اعلام نظرات و میزان رضایت خود، ما را در ارتقای کیفیت برنامه‌های آتی یاری فرمایید.',
         questions: [
           {
@@ -4279,6 +4280,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         eventNum: 2,
         folder: 'survey2',
         title: 'نظرسنجی کیفیت برگزاری تور کویر ورزنه',
+        vercelUrl: 'https://kavir-survey.vercel.app/',
         description: 'همکار گرامی، خواهشمند است با ارزیابی بخش‌های مختلف تور کویر ورزنه، ما را در برگزاری هرچه بهتر برنامه‌های آتی همراهی فرمایید.',
         questions: [
           {
@@ -4324,6 +4326,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         eventNum: 3,
         folder: 'survey3',
         title: 'نظرسنجی کیفیت برگزاری تور رفتینگ مارکده',
+        vercelUrl: 'https://rafting-survey.vercel.app/',
         description: 'همکار گرامی، با سپاس از حضور پرشور شما در تور رفتینگ مارکده، لطفاً با تکمیل این فرم ما را در ارزیابی و بهبود خدمات یاری نمایید.',
         questions: [
           {
@@ -4374,7 +4377,6 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
       if (EVENT_SURVEY_DEFAULTS[eventId]) {
         const def = EVENT_SURVEY_DEFAULTS[eventId];
-        const num = def.eventNum;
 
         // ۱. اگر ادمین آدرس اختصاصی دستی Vercel ذخیره کرده باشد
         const custom = localStorage.getItem('survey_custom_url_' + eventId) || localStorage.getItem('survey_custom_url_survey_' + eventId);
@@ -4386,7 +4388,13 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           return u;
         }
 
-        // ۲. اگر پنل در وب یا ورسل لود شده باشد، آدرس ساب‌پوشه ورسل را برمی‌گرداند
+        // ۲. آدرس فعال رسمی Vercel متصل شده برای این نظرسنجی
+        if (def.vercelUrl) {
+          return def.vercelUrl;
+        }
+
+        const num = def.eventNum;
+        // ۳. اگر پنل در وب یا ورسل لود شده باشد، آدرس ساب‌پوشه ورسل را برمی‌گرداند
         if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
           let base = window.location.href.split('?')[0].split('#')[0];
           base = base.replace(/\/admin(\/index\.html|\.html|\/)?$/i, '');
@@ -4394,7 +4402,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           return `${base}/survey${num}/`;
         }
 
-        // ۳. آدرس پیش‌فرض پروژه مجزای Vercel
+        // ۴. آدرس پیش‌فرض پروژه مجزای Vercel
         return `https://entekhab-survey${num}.vercel.app/`;
       }
 
@@ -4407,10 +4415,11 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       return `./survey.html?id=${encodeURIComponent(surveyIdOrEventId)}`;
     }
 
-    // دریافت آدرس پیش‌نمایش مستقیم (محلی یا آنلاین)
+    // دریافت آدرس پیش‌نمایش مستقیم (آنلاین Vercel یا محلی)
     function getSurveyPreviewUrl(eventId, num) {
-      if (window.location.protocol === 'file:') {
-        return `./survey${num}/index.html`;
+      const def = EVENT_SURVEY_DEFAULTS[eventId];
+      if (def && def.vercelUrl) {
+        return def.vercelUrl;
       }
       return getSurveyPublicUrl(eventId);
     }
@@ -4418,20 +4427,20 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     // تنظیم یا ویرایش آدرس اختصاصی دامنه Vercel توسط ادمین
     function setCustomSurveyUrl(eventId, eventTitle) {
       const def = EVENT_SURVEY_DEFAULTS[eventId];
-      const num = def ? def.eventNum : 1;
-      const current = localStorage.getItem('survey_custom_url_' + eventId) || getSurveyPublicUrl(eventId);
+      const defaultUrl = (def && def.vercelUrl) ? def.vercelUrl : getSurveyPublicUrl(eventId);
+      const current = localStorage.getItem('survey_custom_url_' + eventId) || defaultUrl;
       const input = prompt(
-        `🌐 تنظیم آدرس Vercel برای نظرسنجی «${eventTitle}»:\n\nاگر پوشه survey${num} را در پروژه‌ای مجزا در Vercel متصل کرده‌اید، آدرس پروژه را وارد کنید (مثال: https://entekhab-survey${num}.vercel.app)\n\n(برای بازگشت به آدرس خودکار، کادر را خالی بگذارید):`,
+        `🌐 تنظیم یا تغییر آدرس Vercel برای نظرسنجی «${eventTitle}»:\n\nآدرس فعلی متصل‌شده: ${defaultUrl}\n\n(جهت تغییر، آدرس جدید را وارد کنید یا برای بازگشت به آدرس پیش‌فرض، کادر را خالی بگذارید):`,
         current
       );
       if (input !== null) {
         const trimmed = input.trim();
-        if (trimmed) {
+        if (trimmed && trimmed !== defaultUrl) {
           localStorage.setItem('survey_custom_url_' + eventId, trimmed);
           showAdminToast("✓ آدرس اختصاصی Vercel با موفقیت ذخیره شد.");
         } else {
           localStorage.removeItem('survey_custom_url_' + eventId);
-          showAdminToast("آدرس به حالت خودکار بازگردانده شد.");
+          showAdminToast("آدرس به دامنه رسمی Vercel متصل گردید.");
         }
         updateEventSurveyBoxes();
         if (typeof renderSurveysList === 'function') renderSurveysList();
@@ -4493,7 +4502,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <span style="font-size: 0.8rem; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
                   <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);"></span>
-                  صفحه نظرسنجی Vercel آماده است
+                  نظرسنجی آنلاین Vercel
                 </span>
                 <span style="font-size: 0.74rem; font-weight: 700; color: #15803d; background: #dcfce7; padding: 2px 8px; border-radius: 10px; border: 1px solid #bbf7d0;">
                   ${respCount.toLocaleString('fa-IR')} پاسخ دریافتی
@@ -4501,10 +4510,10 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
               </div>
 
               <!-- نمایش آدرس اختصاصی نظرسنجی به همراه ویرایش دامنه -->
-              <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; font-size: 0.73rem; color: #334155;">
-                <span style="direction: ltr; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px;" title="${publicUrl}">
+              <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 6px; padding: 5px 8px; margin-bottom: 8px; font-size: 0.73rem; color: #334155; gap: 6px;">
+                <a href="${publicUrl}" target="_blank" style="direction: ltr; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; color: #0284c7; text-decoration: none; font-weight: 700;" title="مشاهده مستقیم صفحه نظرسنجی">
                   ${publicUrl}
-                </span>
+                </a>
                 <button type="button" class="btn btn-outline" style="padding: 2px 6px; font-size: 0.69rem; border-color: #86efac; color: #15803d; line-height: 1.2; flex-shrink: 0;" onclick="setCustomSurveyUrl('${ev.id}', '${escapeHtml(ev.title)}')" title="تغییر آدرس دامنه Vercel">
                   ✏️ تغییر دامنه
                 </button>
@@ -4513,7 +4522,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
               <!-- کلیدهای عملیاتی کپی لینک، پیامک، آمار و ویرایش سوالات -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
                 <button type="button" class="btn btn-primary" style="padding: 6px 8px; font-size: 0.77rem; background: #16a34a; justify-content: center; font-weight: 700;" onclick="copyEventSurveyLink('${ev.id}', ${ev.num})" title="کپی لینک اختصاصی نظرسنجی جهت اشتراک‌گذاری">
-                  📋 کپی لینک
+                  📋 کپی لینک Vercel
                 </button>
                 <button type="button" class="btn btn-secondary" style="padding: 6px 8px; font-size: 0.77rem; justify-content: center;" onclick="copyEventSurveySms('${ev.id}', ${ev.num}, '${escapeHtml(ev.title)}')" title="کپی متن پیامک آماده نظرسنجی">
                   📱 پیامک دعوت
@@ -4528,8 +4537,8 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
               <!-- لینک مشاهده صفحه نظرسنجی -->
               <div style="margin-top: 7px; text-align: center;">
-                <a href="${previewUrl}" target="_blank" style="font-size: 0.72rem; color: #0284c7; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-                  🔗 باز کردن صفحه نظرسنجی رویداد ${ev.num} ↗
+                <a href="${publicUrl}" target="_blank" style="font-size: 0.72rem; color: #0284c7; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                  🌐 باز کردن صفحه نظرسنجی در ورسل ↗
                 </a>
               </div>
             </div>
