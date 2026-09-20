@@ -1264,6 +1264,483 @@ const StorageService = {
             totalCount: totalCount,
             updatedAt: nowIso
         };
+    },
+
+    // ==========================================
+    // بخش سامانه نظرسنجی و فرم‌های سازمانی
+    // ==========================================
+    SURVEYS_KEY: 'entekhab_surveys_list',
+    SURVEY_RESPONSES_PREFIX: 'entekhab_survey_responses_',
+
+    getLocalSurveys: function() {
+        try {
+            const raw = localStorage.getItem(this.SURVEYS_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch(e) {
+            return [];
+        }
+    },
+
+    setLocalSurveys: function(surveys) {
+        try {
+            localStorage.setItem(this.SURVEYS_KEY, JSON.stringify(surveys || []));
+        } catch(e) {}
+    },
+
+    getLocalSurveyResponses: function(surveyId) {
+        try {
+            const raw = localStorage.getItem(this.SURVEY_RESPONSES_PREFIX + surveyId);
+            return raw ? JSON.parse(raw) : [];
+        } catch(e) {
+            return [];
+        }
+    },
+
+    setLocalSurveyResponses: function(surveyId, responses) {
+        try {
+            localStorage.setItem(this.SURVEY_RESPONSES_PREFIX + surveyId, JSON.stringify(responses || []));
+        } catch(e) {}
+    },
+
+    // دریافت لیست تمامی نظرسنجی‌ها با همگام‌سازی از Supabase
+    getAllSurveys: async function(forceCloud = false) {
+        let surveys = this.getLocalSurveys();
+
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+            try {
+                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.__surveys__&select=*&order=created_at.desc`;
+                const res = await fetch(fetchUrl, {
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (res.ok) {
+                    const rows = await res.json();
+                    if (Array.isArray(rows)) {
+                        const cloudSurveys = [];
+                        for (const row of rows) {
+                            try {
+                                const parsed = JSON.parse(row.status_text || '{}');
+                                if (parsed && parsed.id) {
+                                    cloudSurveys.push(parsed);
+                                }
+                            } catch(err) {}
+                        }
+                        const map = new Map();
+                        surveys.forEach(s => map.set(s.id, s));
+                        cloudSurveys.forEach(s => map.set(s.id, s));
+                        surveys = Array.from(map.values());
+                        surveys.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                        this.setLocalSurveys(surveys);
+                    }
+                }
+            } catch(e) {
+                console.warn("خطا در دریافت نظرسنجی‌ها از دیتابیس:", e);
+            }
+        }
+
+        return surveys;
+    },
+
+    // دریافت یک نظرسنجی بر اساس شناسه
+    getSurveyById: async function(surveyId) {
+        if (!surveyId) return null;
+        let surveys = this.getLocalSurveys();
+        let survey = surveys.find(s => s.id === surveyId);
+
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+            try {
+                const recordId = `__survey_${surveyId}`;
+                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(recordId)}&select=*`;
+                const res = await fetch(fetchUrl, {
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                if (res.ok) {
+                    const rows = await res.json();
+                    if (Array.isArray(rows) && rows.length > 0) {
+                        try {
+                            const parsed = JSON.parse(rows[0].status_text || '{}');
+                            if (parsed && parsed.id) {
+                                survey = parsed;
+                                const idx = surveys.findIndex(s => s.id === surveyId);
+                                if (idx >= 0) surveys[idx] = survey;
+                                else surveys.push(survey);
+                                this.setLocalSurveys(surveys);
+                            }
+                        } catch(err) {}
+                    }
+                }
+            } catch(e) {
+                console.warn("خطا در دریافت نظرسنجی از دیتابیس:", e);
+            }
+        }
+
+        return survey || null;
+    },
+
+    // ذخیره یا ویرایش یک نظرسنجی (محلی + Supabase)
+    saveSurvey: async function(surveyData) {
+        if (!surveyData) throw new Error("اطلاعات نظرسنجی ناقص است.");
+
+        const now = new Date();
+        const surveyId = surveyData.id || ('survey_' + Date.now());
+
+        const survey = Object.assign({}, surveyData, {
+            id: surveyId,
+            title: (surveyData.title || 'نظرسنجی بدون عنوان').trim(),
+            description: (surveyData.description || '').trim(),
+            status: surveyData.status || 'active',
+            requirePersonnelCode: Boolean(surveyData.requirePersonnelCode),
+            isAnonymous: Boolean(surveyData.isAnonymous),
+            allowMultipleResponses: Boolean(surveyData.allowMultipleResponses),
+            questions: Array.isArray(surveyData.questions) ? surveyData.questions : [],
+            createdAt: surveyData.createdAt || now.toISOString(),
+            updatedAt: now.toISOString(),
+            jalaliDate: surveyData.jalaliDate || this.toJalaliString(now)
+        });
+
+        // ذخیره در LocalStorage
+        const surveys = this.getLocalSurveys();
+        const idx = surveys.findIndex(s => s.id === surveyId);
+        if (idx >= 0) {
+            surveys[idx] = survey;
+        } else {
+            surveys.unshift(survey);
+        }
+        this.setLocalSurveys(surveys);
+
+        // ذخیره در Supabase
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+            try {
+                const recordId = `__survey_${surveyId}`;
+                await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(recordId)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`
+                    }
+                });
+
+                const payload = {
+                    id: recordId,
+                    event_id: '__surveys__',
+                    event_title: survey.title,
+                    personnel_code: '__SURVEY__',
+                    full_name: survey.title,
+                    status: survey.status,
+                    status_text: JSON.stringify(survey),
+                    timestamp: survey.createdAt,
+                    jalali_date: survey.jalaliDate,
+                    user_agent: 'Survey Admin'
+                };
+
+                const insertRes = await fetch(`${spConfig.url}/rest/v1/${spConfig.table}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!insertRes.ok) {
+                    const errText = await insertRes.text();
+                    console.warn("هشدار در ذخیره نظرسنجی در دیتابیس ابری:", errText);
+                }
+            } catch(e) {
+                console.warn("خطا در ذخیره نظرسنجی در Supabase:", e);
+            }
+        }
+
+        return { success: true, survey };
+    },
+
+    // حذف یک نظرسنجی و پاسخ‌های آن
+    deleteSurvey: async function(surveyId) {
+        if (!surveyId) return { success: false };
+
+        let surveys = this.getLocalSurveys().filter(s => s.id !== surveyId);
+        this.setLocalSurveys(surveys);
+        localStorage.removeItem(this.SURVEY_RESPONSES_PREFIX + surveyId);
+
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+            try {
+                const recordId = `__survey_${surveyId}`;
+                await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(recordId)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`
+                    }
+                });
+                await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.survey_${encodeURIComponent(surveyId)}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`
+                    }
+                });
+            } catch(e) {
+                console.warn("خطا در حذف نظرسنجی از Supabase:", e);
+            }
+        }
+
+        return { success: true };
+    },
+
+    // ثبت پاسخ کاربر به نظرسنجی
+    submitSurveyResponse: async function(surveyId, responseData) {
+        if (!surveyId || !responseData) throw new Error("اطلاعات پاسخ نظرسنجی نامعتبر است.");
+
+        const now = new Date();
+        const responseId = `resp_${surveyId}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+        const responseObj = {
+            id: responseId,
+            surveyId: surveyId,
+            surveyTitle: responseData.surveyTitle || 'نظرسنجی',
+            personnelCode: (responseData.personnelCode || '').trim(),
+            fullName: (responseData.fullName || (responseData.personnelCode ? 'همکار انتخاب' : 'ناشناس')).trim(),
+            answers: responseData.answers || {},
+            timestamp: now.toISOString(),
+            jalaliDate: this.toJalaliString(now),
+            userAgent: navigator.userAgent.substring(0, 150)
+        };
+
+        // ذخیره محلی
+        const localList = this.getLocalSurveyResponses(surveyId);
+        localList.unshift(responseObj);
+        this.setLocalSurveyResponses(surveyId, localList);
+
+        try {
+            localStorage.setItem(`entekhab_survey_voted_${surveyId}`, '1');
+            if (responseObj.personnelCode) {
+                localStorage.setItem(`entekhab_survey_voted_${surveyId}_${responseObj.personnelCode}`, '1');
+            }
+        } catch(e) {}
+
+        // ذخیره در Supabase
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+            try {
+                const payload = {
+                    id: responseId,
+                    event_id: `survey_${surveyId}`,
+                    event_title: responseObj.surveyTitle,
+                    personnel_code: responseObj.personnelCode || 'ANONYMOUS',
+                    full_name: responseObj.fullName,
+                    status: 'submitted',
+                    status_text: JSON.stringify(responseObj.answers),
+                    timestamp: responseObj.timestamp,
+                    jalali_date: responseObj.jalaliDate,
+                    user_agent: responseObj.userAgent
+                };
+
+                const postRes = await fetch(`${spConfig.url}/rest/v1/${spConfig.table}`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!postRes.ok) {
+                    const errTxt = await postRes.text();
+                    console.warn("خطا در ارسال پاسخ نظرسنجی به دیتابیس ابری:", errTxt);
+                }
+            } catch(e) {
+                console.warn("خطای شبکه هنگام ثبت پاسخ نظرسنجی:", e);
+            }
+        }
+
+        return { success: true, response: responseObj };
+    },
+
+    // دریافت پاسخ‌های یک نظرسنجی
+    getSurveyResponses: async function(surveyId) {
+        if (!surveyId) return [];
+
+        let responses = this.getLocalSurveyResponses(surveyId);
+
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+            try {
+                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.survey_${encodeURIComponent(surveyId)}&select=*&order=created_at.desc`;
+                const res = await fetch(fetchUrl, {
+                    headers: {
+                        'apikey': spConfig.anonKey,
+                        'Authorization': `Bearer ${spConfig.anonKey}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (res.ok) {
+                    const rows = await res.json();
+                    if (Array.isArray(rows)) {
+                        const cloudResponses = rows.map(r => {
+                            let parsedAnswers = {};
+                            try {
+                                parsedAnswers = JSON.parse(r.status_text || '{}');
+                            } catch(err) {}
+
+                            return {
+                                id: r.id,
+                                surveyId: surveyId,
+                                personnelCode: (r.personnel_code === 'ANONYMOUS' || r.personnel_code === '__SURVEY__') ? '' : r.personnel_code,
+                                fullName: r.full_name || '',
+                                answers: parsedAnswers,
+                                timestamp: r.timestamp || r.created_at,
+                                jalaliDate: r.jalali_date || (r.timestamp ? this.toJalaliString(r.timestamp) : ''),
+                                userAgent: r.user_agent || ''
+                            };
+                        });
+
+                        const map = new Map();
+                        responses.forEach(item => map.set(item.id, item));
+                        cloudResponses.forEach(item => map.set(item.id, item));
+                        responses = Array.from(map.values());
+                        responses.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+                        this.setLocalSurveyResponses(surveyId, responses);
+                    }
+                }
+            } catch(e) {
+                console.warn("خطا در دریافت پاسخ‌های نظرسنجی از Supabase:", e);
+            }
+        }
+
+        return responses;
+    },
+
+    // دریافت تعداد کل پاسخ‌ها برای چندین نظرسنجی (جهت نمایش سریع در داشبورد)
+    getSurveysResponseCounts: async function(surveys) {
+        const counts = {};
+        if (!Array.isArray(surveys)) return counts;
+
+        for (const s of surveys) {
+            const local = this.getLocalSurveyResponses(s.id);
+            counts[s.id] = local.length;
+        }
+
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey && surveys.length > 0) {
+            for (const s of surveys) {
+                try {
+                    const url = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.survey_${encodeURIComponent(s.id)}&select=id`;
+                    const r = await fetch(url, {
+                        headers: {
+                            'apikey': spConfig.anonKey,
+                            'Authorization': `Bearer ${spConfig.anonKey}`,
+                            'Range': '0-0',
+                            'Prefer': 'count=exact'
+                        }
+                    });
+                    const contentRange = r.headers.get('content-range');
+                    if (contentRange && contentRange.includes('/')) {
+                        const total = parseInt(contentRange.split('/')[1], 10);
+                        if (!isNaN(total)) {
+                            counts[s.id] = total;
+                        }
+                    }
+                } catch(err) {}
+            }
+        }
+
+        return counts;
+    },
+
+    // خروجی اکسل از پاسخ‌های نظرسنجی
+    exportSurveyToExcel: async function(surveyId) {
+        if (!surveyId) return false;
+        const survey = await this.getSurveyById(surveyId);
+        if (!survey) {
+            alert("نظرسنجی مورد نظر یافت نشد.");
+            return false;
+        }
+
+        const responses = await this.getSurveyResponses(surveyId);
+        if (!responses || responses.length === 0) {
+            alert("هنوز پاسخی برای این نظرسنجی ثبت نشده است.");
+            return false;
+        }
+
+        if (typeof XLSX === 'undefined') {
+            alert("کتابخانه اکسل لود نشده است.");
+            return false;
+        }
+
+        const questions = survey.questions || [];
+
+        const headers = [
+            "ردیف",
+            "کد پرسنلی",
+            "نام و نام خانوادگی",
+            "تاریخ و زمان ثبت"
+        ];
+
+        questions.forEach((q, idx) => {
+            headers.push(`سوال ${idx + 1}: ${q.text || 'بدون متن'}`);
+        });
+
+        const rows = [headers];
+
+        responses.forEach((resp, rIdx) => {
+            const rowData = [
+                rIdx + 1,
+                resp.personnelCode || 'ناشناس',
+                resp.fullName || 'ناشناس',
+                resp.jalaliDate || resp.timestamp || ''
+            ];
+
+            questions.forEach(q => {
+                const ans = (resp.answers && resp.answers[q.id] !== undefined) ? resp.answers[q.id] : '';
+                if (Array.isArray(ans)) {
+                    rowData.push(ans.join('، '));
+                } else if (typeof ans === 'boolean') {
+                    rowData.push(ans ? 'بله' : 'خیر');
+                } else {
+                    rowData.push(String(ans ?? ''));
+                }
+            });
+
+            rows.push(rowData);
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+
+        ws['!cols'] = [
+            { wch: 8 },
+            { wch: 16 },
+            { wch: 25 },
+            { wch: 22 }
+        ];
+        questions.forEach(() => {
+            ws['!cols'].push({ wch: 35 });
+        });
+
+        XLSX.utils.book_append_sheet(wb, ws, "پاسخ‌ها");
+
+        const dateStr = this.toJalaliString(new Date()).replace(/[/:]/g, '-').replace(/\s+/g, '_');
+        const cleanTitle = (survey.title || 'Survey').replace(/[\\/:*?"<>|]/g, '_').substring(0, 30);
+        const fileName = `نتایج_${cleanTitle}_${dateStr}.xlsx`;
+
+        XLSX.writeFile(wb, fileName);
+        return true;
     }
 };
 

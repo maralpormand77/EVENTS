@@ -235,11 +235,180 @@
         display: none !important;
       }
     }
-    #eventSettingsModal.active {
+    #eventSettingsModal.active,
+    #surveyModal.active,
+    #surveyResultsModal.active,
+    .modal-overlay.active {
       display: flex !important;
       opacity: 1 !important;
       visibility: visible !important;
       pointer-events: auto !important;
+      z-index: 999999 !important;
+    }
+    .modal-overlay.active .modal-card {
+      pointer-events: auto !important;
+      transform: scale(1) !important;
+    }
+
+    /* استایل‌های سامانه نظرسنجی در پنل مدیریت */
+    .main-sections-nav {
+      display: flex;
+      gap: 12px;
+      margin: 18px 0 20px 0;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+      align-items: center;
+    }
+    .main-nav-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      font-weight: 700;
+      font-size: 0.96rem;
+      border-radius: 12px;
+      border: 1.5px solid transparent;
+      background: #f8fafc;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .main-nav-tab:hover {
+      color: var(--primary);
+      background: #f1f5f9;
+    }
+    .main-nav-tab.active {
+      color: var(--primary);
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      box-shadow: 0 2px 8px rgba(0, 75, 147, 0.08);
+    }
+    .surveys-count-badge {
+      background: #3b82f6;
+      color: #ffffff;
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .survey-admin-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      border: 1px solid #e2e8f0;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 18px;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+    .survey-admin-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: #cbd5e1;
+    }
+    .survey-card-header {
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .survey-card-body {
+      padding: 18px 20px;
+    }
+    .survey-link-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: #f1f5f9;
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      margin-top: 14px;
+      border: 1px dashed #cbd5e1;
+      flex-wrap: wrap;
+    }
+    .survey-link-input {
+      flex: 1;
+      min-width: 220px;
+      direction: ltr;
+      text-align: left;
+      font-family: monospace;
+      font-size: 0.84rem;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: #0f172a;
+    }
+    .survey-actions-strip {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* بیلدر سوالات */
+    .builder-question-card {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .builder-question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .builder-option-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .btn-remove-option {
+      background: #fee2e2;
+      color: #ef4444;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    /* نمایش نتایج */
+    .result-stat-row {
+      margin-bottom: 16px;
+      background: #f8fafc;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+    }
+    .result-stat-label-wrap {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    .result-bar-track {
+      background: #e2e8f0;
+      height: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .result-bar-fill {
+      background: linear-gradient(90deg, #0284c7 0%, #004b93 100%);
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.4s ease;
     }
   </style>
 </head>
@@ -446,6 +615,8 @@
                 📱 پیامک
               </button>
             </div>
+            <!-- نظرسنجی اختصاصی رویداد -->
+            <div class="event-survey-box" id="eventSurveyBox_sobh-hamdeli"></div>
           </div>
         </div>
       </div>
@@ -514,6 +685,8 @@
                 📱 پیامک
               </button>
             </div>
+            <!-- نظرسنجی اختصاصی رویداد -->
+            <div class="event-survey-box" id="eventSurveyBox_kavir-varzaneh"></div>
           </div>
         </div>
       </div>
@@ -582,6 +755,8 @@
                 📱 پیامک
               </button>
             </div>
+            <!-- نظرسنجی اختصاصی رویداد -->
+            <div class="event-survey-box" id="eventSurveyBox_rafting-markadeh"></div>
           </div>
         </div>
       </div>
@@ -679,6 +854,7 @@
         </tbody>
       </table>
     </div>
+
 
     <footer class="page-footer">
       سامانه مدیریت یکپارچه ایونت‌های گروه توسعه سرمایه گذاری انتخاب &copy; ۱۴۰۵
@@ -1307,6 +1483,177 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
             ☁️ ذخیره و اعمال در کل سامانه (بدون نیاز به گیت)
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال ایجاد و ویرایش نظرسنجی (Survey Builder) -->
+  <div class="modal-overlay" id="surveyModal">
+    <div class="modal-card modal-lg" style="max-width: 850px; max-height: 92vh; display: flex; flex-direction: column;">
+      <!-- هدر مودال -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 40px; height: 40px; border-radius: 10px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <div>
+            <h3 class="modal-title" id="surveyModalTitle" style="margin: 0; font-size: 1.15rem; color: #0f172a;">ایجاد نظرسنجی جدید</h3>
+            <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: #64748b;">طراحی فرم، سوالات، گزینه‌ها و تنظیمات ثبت‌نام</p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="closeSurveyModal()">&times;</button>
+      </div>
+
+      <!-- بدنه فرم مودال (اسکرول‌پذیر) -->
+      <div style="overflow-y: auto; flex: 1; padding: 4px 6px; display: flex; flex-direction: column; gap: 18px;">
+        <input type="hidden" id="builderSurveyId" value="">
+        <input type="hidden" id="builderSurveyEventId" value="">
+
+        <!-- بخش ۱: مشخصات کلی نظرسنجی -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-md); padding: 16px;">
+          <div style="font-weight: 700; color: var(--primary); font-size: 0.95rem; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+            ۱. مشخصات کلی نظرسنجی
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="builderSurveyTitle" class="form-label">عنوان نظرسنجی: <span style="color: #ef4444;">*</span></label>
+            <input type="text" id="builderSurveyTitle" class="form-input" placeholder="مثال: نظرسنجی کیفیت برگزاری تور کویر ورزنه" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label for="builderSurveyDesc" class="form-label">توضیحات و راهنمای شرکت در نظرسنجی:</label>
+            <textarea id="builderSurveyDesc" class="form-input" style="min-height: 70px; resize: vertical;" placeholder="پیام خوش‌آمدگویی یا توضیحات برای پرسنل..."></textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="builderSurveyStatus" class="form-label">وضعیت نظرسنجی:</label>
+              <select id="builderSurveyStatus" class="form-input">
+                <option value="active">🟢 فعال (امکان ثبت پاسخ باز است)</option>
+                <option value="closed">🔴 پایان‌یافته (فرم بسته است)</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="builderSurveyIdentity" class="form-label">نحوه ثبت مشخصات پرسنل:</label>
+              <select id="builderSurveyIdentity" class="form-input">
+                <option value="anonymous">🔒 کاملاً ناشناس و محرمانه (بدون ثبت نام/کد)</option>
+                <option value="optional">👤 اختیاری (همکار در صورت تمایل کد وارد کند)</option>
+                <option value="required">🆔 الزامی (ورود کد پرسنلی و تطبیق نام با دیتابیس)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px;">
+            <label style="font-size: 0.84rem; color: #475569; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="builderAllowMultiple" style="width: 16px; height: 16px; accent-color: var(--primary);">
+              اجازه ثبت بیش از یکبار پاسخ از یک دستگاه (به طور پیش‌فرض هر شخص یکبار پاسخ می‌دهد)
+            </label>
+          </div>
+        </div>
+
+        <!-- بخش ۲: سوالات و پاسخ‌ها -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div style="font-weight: 700; color: var(--primary); font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              ۲. سوالات و گزینه‌های پاسخ
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.8rem; background: #ffffff;" onclick="loadSampleSurveyTemplate()">
+                📋 بارگذاری نمونه سوالات استاندارد
+              </button>
+              <button type="button" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.82rem; background: #0284c7;" onclick="addQuestionToBuilder()">
+                ➕ افزودن سوال جدید
+              </button>
+            </div>
+          </div>
+
+          <!-- لیست سوالات طراحی‌شده -->
+          <div id="builderQuestionsContainer">
+            <!-- با جاوااسکریپت درج می‌شود -->
+          </div>
+        </div>
+      </div>
+
+      <!-- فوتر مودال -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 10px; flex-wrap: wrap; gap: 8px;">
+        <button type="button" class="btn btn-secondary" onclick="closeSurveyModal()">
+          انصراف
+        </button>
+
+        <button type="button" class="btn btn-primary" id="btnSaveSurveyBuilder" onclick="saveSurveyFromBuilder()" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); font-weight: 800; padding: 11px 26px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);">
+          💾 ذخیره و انتشار نظرسنجی
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال نتایج و تحلیل آماری نظرسنجی -->
+  <div class="modal-overlay" id="surveyResultsModal">
+    <div class="modal-card modal-lg" style="max-width: 900px; max-height: 92vh; display: flex; flex-direction: column;">
+      <!-- هدر مودال -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 12px;">
+        <div>
+          <h3 class="modal-title" id="resultsModalTitle" style="margin: 0; font-size: 1.15rem; color: #0f172a;">نتایج و آمار نظرسنجی</h3>
+          <div style="font-size: 0.82rem; color: #64748b; margin-top: 2px;">
+            تعداد کل پاسخ‌ها: <strong id="resultsTotalCountBadge" style="color: var(--primary);">۰</strong> نفر
+          </div>
+        </div>
+        <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.9rem;" onclick="closeSurveyResultsModal()">&times;</button>
+      </div>
+
+      <!-- تولبار ابزارها -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="modal-tab-btn active" id="btnTabResultsAnalytics" onclick="switchResultsTab('analytics')">
+            📊 تحلیل آماری گزینه‌ها
+          </button>
+          <button type="button" class="modal-tab-btn" id="btnTabResultsTable" onclick="switchResultsTab('table')">
+            👥 فهرست پاسخ‌دهندگان
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="btn btn-attend" id="btnExportSurveyExcel" onclick="exportCurrentSurveyExcel()" style="padding: 6px 14px; font-size: 0.82rem;">
+            <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            دریافت خروجی اکسل
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="printSurveyResultsReport()" style="padding: 6px 14px; font-size: 0.82rem;">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            چاپ
+          </button>
+        </div>
+      </div>
+
+      <!-- تب ۱: تحلیل آماری گزینه‌ها -->
+      <div id="resultsAnalyticsTab" style="overflow-y: auto; flex: 1; padding: 4px 6px;">
+        <div id="analyticsChartsContainer">
+          <!-- با جاوااسکریپت پر می‌شود -->
+        </div>
+      </div>
+
+      <!-- تب ۲: فهرست پاسخ‌دهندگان -->
+      <div id="resultsTableTab" style="display: none; overflow-y: auto; flex: 1; padding: 4px 6px;">
+        <div class="table-wrapper" style="margin-top: 4px;">
+          <table class="data-table">
+            <thead id="resultsTableHead">
+              <!-- با جاوااسکریپت پر می‌شود -->
+            </thead>
+            <tbody id="resultsTableBody">
+              <!-- با جاوااسکریپت پر می‌شود -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- فوتر -->
+      <div style="display: flex; justify-content: flex-end; border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 10px;">
+        <button type="button" class="btn btn-secondary" onclick="closeSurveyResultsModal()">
+          بستن
+        </button>
       </div>
     </div>
   </div>
@@ -3813,12 +4160,1123 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       }
     }
 
+    // ====================================================================
+    // سامانه مدیریت نظرسنجی‌ها و فرم‌های سازمانی (Admin Surveys Controller)
+    // ====================================================================
+    let currentAdminSection = 'events';
+    let cachedSurveys = [];
+    let cachedSurveysResponseCounts = {};
+    let currentResultsSurveyId = null;
+
+    // پیام اطلاع‌رسانی سریع (Toast)
+    function showAdminToast(message, type = 'success') {
+      let toast = document.getElementById('adminGlobalToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'adminGlobalToast';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '24px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.padding = '12px 24px';
+        toast.style.borderRadius = '10px';
+        toast.style.fontSize = '0.92rem';
+        toast.style.fontWeight = '700';
+        toast.style.zIndex = '99999';
+        toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+        toast.style.transition = 'all 0.3s ease';
+        toast.style.direction = 'rtl';
+        document.body.appendChild(toast);
+      }
+
+      if (type === 'success') {
+        toast.style.background = '#10b981';
+        toast.style.color = '#ffffff';
+      } else if (type === 'error') {
+        toast.style.background = '#ef4444';
+        toast.style.color = '#ffffff';
+      } else {
+        toast.style.background = '#0284c7';
+        toast.style.color = '#ffffff';
+      }
+
+      toast.textContent = message;
+      toast.style.display = 'block';
+      toast.style.opacity = '1';
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => { toast.style.display = 'none'; }, 300);
+      }, 3000);
+    }
+
+    // تابع کمکی خنثی‌سازی کدهای HTML
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // تغییر تب بخش اصلی پنل (جهت حفظ سازگاری)
+    function switchAdminSection(section) {
+      currentAdminSection = section;
+    }
+
+    // دریافت آدرس عمومی صفحه نظرسنجی
+    function getSurveyPublicUrl(surveyId) {
+      let base = window.location.href.split('?')[0].split('#')[0];
+      base = base.replace(/\/admin(\/index\.html|\.html|\/)?$/i, '');
+      if (base.endsWith('/')) base = base.slice(0, -1);
+      return `${base}/survey.html?id=${encodeURIComponent(surveyId)}`;
+    }
+
+    // به‌روزرسانی بخش نظرسنجی زیر هر یک از کارت‌های ۳ رویداد
+    function updateEventSurveyBoxes() {
+      const events = [
+        { id: 'sobh-hamdeli', title: 'صبح همدلی', boxId: 'eventSurveyBox_sobh-hamdeli' },
+        { id: 'kavir-varzaneh', title: 'تور کویر ورزنه', boxId: 'eventSurveyBox_kavir-varzaneh' },
+        { id: 'rafting-markadeh', title: 'تور رفتینگ مارکده', boxId: 'eventSurveyBox_rafting-markadeh' }
+      ];
+
+      events.forEach(ev => {
+        const box = document.getElementById(ev.boxId);
+        if (!box) return;
+
+        // جستجوی نظرسنجی این رویداد
+        const survey = (cachedSurveys || []).find(s => 
+          s.eventId === ev.id || 
+          (s.title && s.title.includes(ev.title)) ||
+          (s.id && s.id.includes(ev.id))
+        );
+
+        if (!survey) {
+          // فقط یک دکمه تمیز برای ایجاد نظرسنجی این رویداد
+          box.innerHTML = `
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+              <button type="button" class="btn btn-outline" style="width: 100%; padding: 8px 10px; font-size: 0.82rem; font-weight: 700; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" onclick="openSurveyModalForEvent('${ev.id}', '${ev.title}')" onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f0f9ff'">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                ➕ ایجاد نظرسنجی این رویداد
+              </button>
+            </div>
+          `;
+        } else {
+          // نظرسنجی فعال است -> ویجت اختصاصی زیر رویداد
+          const respCount = (cachedSurveysResponseCounts && cachedSurveysResponseCounts[survey.id]) || 0;
+          const isActive = survey.status === 'active';
+          const safeTitle = escapeHtml(survey.title || ev.title);
+
+          box.innerHTML = `
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed ${isActive ? '#86efac' : '#cbd5e1'};">
+              <div style="background: ${isActive ? '#f0fdf4' : '#f8fafc'}; border: 1.5px solid ${isActive ? '#86efac' : '#cbd5e1'}; border-radius: 8px; padding: 8px 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <span style="font-size: 0.78rem; font-weight: 700; color: ${isActive ? '#166534' : '#64748b'}; display: flex; align-items: center; gap: 5px;">
+                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${isActive ? '#22c55e' : '#94a3b8'};"></span>
+                    ${isActive ? 'نظرسنجی فعال رویداد' : 'نظرسنجی بسته‌شده'}
+                  </span>
+                  <span style="font-size: 0.74rem; font-weight: 700; color: ${isActive ? '#15803d' : '#475569'}; background: ${isActive ? '#dcfce7' : '#e2e8f0'}; padding: 2px 7px; border-radius: 10px;">
+                    ${respCount.toLocaleString('fa-IR')} پاسخ
+                  </span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                  <button type="button" class="btn btn-primary" style="padding: 5px 6px; font-size: 0.76rem; background: #16a34a; justify-content: center;" onclick="copySurveyLink('${survey.id}')" title="کپی لینک مستقیم نظرسنجی">
+                    📋 کپی لینک
+                  </button>
+                  <button type="button" class="btn btn-secondary" style="padding: 5px 6px; font-size: 0.76rem; justify-content: center;" onclick="copySurveySms('${survey.id}', '${safeTitle}')" title="کپی متن پیامک آماده نظرسنجی">
+                    📱 پیامک
+                  </button>
+                  <button type="button" class="btn btn-secondary" style="padding: 5px 6px; font-size: 0.76rem; justify-content: center;" onclick="openSurveyResultsModal('${survey.id}')" title="مشاهده آمار و دانلود اکسل">
+                    📊 آمار و نتایج
+                  </button>
+                  <div style="display: flex; gap: 3px;">
+                    <button type="button" class="btn btn-outline" style="flex: 1; padding: 5px 4px; font-size: 0.76rem; justify-content: center;" onclick="openSurveyModalForEvent('${ev.id}', '${escapeHtml(ev.title)}', '${survey.id}')" title="ویرایش نظرسنجی">
+                      ⚙️ ویرایش
+                    </button>
+                    <button type="button" class="btn btn-outline" style="padding: 5px 6px; font-size: 0.76rem; color: #dc2626; border-color: #fca5a5;" onclick="deleteSurveyConfirm('${survey.id}', '${safeTitle}')" title="حذف نظرسنجی">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      });
+    }
+
+    // دریافت و بارگذاری نظرسنجی‌ها از StorageService
+    async function loadSurveysData(forceCloud = false) {
+      try {
+        cachedSurveys = await StorageService.getAllSurveys(forceCloud);
+        cachedSurveysResponseCounts = await StorageService.getSurveysResponseCounts(cachedSurveys);
+      } catch (err) {
+        console.error("خطا در دریافت لیست نظرسنجی‌ها:", err);
+      }
+
+      try { updateSurveysStatistics(); } catch (e) {}
+      try { updateEventSurveyBoxes(); } catch (e) { console.warn(e); }
+    }
+
+    // به‌روزرسانی آمارهای سربرگ نظرسنجی
+    function updateSurveysStatistics() {
+      const total = cachedSurveys.length;
+      const active = cachedSurveys.filter(s => s.status === 'active').length;
+
+      let totalResponses = 0;
+      let totalQuestions = 0;
+
+      cachedSurveys.forEach(s => {
+        totalResponses += (cachedSurveysResponseCounts[s.id] || 0);
+        totalQuestions += (s.questions ? s.questions.length : 0);
+      });
+
+      const avgQuestions = total > 0 ? (totalQuestions / total).toFixed(1) : '۰';
+
+      const badge = document.getElementById('adminSurveysCountBadge');
+      if (badge) badge.textContent = total.toLocaleString('fa-IR');
+
+      const elTotal = document.getElementById('statSurveysTotal');
+      if (elTotal) elTotal.textContent = total.toLocaleString('fa-IR');
+
+      const elActive = document.getElementById('statSurveysActive');
+      if (elActive) elActive.textContent = active.toLocaleString('fa-IR');
+
+      const elResp = document.getElementById('statSurveysResponses');
+      if (elResp) elResp.textContent = totalResponses.toLocaleString('fa-IR');
+
+      const elAvg = document.getElementById('statSurveysAvgQuestions');
+      if (elAvg) elAvg.textContent = Number(avgQuestions).toLocaleString('fa-IR');
+    }
+
+    // فیلتر و جستجوی نظرسنجی‌ها
+    function filterSurveysList() {
+      const searchInput = document.getElementById('searchSurveysInput');
+      const statusSelect = document.getElementById('statusSurveyFilter');
+
+      const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+      const status = statusSelect ? statusSelect.value : 'all';
+
+      const filtered = cachedSurveys.filter(s => {
+        if (status !== 'all' && s.status !== status) return false;
+        if (q) {
+          const matchTitle = (s.title || '').toLowerCase().includes(q);
+          const matchDesc = (s.description || '').toLowerCase().includes(q);
+          if (!matchTitle && !matchDesc) return false;
+        }
+        return true;
+      });
+
+      renderSurveysList(filtered);
+    }
+
+    // رندر کارت‌های نظرسنجی
+    function renderSurveysList(surveys) {
+      const container = document.getElementById('surveysListContainer');
+      if (!container) return;
+
+      if (!surveys || surveys.length === 0) {
+        container.innerHTML = `
+          <div class="survey-admin-card" style="padding: 45px 20px; text-align: center;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            </div>
+            <h3 style="font-size: 1.2rem; font-weight: 800; color: #0f172a; margin-bottom: 8px;">هنوز نظرسنجی ثبت نشده است</h3>
+            <p style="color: #64748b; font-size: 0.9rem; max-width: 500px; margin: 0 auto 22px; line-height: 1.7;">
+              شما می‌توانید با کلیک روی دکمه زیر، اولین نظرسنجی سازمان را به سادگی طراحی کرده و لینک مستقیم آن را برای همکاران بفرستید.
+            </p>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+              <button type="button" class="btn btn-primary" onclick="openSurveyModal()" style="padding: 10px 22px; font-weight: 700;">
+                ➕ ایجاد اولین نظرسنجی
+              </button>
+              <button type="button" class="btn btn-secondary" onclick="openSurveyModalWithTemplate()" style="padding: 10px 20px;">
+                📋 ایجاد سریع با قالب استاندارد رویداد
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+
+      surveys.forEach(survey => {
+        const publicUrl = getSurveyPublicUrl(survey.id);
+        const respCount = cachedSurveysResponseCounts[survey.id] || 0;
+        const qCount = survey.questions ? survey.questions.length : 0;
+        const isActive = survey.status === 'active';
+
+        let identityLabel = '🔒 ناشناس';
+        if (survey.requirePersonnelCode) {
+          identityLabel = '🆔 با کد پرسنلی (الزامی)';
+        } else if (!survey.isAnonymous) {
+          identityLabel = '👤 با کد پرسنلی (اختیاری)';
+        }
+
+        const card = document.createElement('div');
+        card.className = 'survey-admin-card';
+        card.innerHTML = `
+          <div class="survey-card-header">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
+                <span class="event-badge-pill ${isActive ? 'badge-status-open' : 'badge-status-closed'}">
+                  ${isActive ? '🟢 در حال دریافت نظر' : '🔴 پایان‌یافته'}
+                </span>
+                <span style="font-size: 0.8rem; color: #64748b; font-weight: 600;">
+                  📅 تاریخ ایجاد: ${survey.jalaliDate || '-'}
+                </span>
+                <span style="font-size: 0.8rem; background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 6px;">
+                  ${identityLabel}
+                </span>
+              </div>
+              <h3 style="font-size: 1.18rem; font-weight: 800; color: #0f172a; margin: 0;">
+                ${escapeHtml(survey.title || 'بدون عنوان')}
+              </h3>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="text-align: center; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 6px 14px;">
+                <div style="font-size: 0.76rem; color: #1e40af; font-weight: 600;">تعداد سوالات</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #0284c7;">${qCount.toLocaleString('fa-IR')}</div>
+              </div>
+
+              <div style="text-align: center; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 6px 14px;">
+                <div style="font-size: 0.76rem; color: #065f46; font-weight: 600;">پاسخ‌های دریافتی</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #059669;">${respCount.toLocaleString('fa-IR')}</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="survey-card-body">
+            <div style="font-size: 0.88rem; color: #475569; line-height: 1.7; margin-bottom: 8px;">
+              ${escapeHtml(survey.description || 'توضیحاتی برای این نظرسنجی درج نشده است.')}
+            </div>
+
+            <!-- نوار لینک اختصاصی جهت کپی و ارسال -->
+            <div class="survey-link-bar">
+              <span style="font-size: 0.84rem; font-weight: 700; color: #334155; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                🔗 لینک اختصاصی:
+              </span>
+              <input type="text" readonly class="survey-link-input" value="${publicUrl}" onclick="this.select()">
+              <button type="button" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap;" onclick="copySurveyLink('${survey.id}')">
+                📋 کپی لینک
+              </button>
+              <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.82rem; white-space: nowrap;" onclick="copySurveySms('${survey.id}', '${escapeHtml(survey.title || '')}')">
+                📱 کپی پیامک دعوت
+              </button>
+              <a href="${publicUrl}" target="_blank" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.82rem; text-decoration: none; white-space: nowrap;">
+                👁️ مشاهده صفحه
+              </a>
+            </div>
+
+            <!-- دکمه‌های اقدام و تحلیل -->
+            <div class="survey-actions-strip">
+              <button type="button" class="btn btn-primary" style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); font-weight: 700; padding: 8px 16px; font-size: 0.86rem;" onclick="openSurveyResultsModal('${survey.id}')">
+                📊 مشاهده نتایج و آمار (${respCount.toLocaleString('fa-IR')} پاسخ)
+              </button>
+              <button type="button" class="btn btn-attend" style="padding: 8px 14px; font-size: 0.86rem;" onclick="StorageService.exportSurveyToExcel('${survey.id}')">
+                📥 خروجی اکسل نتایج
+              </button>
+              <button type="button" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.86rem;" onclick="openSurveyModal('${survey.id}')">
+                ⚙️ ویرایش نظرسنجی
+              </button>
+              <button type="button" class="btn btn-decline" style="padding: 8px 14px; font-size: 0.86rem; margin-right: auto;" onclick="deleteSurveyConfirm('${survey.id}', '${escapeHtml(survey.title || '')}')">
+                🗑️ حذف
+              </button>
+            </div>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    // کپی لینک مستقیم نظرسنجی
+    function copySurveyLink(surveyId) {
+      const url = getSurveyPublicUrl(surveyId);
+      navigator.clipboard.writeText(url).then(() => {
+        showAdminToast("✓ لینک اختصاصی نظرسنجی با موفقیت در کلیپ‌بورد کپی شد.");
+      }).catch(() => {
+        prompt("لطفاً لینک نظرسنجی را به صورت دستی کپی فرمایید:", url);
+      });
+    }
+
+    // کپی متن پیامک آماده دعوت به نظرسنجی
+    function copySurveySms(surveyId, surveyTitle) {
+      const url = getSurveyPublicUrl(surveyId);
+      const text = `همکار گرامی گروه توسعه سرمایه‌گذاری انتخاب\nبا سلام، خواهشمند است با تکمیل نظرسنجی «${surveyTitle}»، ما را در بهبود کیفیت و خدمات رویدادهای سازمانی یاری فرمایید:\n🔗 ${url}`;
+      navigator.clipboard.writeText(text).then(() => {
+        showAdminToast("✓ متن پیامک دعوت به نظرسنجی با موفقیت کپی شد.");
+      }).catch(() => {
+        prompt("متن پیامک آماده:", text);
+      });
+    }
+
+    // باز کردن مودال ایجاد یا ویرایش نظرسنجی اختصاصی رویداد
+    function openSurveyModalForEvent(eventId, eventTitle, surveyId = null) {
+      const modal = document.getElementById('surveyModal');
+      const titleEl = document.getElementById('surveyModalTitle');
+      const idInput = document.getElementById('builderSurveyId');
+      const eventIdInput = document.getElementById('builderSurveyEventId');
+      const titleInput = document.getElementById('builderSurveyTitle');
+      const descInput = document.getElementById('builderSurveyDesc');
+      const statusSelect = document.getElementById('builderSurveyStatus');
+      const identitySelect = document.getElementById('builderSurveyIdentity');
+      const multipleCheck = document.getElementById('builderAllowMultiple');
+      const qContainer = document.getElementById('builderQuestionsContainer');
+
+      if (!modal) {
+        alert("خطا: فرم نظرسنجی در صفحه بارگذاری نشده است.");
+        return;
+      }
+
+      if (qContainer) qContainer.innerHTML = '';
+      if (eventIdInput) eventIdInput.value = eventId || '';
+
+      if (surveyId) {
+        const survey = (cachedSurveys || []).find(s => s.id === surveyId);
+        if (survey) {
+          if (titleEl) titleEl.textContent = '⚙️ ویرایش نظرسنجی: ' + (survey.title || eventTitle || '');
+          if (idInput) idInput.value = survey.id;
+          if (eventIdInput) eventIdInput.value = survey.eventId || eventId || '';
+          if (titleInput) titleInput.value = survey.title || '';
+          if (descInput) descInput.value = survey.description || '';
+          if (statusSelect) statusSelect.value = survey.status || 'active';
+
+          if (survey.requirePersonnelCode) {
+            if (identitySelect) identitySelect.value = 'required';
+          } else if (survey.isAnonymous) {
+            if (identitySelect) identitySelect.value = 'anonymous';
+          } else {
+            if (identitySelect) identitySelect.value = 'optional';
+          }
+
+          if (multipleCheck) multipleCheck.checked = Boolean(survey.allowMultipleResponses);
+
+          const questions = survey.questions || [];
+          questions.forEach(q => {
+            addQuestionToBuilder(q);
+          });
+        }
+      } else {
+        const fullTitle = eventTitle ? `نظرسنجی کیفیت برگزاری ${eventTitle}` : 'نظرسنجی کیفیت برگزاری رویداد';
+        if (titleEl) titleEl.textContent = '➕ ایجاد ' + fullTitle;
+        if (idInput) idInput.value = '';
+        if (titleInput) titleInput.value = fullTitle;
+        if (descInput) descInput.value = 'همکار گرامی، خواهشمند است با اعلام نظرات سازنده خود، ما را در ارتقای کیفیت و خدمات رویدادهای سازمانی یاری فرمایید.';
+        if (statusSelect) statusSelect.value = 'active';
+        if (identitySelect) identitySelect.value = 'optional';
+        if (multipleCheck) multipleCheck.checked = false;
+
+        // ۴ سوال پیش‌فرض استاندارد سنجش رضایت برای رویداد
+        addQuestionToBuilder({
+          text: 'میزان رضایت کلی شما از برگزاری این رویداد:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار عالی', 'خوب', 'متوسط', 'ضعیف']
+        });
+        addQuestionToBuilder({
+          text: 'کیفیت اطلاع‌رسانی، زمان‌بندی و نظم برنامه:',
+          type: 'radio',
+          required: true,
+          options: ['عالی', 'خوب', 'متوسط', 'ضعیف']
+        });
+        addQuestionToBuilder({
+          text: 'کیفیت پذیرایی، ترانسفر و خدمات ارائه‌شده:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار مناسب', 'قابل قبول', 'نیاز به بهبود', 'نامناسب']
+        });
+        addQuestionToBuilder({
+          text: 'پیشنهادات، انتقادات یا نکات تکمیلی شما برای رویدادهای بعدی:',
+          type: 'textarea',
+          required: false,
+          options: []
+        });
+      }
+
+      modal.classList.add('active');
+    }
+
+    // باز کردن مودال عمومی نظرسنجی (جهت حفظ سازگاری کامل)
+    function openSurveyModal(surveyId = null) {
+      openSurveyModalForEvent('', 'رویداد', surveyId);
+    }
+
+    function openSurveyModalWithTemplate() {
+      openSurveyModal();
+      loadSampleSurveyTemplate(false);
+    }
+
+    function closeSurveyModal() {
+      const modal = document.getElementById('surveyModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    // افزودن سوال به بیلدر نظرسنجی
+    function addQuestionToBuilder(qData = null) {
+      const container = document.getElementById('builderQuestionsContainer');
+      const qId = qData && qData.id ? qData.id : ('q_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4));
+
+      const card = document.createElement('div');
+      card.className = 'builder-question-card';
+      card.dataset.qid = qId;
+
+      const qText = qData ? (qData.text || '') : '';
+      const qType = qData ? (qData.type || 'radio') : 'radio';
+      const qRequired = qData ? Boolean(qData.required) : true;
+      const qOptions = qData && Array.isArray(qData.options) ? qData.options : ['عالی', 'خوب', 'متوسط', 'ضعیف'];
+
+      card.innerHTML = `
+        <div class="builder-question-header">
+          <span class="builder-q-label" style="font-weight: 800; color: #0284c7; font-size: 0.92rem;">سوال</span>
+          <button type="button" class="btn btn-decline" style="padding: 3px 8px; font-size: 0.78rem;" onclick="removeQuestionCard(this)">
+            🗑️ حذف سوال
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 10px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.82rem;">متن سوال: <span style="color: #ef4444;">*</span></label>
+            <input type="text" class="form-input q-text-input" value="${escapeHtml(qText)}" placeholder="مثال: کیفیت پذیرایی و خدمات رویداد چگونه بود؟" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 0.82rem;">نوع پاسخ به سوال:</label>
+            <select class="form-input q-type-select" onchange="handleQuestionTypeChange(this)">
+              <option value="radio" ${qType === 'radio' ? 'selected' : ''}>چند گزینه‌ای - تک انتخابی (Radio)</option>
+              <option value="checkbox" ${qType === 'checkbox' ? 'selected' : ''}>چند گزینه‌ای - چند انتخابی (Checkbox)</option>
+              <option value="rating" ${qType === 'rating' ? 'selected' : ''}>امتیازدهی ۱ تا ۵ ستاره (Rating)</option>
+              <option value="text" ${qType === 'text' ? 'selected' : ''}>پاسخ متنی کوتاه (Short Text)</option>
+              <option value="textarea" ${qType === 'textarea' ? 'selected' : ''}>پاسخ متنی تشریحی (Textarea)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- بخش گزینه‌ها (مخصوص رادیو و چک‌باکس) -->
+        <div class="options-builder-section" style="${(qType === 'radio' || qType === 'checkbox') ? 'display: block;' : 'display: none;'} background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 0.82rem; font-weight: 700; color: #334155;">گزینه‌های پاسخ:</span>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <span style="font-size: 0.75rem; color: #64748b; align-self: center;">قالب‌های سریع:</span>
+              <button type="button" class="btn btn-outline" style="padding: 2px 6px; font-size: 0.74rem;" onclick="applyPresetOptions(this, ['عالی', 'خوب', 'متوسط', 'ضعیف'])">عالی تا ضعیف</button>
+              <button type="button" class="btn btn-outline" style="padding: 2px 6px; font-size: 0.74rem;" onclick="applyPresetOptions(this, ['خیلی راضی', 'راضی', 'ممتنع', 'ناراضی', 'خیلی ناراضی'])">خیلی راضی تا خیلی ناراضی</button>
+              <button type="button" class="btn btn-outline" style="padding: 2px 6px; font-size: 0.74rem;" onclick="applyPresetOptions(this, ['بله', 'خیر'])">بله / خیر</button>
+            </div>
+          </div>
+
+          <div class="options-list-container">
+          </div>
+
+          <button type="button" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.78rem; margin-top: 6px;" onclick="addOptionToQuestionRow(this)">
+            ➕ افزودن گزینه جدید
+          </button>
+        </div>
+
+        <div>
+          <label style="font-size: 0.82rem; color: #475569; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <input type="checkbox" class="q-required-check" ${qRequired ? 'checked' : ''} style="width: 15px; height: 15px; accent-color: var(--primary);">
+            پاسخ به این سوال اجباری است
+          </label>
+        </div>
+      `;
+
+      container.appendChild(card);
+
+      // اضافه کردن گزینه‌ها
+      const optContainer = card.querySelector('.options-list-container');
+      qOptions.forEach(opt => {
+        addOptionInput(optContainer, opt);
+      });
+
+      updateQuestionNumbers();
+    }
+
+    function removeQuestionCard(btn) {
+      const card = btn.closest('.builder-question-card');
+      if (card) {
+        card.remove();
+        updateQuestionNumbers();
+      }
+    }
+
+    function updateQuestionNumbers() {
+      const cards = document.querySelectorAll('#builderQuestionsContainer .builder-question-card');
+      cards.forEach((card, idx) => {
+        const label = card.querySelector('.builder-q-label');
+        if (label) label.textContent = `سوال شماره ${idx + 1}`;
+      });
+    }
+
+    function handleQuestionTypeChange(select) {
+      const card = select.closest('.builder-question-card');
+      const optSection = card.querySelector('.options-builder-section');
+      const optContainer = card.querySelector('.options-list-container');
+      const val = select.value;
+
+      if (val === 'radio' || val === 'checkbox') {
+        optSection.style.display = 'block';
+        if (optContainer.children.length === 0) {
+          addOptionInput(optContainer, 'گزینه ۱');
+          addOptionInput(optContainer, 'گزینه ۲');
+        }
+      } else {
+        optSection.style.display = 'none';
+      }
+    }
+
+    function addOptionToQuestionRow(btn) {
+      const section = btn.closest('.options-builder-section');
+      const container = section.querySelector('.options-list-container');
+      addOptionInput(container, '');
+    }
+
+    function addOptionInput(container, text = '') {
+      const row = document.createElement('div');
+      row.className = 'builder-option-row';
+      row.innerHTML = `
+        <span style="font-size: 0.8rem; color: #64748b;">•</span>
+        <input type="text" class="form-input option-val-input" value="${escapeHtml(text)}" placeholder="متن گزینه..." style="padding: 6px 10px; font-size: 0.86rem;" required>
+        <button type="button" class="btn-remove-option" onclick="this.closest('.builder-option-row').remove()" title="حذف این گزینه">✕</button>
+      `;
+      container.appendChild(row);
+      const input = row.querySelector('input');
+      if (!text && input) input.focus();
+    }
+
+    function applyPresetOptions(btn, presetList) {
+      const section = btn.closest('.options-builder-section');
+      const container = section.querySelector('.options-list-container');
+      container.innerHTML = '';
+      presetList.forEach(item => {
+        addOptionInput(container, item);
+      });
+    }
+
+    // بارگذاری قالب استاندارد نظرسنجی رویداد
+    function loadSampleSurveyTemplate(confirmNeeded = true) {
+      if (confirmNeeded) {
+        if (!confirm("آیا مایلید سوالات نمونه استاندارد رضایت‌سنجی رویداد بارگذاری شوند؟")) {
+          return;
+        }
+      }
+
+      document.getElementById('builderSurveyTitle').value = "نظرسنجی کیفیت و رضایت‌مندی از برگزاری رویداد سازمانی";
+      document.getElementById('builderSurveyDesc').value = "همکار ارجمند، با درود و احترام؛ خواهشمند است با صرف دقایقی از وقت ارزشمند خود و پاسخ به سوالات زیر، ما را در بهبود خدمات و ارتقای کیفیت برنامه‌های آتی همراهی فرمایید.";
+
+      const container = document.getElementById('builderQuestionsContainer');
+      container.innerHTML = '';
+
+      addQuestionToBuilder({
+        text: 'کیفیت هماهنگی، ترابری و زمان‌بندی رویداد را چگونه ارزیابی می‌فرمایید؟',
+        type: 'radio',
+        required: true,
+        options: ['عالی و بی‌نقص', 'خوب و رضایت‌بخش', 'متوسط', 'ضعیف و نیازمند بهبود']
+      });
+
+      addQuestionToBuilder({
+        text: 'میزان رضایت شما از پذیرایی، وعده‌های غذایی و میان‌وعده‌ها:',
+        type: 'radio',
+        required: true,
+        options: ['بسیار عالی', 'خوب', 'متوسط', 'نامناسب']
+      });
+
+      addQuestionToBuilder({
+        text: 'میزان رضایت کلی شما از این رویداد سازمانی (امتیاز ۱ تا ۵):',
+        type: 'rating',
+        required: true,
+        options: []
+      });
+
+      addQuestionToBuilder({
+        text: 'مایل به برگزاری کدام نوع رویدادها در برنامه‌های آتی سازمان هستید؟',
+        type: 'checkbox',
+        required: false,
+        options: ['تورهای کویرنوردی و طبیعت‌گردی', 'مسابقات و ایونت‌های ورزشی', 'پیاده‌روی و برنامه‌های صبحگاهی', 'همایش‌های علمی و آموزشی', 'برنامه‌های تفریحی خانوادگی']
+      });
+
+      addQuestionToBuilder({
+        text: 'نقطه قوت اصلی، انتقادات یا پیشنهادات سازنده شما برای رویدادهای آینده:',
+        type: 'textarea',
+        required: false,
+        options: []
+      });
+
+      showAdminToast("✓ قالب نمونه استاندارد رضایت‌سنجی بارگذاری شد.");
+    }
+
+    // ذخیره نظرسنجی از طریق بیلدر
+    async function saveSurveyFromBuilder() {
+      const btn = document.getElementById('btnSaveSurveyBuilder');
+      const surveyId = document.getElementById('builderSurveyId').value.trim();
+      const eventIdInput = document.getElementById('builderSurveyEventId');
+      const eventId = eventIdInput ? eventIdInput.value.trim() : '';
+      const title = document.getElementById('builderSurveyTitle').value.trim();
+      const desc = document.getElementById('builderSurveyDesc').value.trim();
+      const status = document.getElementById('builderSurveyStatus').value;
+      const identity = document.getElementById('builderSurveyIdentity').value;
+      const allowMultiple = document.getElementById('builderAllowMultiple').checked;
+
+      if (!title) {
+        alert("لطفاً عنوان نظرسنجی را وارد فرمایید.");
+        document.getElementById('builderSurveyTitle').focus();
+        return;
+      }
+
+      const qCards = document.querySelectorAll('#builderQuestionsContainer .builder-question-card');
+      if (qCards.length === 0) {
+        alert("لطفاً حداقل یک سوال برای نظرسنجی تعریف فرمایید.");
+        return;
+      }
+
+      const questions = [];
+
+      for (let i = 0; i < qCards.length; i++) {
+        const card = qCards[i];
+        const qId = card.dataset.qid || ('q_' + (i + 1));
+        const qTextInput = card.querySelector('.q-text-input');
+        const qText = qTextInput ? qTextInput.value.trim() : '';
+        const qType = card.querySelector('.q-type-select').value;
+        const qRequired = card.querySelector('.q-required-check').checked;
+
+        if (!qText) {
+          alert(`لطفاً متن سوال شماره ${i + 1} را وارد فرمایید.`);
+          if (qTextInput) qTextInput.focus();
+          return;
+        }
+
+        let options = [];
+        if (qType === 'radio' || qType === 'checkbox') {
+          const optInputs = card.querySelectorAll('.option-val-input');
+          optInputs.forEach(optIn => {
+            const v = optIn.value.trim();
+            if (v) options.push(v);
+          });
+
+          if (options.length < 2) {
+            alert(`برای سوال شماره ${i + 1} («${qText}»)، حداقل ۲ گزینه پاسخ تعریف فرمایید.`);
+            return;
+          }
+        }
+
+        questions.push({
+          id: qId,
+          text: qText,
+          type: qType,
+          required: qRequired,
+          options: options
+        });
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></div> در حال ذخیره...`;
+
+      try {
+        const surveyData = {
+          id: surveyId || undefined,
+          eventId: eventId || undefined,
+          title: title,
+          description: desc,
+          status: status,
+          requirePersonnelCode: identity === 'required',
+          isAnonymous: identity === 'anonymous',
+          allowMultipleResponses: allowMultiple,
+          questions: questions
+        };
+
+        const res = await StorageService.saveSurvey(surveyData);
+
+        closeSurveyModal();
+        showAdminToast("🎉 نظرسنجی با موفقیت در سامانه ذخیره و فعال شد.");
+        loadSurveysData(true);
+      } catch (err) {
+        console.error("خطا در ذخیره نظرسنجی:", err);
+        alert("خطا در ذخیره نظرسنجی: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `💾 ذخیره و انتشار نظرسنجی`;
+      }
+    }
+
+    // تایید و حذف نظرسنجی
+    async function deleteSurveyConfirm(surveyId, surveyTitle) {
+      if (!confirm(`آیا از حذف کامل نظرسنجی «${surveyTitle}» و تمامی پاسخ‌های ثبت‌شده آن اطمینان دارید؟\nاین عملیات غیرقابل بازگشت است.`)) {
+        return;
+      }
+
+      try {
+        await StorageService.deleteSurvey(surveyId);
+        showAdminToast("نظرسنجی مورد نظر با موفقیت حذف گردید.");
+        loadSurveysData(true);
+      } catch (err) {
+        alert("خطا در حذف نظرسنجی: " + err.message);
+      }
+    }
+
+    // ==========================================
+    // بخش مشاهده نتایج و آمار نظرسنجی
+    // ==========================================
+    async function openSurveyResultsModal(surveyId) {
+      currentResultsSurveyId = surveyId;
+      const modal = document.getElementById('surveyResultsModal');
+      const titleEl = document.getElementById('resultsModalTitle');
+      const countEl = document.getElementById('resultsTotalCountBadge');
+      const chartsContainer = document.getElementById('analyticsChartsContainer');
+      const thead = document.getElementById('resultsTableHead');
+      const tbody = document.getElementById('resultsTableBody');
+
+      modal.classList.add('active');
+      switchResultsTab('analytics');
+
+      titleEl.textContent = 'در حال دریافت نتایج نظرسنجی...';
+      countEl.textContent = '...';
+      chartsContainer.innerHTML = '<div style="text-align: center; padding: 40px;"><div class="spinner" style="margin: 0 auto 10px;"></div>در حال پردازش داده‌ها...</div>';
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+
+      let survey = cachedSurveys.find(s => s.id === surveyId);
+      if (!survey) {
+        survey = await StorageService.getSurveyById(surveyId);
+      }
+
+      const responses = await StorageService.getSurveyResponses(surveyId);
+
+      titleEl.textContent = '📊 نتایج و تحلیل آماری نظرسنجی: ' + (survey ? survey.title : '');
+      countEl.textContent = responses.length.toLocaleString('fa-IR');
+
+      renderSurveyResultsAnalytics(survey, responses);
+      renderSurveyResultsTable(survey, responses);
+    }
+
+    function closeSurveyResultsModal() {
+      const modal = document.getElementById('surveyResultsModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    function switchResultsTab(tab) {
+      const btnA = document.getElementById('btnTabResultsAnalytics');
+      const btnT = document.getElementById('btnTabResultsTable');
+      const secA = document.getElementById('resultsAnalyticsTab');
+      const secT = document.getElementById('resultsTableTab');
+
+      if (tab === 'table') {
+        btnA.classList.remove('active');
+        btnT.classList.add('active');
+        secA.style.display = 'none';
+        secT.style.display = 'block';
+      } else {
+        btnA.classList.add('active');
+        btnT.classList.remove('active');
+        secA.style.display = 'block';
+        secT.style.display = 'none';
+      }
+    }
+
+    // رندر نمودارها و تحلیل درصدی هر گزینه
+    function renderSurveyResultsAnalytics(survey, responses) {
+      const container = document.getElementById('analyticsChartsContainer');
+      if (!container) return;
+
+      const totalResponses = responses.length;
+
+      if (!survey || !survey.questions || survey.questions.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 30px; color: #64748b;">سوالی برای این نظرسنجی وجود ندارد.</div>';
+        return;
+      }
+
+      if (totalResponses === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 45px 20px; color: #64748b;">
+            <div style="font-size: 2.2rem; margin-bottom: 10px;">📭</div>
+            <h4 style="color: #334155; margin-bottom: 6px;">هنوز پاسخی برای این نظرسنجی ثبت نشده است</h4>
+            <p style="font-size: 0.85rem;">به محض شرکت اولین همکار در نظرسنجی، نمودارها و تحلیل لحظه‌ای در این بخش نمایش خواهد یافت.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+
+      survey.questions.forEach((q, idx) => {
+        const box = document.createElement('div');
+        box.className = 'result-stat-row';
+
+        const qTitle = document.createElement('div');
+        qTitle.style.fontWeight = '800';
+        qTitle.style.color = '#0f172a';
+        qTitle.style.fontSize = '0.96rem';
+        qTitle.style.marginBottom = '12px';
+        qTitle.style.display = 'flex';
+        qTitle.style.alignItems = 'center';
+        qTitle.style.gap = '8px';
+        qTitle.innerHTML = `
+          <span style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-size: 0.78rem;">سوال ${idx + 1}</span>
+          <span>${escapeHtml(q.text || '')}</span>
+        `;
+        box.appendChild(qTitle);
+
+        // تحلیل بر اساس نوع سوال
+        if (q.type === 'radio' || q.type === 'checkbox') {
+          const counts = {};
+          (q.options || []).forEach(opt => counts[opt] = 0);
+
+          let answeredCount = 0;
+
+          responses.forEach(r => {
+            const ans = r.answers ? r.answers[q.id] : null;
+            if (ans) {
+              if (Array.isArray(ans)) {
+                ans.forEach(item => {
+                  counts[item] = (counts[item] || 0) + 1;
+                });
+                answeredCount++;
+              } else {
+                counts[ans] = (counts[ans] || 0) + 1;
+                answeredCount++;
+              }
+            }
+          });
+
+          const baseTotal = answeredCount > 0 ? answeredCount : 1;
+
+          const optionsList = document.createElement('div');
+          optionsList.style.display = 'flex';
+          optionsList.style.flexDirection = 'column';
+          optionsList.style.gap = '10px';
+
+          (q.options || []).forEach(opt => {
+            const count = counts[opt] || 0;
+            const pct = Math.round((count / baseTotal) * 100);
+
+            const row = document.createElement('div');
+            row.innerHTML = `
+              <div class="result-stat-label-wrap">
+                <span style="color: #334155;">${escapeHtml(opt)}</span>
+                <span style="color: #0284c7; font-weight: 700;">${count.toLocaleString('fa-IR')} رای (${pct}٪)</span>
+              </div>
+              <div class="result-bar-track">
+                <div class="result-bar-fill" style="width: ${pct}%;"></div>
+              </div>
+            `;
+            optionsList.appendChild(row);
+          });
+
+          box.appendChild(optionsList);
+
+        } else if (q.type === 'rating') {
+          let sum = 0;
+          let count = 0;
+          const starsCount = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+          responses.forEach(r => {
+            const star = r.answers ? parseInt(r.answers[q.id], 10) : 0;
+            if (star >= 1 && star <= 5) {
+              sum += star;
+              count++;
+              starsCount[star] = (starsCount[star] || 0) + 1;
+            }
+          });
+
+          const avg = count > 0 ? (sum / count).toFixed(1) : '۰';
+
+          const wrap = document.createElement('div');
+          wrap.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 12px; background: #fffbeb; padding: 10px 16px; border-radius: 8px; border: 1px solid #fde68a;">
+              <div style="font-size: 1.8rem; font-weight: 900; color: #b45309;">${Number(avg).toLocaleString('fa-IR')} <span style="font-size: 1rem; font-weight: normal;">از ۵</span></div>
+              <div style="font-size: 0.88rem; color: #92400e;">
+                میانگین امتیاز کل (مشارکت ${count.toLocaleString('fa-IR')} نفر)
+              </div>
+            </div>
+          `;
+
+          const starsStrip = document.createElement('div');
+          starsStrip.style.display = 'flex';
+          starsStrip.style.flexDirection = 'column';
+          starsStrip.style.gap = '6px';
+
+          for (let s = 5; s >= 1; s--) {
+            const c = starsCount[s] || 0;
+            const p = count > 0 ? Math.round((c / count) * 100) : 0;
+            const sRow = document.createElement('div');
+            sRow.innerHTML = `
+              <div class="result-stat-label-wrap" style="font-size: 0.82rem;">
+                <span>★ ${s} ستاره</span>
+                <span>${c.toLocaleString('fa-IR')} نفر (${p}٪)</span>
+              </div>
+              <div class="result-bar-track">
+                <div class="result-bar-fill" style="width: ${p}%; background: #f59e0b;"></div>
+              </div>
+            `;
+            starsStrip.appendChild(sRow);
+          }
+
+          wrap.appendChild(starsStrip);
+          box.appendChild(wrap);
+
+        } else {
+          // متنی یا تشریحی
+          const textAnswers = [];
+          responses.forEach(r => {
+            const ans = r.answers ? r.answers[q.id] : '';
+            if (ans && String(ans).trim()) {
+              textAnswers.push({
+                text: String(ans).trim(),
+                name: r.fullName || 'ناشناس',
+                date: r.jalaliDate || ''
+              });
+            }
+          });
+
+          const wrap = document.createElement('div');
+          wrap.innerHTML = `
+            <div style="font-size: 0.82rem; color: #64748b; margin-bottom: 8px;">
+              تعداد ${textAnswers.length.toLocaleString('fa-IR')} پاسخ متنی ثبت شده است:
+            </div>
+          `;
+
+          const list = document.createElement('div');
+          list.style.maxHeight = '200px';
+          list.style.overflowY = 'auto';
+          list.style.display = 'flex';
+          list.style.flexDirection = 'column';
+          list.style.gap = '8px';
+
+          if (textAnswers.length === 0) {
+            list.innerHTML = '<div style="font-size: 0.82rem; color: #94a3b8; font-style: italic;">هنوز پاسخی برای این سوال ثبت نشده است.</div>';
+          } else {
+            textAnswers.forEach(t => {
+              const item = document.createElement('div');
+              item.style.background = '#ffffff';
+              item.style.border = '1px solid #e2e8f0';
+              item.style.borderRadius = '6px';
+              item.style.padding = '8px 12px';
+              item.innerHTML = `
+                <div style="font-size: 0.88rem; color: #1e293b; line-height: 1.6;">${escapeHtml(t.text)}</div>
+                <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 4px; display: flex; justify-content: space-between;">
+                  <span>👤 ${escapeHtml(t.name)}</span>
+                  <span>${t.date}</span>
+                </div>
+              `;
+              list.appendChild(item);
+            });
+          }
+
+          wrap.appendChild(list);
+          box.appendChild(wrap);
+        }
+
+        container.appendChild(box);
+      });
+    }
+
+    // رندر جدول داده‌های فردی پاسخ‌دهندگان
+    function renderSurveyResultsTable(survey, responses) {
+      const thead = document.getElementById('resultsTableHead');
+      const tbody = document.getElementById('resultsTableBody');
+      if (!thead || !tbody) return;
+
+      const questions = survey ? (survey.questions || []) : [];
+
+      let headHtml = `
+        <tr>
+          <th style="width: 45px; text-align: center;">#</th>
+          <th style="width: 100px;">کد پرسنلی</th>
+          <th style="width: 140px;">نام و نام خانوادگی</th>
+          <th style="width: 130px;">تاریخ ثبت</th>
+      `;
+
+      questions.forEach((q, idx) => {
+        headHtml += `<th>سوال ${idx + 1}</th>`;
+      });
+
+      headHtml += `<th style="width: 60px; text-align: center;">عملیات</th></tr>`;
+      thead.innerHTML = headHtml;
+
+      if (!responses || responses.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="${questions.length + 5}" style="text-align: center; padding: 30px; color: #94a3b8;">
+              هنوز پاسخی برای این نظرسنجی ثبت نشده است.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      let rowsHtml = '';
+      responses.forEach((resp, rIdx) => {
+        rowsHtml += `
+          <tr>
+            <td style="text-align: center;">${(rIdx + 1).toLocaleString('fa-IR')}</td>
+            <td><strong>${escapeHtml(resp.personnelCode || 'ناشناس')}</strong></td>
+            <td>${escapeHtml(resp.fullName || 'ناشناس')}</td>
+            <td style="font-size: 0.8rem; color: #64748b;">${escapeHtml(resp.jalaliDate || '')}</td>
+        `;
+
+        questions.forEach(q => {
+          const ans = resp.answers ? resp.answers[q.id] : '';
+          let displayAns = '-';
+          if (ans !== undefined && ans !== null && ans !== '') {
+            if (Array.isArray(ans)) {
+              displayAns = ans.join('، ');
+            } else if (q.type === 'rating') {
+              displayAns = `⭐ ${ans}`;
+            } else {
+              displayAns = String(ans);
+            }
+          }
+          rowsHtml += `<td style="font-size: 0.84rem; max-width: 250px;">${escapeHtml(displayAns)}</td>`;
+        });
+
+        rowsHtml += `
+            <td style="text-align: center;">
+              <button type="button" class="action-btn btn-delete" title="حذف این پاسخ" onclick="deleteSingleSurveyResponse('${survey.id}', '${resp.id}')" style="padding: 4px 8px;">
+                🗑️
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = rowsHtml;
+    }
+
+    // حذف یک پاسخ خاص از نظرسنجی
+    async function deleteSingleSurveyResponse(surveyId, responseId) {
+      if (!confirm("آیا از حذف این رکورد پاسخ اطمینان دارید؟")) return;
+
+      try {
+        await StorageService.deleteSurveyResponse(surveyId, responseId);
+        showAdminToast("پاسخ مورد نظر با موفقیت حذف گردید.");
+        openSurveyResultsModal(surveyId);
+        loadSurveysData(true);
+      } catch (err) {
+        alert("خطا در حذف رکورد: " + err.message);
+      }
+    }
+
+    // دریافت اکسل نظرسنجی فعال
+    function exportCurrentSurveyExcel() {
+      if (currentResultsSurveyId) {
+        StorageService.exportSurveyToExcel(currentResultsSurveyId);
+      }
+    }
+
+    // چاپ گزارش نتایج نظرسنجی
+    function printSurveyResultsReport() {
+      window.print();
+    }
+
     // آغاز اجرای صفحه
     if (checkAuth()) {
       try { resetFiltersOnLoad(); } catch (e) {}
       try { updateSmsTexts(); } catch (e) { console.warn(e); }
       try { checkCloudStatus(); } catch (e) { console.warn(e); }
       try { initDeadlineControls(); } catch (e) { console.warn(e); }
+      try { updateEventSurveyBoxes(); } catch (e) { console.warn(e); }
+      try { loadSurveysData(); } catch (e) { console.warn(e); }
       loadData();
     }
 

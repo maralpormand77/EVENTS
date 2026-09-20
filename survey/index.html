@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظرسنجی سازمانی | گروه توسعه سرمایه گذاری انتخاب</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <style>
+    :root {
+      --survey-primary: #004b93;
+      --survey-accent: #10b981;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+      min-height: 100vh;
+      padding-bottom: 50px;
+    }
+
+    .survey-container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    .survey-main-card {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      border: 1px solid rgba(0, 75, 147, 0.08);
+      margin-bottom: 24px;
+    }
+
+    .survey-hero {
+      background: linear-gradient(135deg, #004b93 0%, #0369a1 100%);
+      color: #ffffff;
+      padding: 30px 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .survey-hero h1 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin: 10px 0 6px 0;
+      line-height: 1.5;
+    }
+
+    .survey-hero p {
+      font-size: 0.92rem;
+      opacity: 0.92;
+      line-height: 1.7;
+      margin: 0;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .survey-meta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      padding: 5px 14px;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .survey-body {
+      padding: 26px 22px;
+    }
+
+    /* کارت مشخصات کاربر */
+    .user-info-section {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      border-right: 4px solid var(--survey-primary);
+    }
+
+    .user-info-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* کارت‌های هر سوال */
+    .question-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .question-card:focus-within,
+    .question-card:hover {
+      border-color: #93c5fd;
+      box-shadow: 0 4px 14px rgba(0, 75, 147, 0.08);
+    }
+
+    .question-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .question-num-pill {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .question-title-text {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: #1e293b;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .question-required-mark {
+      color: #ef4444;
+      font-weight: bold;
+      margin-right: 3px;
+    }
+
+    /* گزینه‌های انتخابی (رادیو و چک‌باکس) */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-item-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      font-size: 0.94rem;
+      color: #334155;
+      position: relative;
+      user-select: none;
+    }
+
+    .option-item-label:hover {
+      background: #f0f7ff;
+      border-color: #bfdbfe;
+    }
+
+    .option-item-label input[type="radio"],
+    .option-item-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--survey-primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .option-item-label.selected {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #1e40af;
+      font-weight: 600;
+    }
+
+    /* سوالات امتیازدهی (Rating ۱ تا ۵) */
+    .rating-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .rating-buttons-strip {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      direction: ltr;
+    }
+
+    .rating-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      border: 2px solid #cbd5e1;
+      background: #ffffff;
+      color: #475569;
+      font-size: 1.25rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      transition: all 0.18s ease;
+    }
+
+    .rating-btn:hover {
+      border-color: #f59e0b;
+      color: #d97706;
+      background: #fffbeb;
+      transform: translateY(-2px);
+    }
+
+    .rating-btn.active {
+      border-color: #f59e0b;
+      background: #fef3c7;
+      color: #b45309;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);
+      transform: scale(1.05);
+    }
+
+    .rating-labels {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 320px;
+      font-size: 0.78rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    /* فیلدهای متنی */
+    .survey-text-input,
+    .survey-textarea {
+      width: 100%;
+      border: 1.5px solid #cbd5e1;
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      font-family: inherit;
+      font-size: 0.94rem;
+      color: #0f172a;
+      background: #ffffff;
+      transition: all 0.2s;
+    }
+
+    .survey-text-input:focus,
+    .survey-textarea:focus {
+      outline: none;
+      border-color: var(--survey-primary);
+      box-shadow: 0 0 0 3px rgba(0, 75, 147, 0.12);
+    }
+
+    .survey-textarea {
+      min-height: 110px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    /* نوار پیشرفت */
+    .survey-progress-wrapper {
+      margin-bottom: 20px;
+    }
+
+    .progress-track {
+      background: #e2e8f0;
+      height: 8px;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-fill {
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 10px;
+    }
+
+    /* کارت تشکر پس از ثبت */
+    .thank-you-card {
+      text-align: center;
+      padding: 45px 24px;
+    }
+
+    .thank-you-icon {
+      width: 76px;
+      height: 76px;
+      background: #dcfce7;
+      color: #16a34a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      box-shadow: 0 8px 24px rgba(22, 163, 74, 0.2);
+    }
+
+    .thank-you-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #14532d;
+      margin-bottom: 10px;
+    }
+
+    .thank-you-text {
+      font-size: 0.98rem;
+      color: #475569;
+      line-height: 1.8;
+      max-width: 520px;
+      margin: 0 auto 24px;
+    }
+
+    /* لیست نظرسنجی‌های دیگر در صورت عدم وجود آیدی */
+    .available-surveys-grid {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .available-survey-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s;
+    }
+
+    .available-survey-item:hover {
+      border-color: #3b82f6;
+      box-shadow: var(--shadow-sm);
+      transform: translateY(-2px);
+    }
+
+    .available-survey-title {
+      font-weight: 700;
+      color: var(--survey-primary);
+      margin-bottom: 4px;
+    }
+
+    /* دکمه ارسال */
+    .btn-submit-survey {
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #004b93 0%, #0284c7 100%);
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 75, 147, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-submit-survey:hover:not(:disabled) {
+      background: linear-gradient(135deg, #00366b 0%, #0369a1 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 75, 147, 0.4);
+    }
+
+    .btn-submit-survey:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="survey-container">
+    <!-- سربرگ برند -->
+    <header class="brand-header">
+      <div class="brand-logo-container">
+        <img src="assets/images/logo.png" onerror="this.src='../images.png'" alt="لوگو گروه انتخاب" class="brand-logo">
+      </div>
+      <div>
+        <span class="org-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          سامانه افکارسنجی و نظرسنجی سازمانی
+        </span>
+      </div>
+    </header>
+
+    <!-- کانتینر اصلی محتوا (پویا) -->
+    <div id="surveyMainWrapper">
+      <!-- حالت در حال بارگذاری -->
+      <div id="surveyLoadingState" class="survey-main-card" style="padding: 40px 20px; text-align: center;">
+        <div class="spinner" style="margin: 0 auto 16px;"></div>
+        <p style="color: #64748b; font-size: 0.95rem;">در حال دریافت و آماده‌سازی فرم نظرسنجی...</p>
+      </div>
+
+      <!-- کارت فرم نظرسنجی -->
+      <div id="surveyFormCard" class="survey-main-card" style="display: none;">
+        <div class="survey-hero">
+          <span class="survey-meta-badge" id="surveyStatusBadge">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #4ade80; display: inline-block;"></span>
+            نظرسنجی فعال
+          </span>
+          <h1 id="surveyTitleDisplay">عنوان نظرسنجی</h1>
+          <p id="surveyDescDisplay">توضیحات و راهنمای شرکت در نظرسنجی</p>
+        </div>
+
+        <div class="survey-body">
+          <!-- نوار پیشرفت پاسخگویی -->
+          <div class="survey-progress-wrapper" id="surveyProgressWrapper">
+            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #64748b; font-weight: 600;">
+              <span>پیشرفت پاسخگویی:</span>
+              <span id="progressText">۰ از ۰ سوال</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFillBar"></div>
+            </div>
+          </div>
+
+          <form id="surveyForm" novalidate>
+            <!-- بخش هویت پرسنلی (در صورت الزامی یا اختیاری بودن) -->
+            <div id="userInfoSection" class="user-info-section" style="display: none;">
+              <div class="user-info-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                مشخصات همکار ارجمند
+                <span id="userInfoRequirementTag" style="font-size: 0.74rem; padding: 2px 8px; border-radius: 6px; background: #e2e8f0; color: #475569; font-weight: normal; margin-right: auto;">اختیاری</span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="surveyPersonnelCodeInput" class="form-label" style="font-size: 0.84rem;">شماره پرسنلی:</label>
+                  <input type="text" id="surveyPersonnelCodeInput" class="form-input" placeholder="مثال: ۹۹۲۱۱۳" maxlength="10" inputmode="numeric">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="surveyFullNameInput" class="form-label" style="font-size: 0.84rem;">نام و نام خانوادگی:</label>
+                  <input type="text" id="surveyFullNameInput" class="form-input" placeholder="شناسایی خودکار یا دستی">
+                </div>
+              </div>
+
+              <div id="surveyPersonnelFeedback" style="display: none; margin-top: 10px; font-size: 0.82rem; padding: 6px 12px; border-radius: 6px;"></div>
+            </div>
+
+            <!-- یادداشت نظرسنجی کاملاً ناشناس -->
+            <div id="anonymousNotice" class="user-info-section" style="display: none; background: #f0fdf4; border-color: #bbf7d0; border-right-color: #10b981;">
+              <div style="display: flex; align-items: center; gap: 8px; color: #166534; font-size: 0.88rem; font-weight: 600;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                این نظرسنجی کاملاً محرمانه و بدون ثبت هویت است. نظرات صادقانه شما برای ما بسیار ارزشمند است.
+              </div>
+            </div>
+
+            <!-- لیست سوالات نظرسنجی -->
+            <div id="questionsContainer">
+              <!-- با جاوااسکریپت پر می‌شود -->
+            </div>
+
+            <!-- پیام خطا در اعتبارسنجی -->
+            <div id="surveyFormError" style="display: none; background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 12px 16px; border-radius: var(--radius-md); font-size: 0.88rem; margin-bottom: 16px; font-weight: 600;">
+            </div>
+
+            <!-- دکمه ثبت نهایی -->
+            <button type="submit" id="btnSubmitSurvey" class="btn-submit-survey">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              ثبت و ارسال پاسخ‌های نظرسنجی
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- کارت تایید و تشکر پس از ثبت موفق -->
+      <div id="surveyThankYouCard" class="survey-main-card" style="display: none;">
+        <div class="thank-you-card">
+          <div class="thank-you-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2 class="thank-you-title">با تشکر از همراهی و مشارکت شما!</h2>
+          <p class="thank-you-text">
+            نظرات و پیشنهادات ارزشمند شما با موفقیت در سامانه رویدادهای گروه انتخاب ثبت گردید. بررسی و ارتقای خدمات بر اساس دیدگاه‌های شما همکاران گرامی انجام خواهد شد.
+          </p>
+
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-md); padding: 14px; max-width: 440px; margin: 0 auto 24px; font-size: 0.86rem; color: #475569;">
+            <div><strong>عنوان نظرسنجی:</strong> <span id="thankYouSurveyTitle">-</span></div>
+            <div style="margin-top: 6px;"><strong>زمان ثبت:</strong> <span id="thankYouSurveyTime">-</span></div>
+          </div>
+
+          <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <a href="index.html" class="btn btn-outline" style="text-decoration: none; padding: 10px 20px;">
+              بازگشت به پرتال رویدادها
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- حالت خطا یا نظرسنجی یافت نشد -->
+      <div id="surveyNotFoundCard" class="survey-main-card" style="display: none; padding: 36px 24px; text-align: center;">
+        <div style="width: 64px; height: 64px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h2 style="font-size: 1.25rem; font-weight: 800; color: #991b1b; margin-bottom: 8px;">نظرسنجی مورد نظر یافت نشد</h2>
+        <p style="color: #64748b; font-size: 0.9rem; line-height: 1.7; max-width: 480px; margin: 0 auto 20px;" id="surveyNotFoundMessage">
+          شناسه نظرسنجی ارسال‌شده معتبر نمی‌باشد یا مهلت پاسخگویی به آن پایان یافته است.
+        </p>
+
+        <!-- لیست سایر نظرسنجی‌های در دسترس -->
+        <div id="otherActiveSurveysBox" style="display: none; text-align: right; max-width: 520px; margin: 0 auto;">
+          <div style="font-weight: 700; color: #334155; font-size: 0.92rem; margin-bottom: 8px;">
+            نظرسنجی‌های فعال در سازمان:
+          </div>
+          <div id="activeSurveysList" class="available-surveys-grid"></div>
+        </div>
+
+        <div style="margin-top: 24px;">
+          <a href="index.html" class="btn btn-primary" style="text-decoration: none; padding: 9px 22px;">
+            ورود به پرتال رویدادها
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- فوتر -->
+    <footer class="page-footer" style="text-align: center; margin-top: 30px; font-size: 0.82rem; color: #64748b;">
+      سامانه یکپارچه نظرسنجی گروه توسعه سرمایه گذاری انتخاب &copy; ۱۴۰۵
+    </footer>
+  </div>
+
+  <!-- اسکریپت‌ها -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/storage.js"></script>
+  <script src="assets/js/personnel-data.js"></script>
+
+  <script>
+    let currentSurvey = null;
+    let surveyAnswers = {};
+
+    function toStandardDigits(str) {
+      return (str || '').replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+                         .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+    }
+
+    // دریافت پارامتر id از URL
+    function getSurveyIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      let id = params.get('id');
+      if (!id) {
+        // بررسی مسیرهای احتمالی مانند /survey/id
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const lastPart = pathParts[pathParts.length - 1];
+        if (lastPart && lastPart !== 'survey.html' && lastPart !== 'index.html' && lastPart !== 'survey') {
+          id = lastPart;
+        }
+      }
+      return id;
+    }
+
+    // مقداردهی اولیه صفحه
+    async function initSurveyPage() {
+      const surveyId = getSurveyIdFromUrl();
+
+      if (!surveyId) {
+        await showActiveSurveysList("لطفاً نظرسنجی مورد نظر خود را از لیست زیر انتخاب فرمایید:");
+        return;
+      }
+
+      try {
+        currentSurvey = await StorageService.getSurveyById(surveyId);
+      } catch (err) {
+        console.error("خطا در بارگذاری نظرسنجی:", err);
+      }
+
+      if (!currentSurvey) {
+        await showActiveSurveysList("نظرسنجی مورد نظر با شناسه درج شده یافت نشد.");
+        return;
+      }
+
+      // بررسی وضعیت فعال بودن
+      if (currentSurvey.status === 'closed') {
+        document.getElementById('surveyLoadingState').style.display = 'none';
+        document.getElementById('surveyNotFoundCard').style.display = 'block';
+        document.getElementById('surveyNotFoundMessage').textContent = "مهلت شرکت در این نظرسنجی به پایان رسیده است.";
+        return;
+      }
+
+      // بررسی آیا قبلاً کاربر در این دستگاه پاسخ داده است؟
+      if (!currentSurvey.allowMultipleResponses) {
+        const hasVoted = localStorage.getItem(`entekhab_survey_voted_${currentSurvey.id}`);
+        if (hasVoted) {
+          showThankYouScreen("شما قبلاً در این نظرسنجی شرکت کرده‌اید. از توجه و همراهی شما سپاسگزاریم.");
+          return;
+        }
+      }
+
+      renderSurveyForm(currentSurvey);
+    }
+
+    // رندر فرم نظرسنجی
+    function renderSurveyForm(survey) {
+      document.getElementById('surveyLoadingState').style.display = 'none';
+      document.getElementById('surveyFormCard').style.display = 'block';
+
+      document.title = `${survey.title || 'نظرسنجی'} | گروه توسعه سرمایه گذاری انتخاب`;
+      document.getElementById('surveyTitleDisplay').textContent = survey.title || 'نظرسنجی سازمانی';
+      document.getElementById('surveyDescDisplay').textContent = survey.description || 'خواهشمند است با اختصاص دقایقی از وقت ارزشمند خود، به سوالات زیر پاسخ دهید.';
+
+      // مدیریت بخش هویت کاربر
+      const userInfoSection = document.getElementById('userInfoSection');
+      const anonymousNotice = document.getElementById('anonymousNotice');
+      const requirementTag = document.getElementById('userInfoRequirementTag');
+      const codeInput = document.getElementById('surveyPersonnelCodeInput');
+
+      if (survey.isAnonymous) {
+        userInfoSection.style.display = 'none';
+        anonymousNotice.style.display = 'block';
+      } else {
+        userInfoSection.style.display = 'block';
+        anonymousNotice.style.display = 'none';
+
+        if (survey.requirePersonnelCode) {
+          requirementTag.textContent = 'الزامی';
+          requirementTag.style.background = '#fee2e2';
+          requirementTag.style.color = '#dc2626';
+          codeInput.required = true;
+        } else {
+          requirementTag.textContent = 'اختیاری';
+          requirementTag.style.background = '#e2e8f0';
+          requirementTag.style.color = '#475569';
+          codeInput.required = false;
+        }
+
+        // رویداد استعلام خودکار کد پرسنلی
+        codeInput.addEventListener('input', handlePersonnelCodeLookup);
+      }
+
+      // رندر سوالات
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = '';
+      const questions = survey.questions || [];
+
+      if (questions.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px 10px; color: #64748b;">
+            هنوز سوالی برای این نظرسنجی تعریف نشده است.
+          </div>
+        `;
+        document.getElementById('btnSubmitSurvey').disabled = true;
+        return;
+      }
+
+      questions.forEach((q, idx) => {
+        const card = createQuestionCard(q, idx);
+        container.appendChild(card);
+      });
+
+      updateProgressBar();
+    }
+
+    // استعلام خودکار کد پرسنلی از دیتابیس سازمان
+    function handlePersonnelCodeLookup(e) {
+      const rawVal = e.target.value;
+      const cleanVal = toStandardDigits(rawVal).trim();
+      const nameInput = document.getElementById('surveyFullNameInput');
+      const feedback = document.getElementById('surveyPersonnelFeedback');
+
+      if (!cleanVal) {
+        feedback.style.display = 'none';
+        return;
+      }
+
+      // جستجو در بانک پرسنل سازمان (window.PERSONNEL_MAP)
+      let found = null;
+      if (typeof window.PERSONNEL_MAP !== 'undefined' && window.PERSONNEL_MAP[cleanVal]) {
+        const p = window.PERSONNEL_MAP[cleanVal];
+        found = {
+          fullName: `${p[0] || ''} ${p[1] || ''}`.trim()
+        };
+      } else if (typeof PERSONNEL_DATA !== 'undefined' && PERSONNEL_DATA[cleanVal]) {
+        const p = PERSONNEL_DATA[cleanVal];
+        found = {
+          fullName: `${p[0] || ''} ${p[1] || ''}`.trim()
+        };
+      }
+
+      if (found && found.fullName) {
+        nameInput.value = found.fullName;
+        feedback.style.display = 'block';
+        feedback.style.background = '#f0fdf4';
+        feedback.style.color = '#166534';
+        feedback.style.border = '1px solid #bbf7d0';
+        feedback.innerHTML = `✓ همکار شناسایی شد: <strong>${found.fullName}</strong>`;
+      } else {
+        feedback.style.display = 'block';
+        feedback.style.background = '#fffbeb';
+        feedback.style.color = '#b45309';
+        feedback.style.border = '1px solid #fde68a';
+        feedback.innerHTML = `شماره پرسنلی در بانک سریع یافت نشد؛ در صورت تمایل نام خود را دستی وارد نمایید.`;
+      }
+    }
+
+    // ساخت کارت یک سوال
+    function createQuestionCard(q, idx) {
+      const card = document.createElement('div');
+      card.className = 'question-card';
+      card.id = `qCard_${q.id}`;
+
+      const header = document.createElement('div');
+      header.className = 'question-header';
+      header.innerHTML = `
+        <span class="question-num-pill">سوال ${idx + 1}</span>
+        <div class="question-title-text">
+          ${escapeHtml(q.text || '')}
+          ${q.required ? '<span class="question-required-mark">*</span>' : ''}
+        </div>
+      `;
+      card.appendChild(header);
+
+      const content = document.createElement('div');
+      content.className = 'question-content';
+
+      switch (q.type) {
+        case 'radio':
+          content.appendChild(renderRadioOptions(q));
+          break;
+        case 'checkbox':
+          content.appendChild(renderCheckboxOptions(q));
+          break;
+        case 'rating':
+          content.appendChild(renderRatingControl(q));
+          break;
+        case 'text':
+          content.appendChild(renderTextInput(q));
+          break;
+        case 'textarea':
+        default:
+          content.appendChild(renderTextarea(q));
+          break;
+      }
+
+      card.appendChild(content);
+      return card;
+    }
+
+    // رندر گزینه‌های رادیویی (تک انتخابی)
+    function renderRadioOptions(q) {
+      const list = document.createElement('div');
+      list.className = 'options-list';
+      const options = q.options || [];
+
+      options.forEach((optText, optIdx) => {
+        const label = document.createElement('label');
+        label.className = 'option-item-label';
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = `ans_${q.id}`;
+        radio.value = optText;
+
+        radio.addEventListener('change', () => {
+          list.querySelectorAll('.option-item-label').forEach(l => l.classList.remove('selected'));
+          label.classList.add('selected');
+          surveyAnswers[q.id] = optText;
+          updateProgressBar();
+        });
+
+        const span = document.createElement('span');
+        span.textContent = optText;
+
+        label.appendChild(radio);
+        label.appendChild(span);
+        list.appendChild(label);
+      });
+
+      return list;
+    }
+
+    // رندر گزینه‌های چک‌باکس (چند انتخابی)
+    function renderCheckboxOptions(q) {
+      const list = document.createElement('div');
+      list.className = 'options-list';
+      const options = q.options || [];
+
+      options.forEach((optText, optIdx) => {
+        const label = document.createElement('label');
+        label.className = 'option-item-label';
+
+        const check = document.createElement('input');
+        check.type = 'checkbox';
+        check.name = `ans_${q.id}`;
+        check.value = optText;
+
+        check.addEventListener('change', () => {
+          if (check.checked) {
+            label.classList.add('selected');
+          } else {
+            label.classList.remove('selected');
+          }
+
+          const selected = [];
+          list.querySelectorAll('input[type="checkbox"]:checked').forEach(c => selected.push(c.value));
+          if (selected.length > 0) {
+            surveyAnswers[q.id] = selected;
+          } else {
+            delete surveyAnswers[q.id];
+          }
+          updateProgressBar();
+        });
+
+        const span = document.createElement('span');
+        span.textContent = optText;
+
+        label.appendChild(check);
+        label.appendChild(span);
+        list.appendChild(label);
+      });
+
+      return list;
+    }
+
+    // رندر امتیازدهی (Rating ۱ تا ۵)
+    function renderRatingControl(q) {
+      const wrap = document.createElement('div');
+      wrap.className = 'rating-container';
+
+      const strip = document.createElement('div');
+      strip.className = 'rating-buttons-strip';
+
+      for (let star = 1; star <= 5; star++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'rating-btn';
+        btn.innerHTML = `
+          <span style="font-size: 0.95rem; line-height: 1;">★</span>
+          <span style="font-size: 0.82rem;">${star}</span>
+        `;
+        btn.title = `امتیاز ${star} از ۵`;
+
+        btn.addEventListener('click', () => {
+          strip.querySelectorAll('.rating-btn').forEach((b, i) => {
+            if (i < star) {
+              b.classList.add('active');
+            } else {
+              b.classList.remove('active');
+            }
+          });
+          surveyAnswers[q.id] = star;
+          updateProgressBar();
+        });
+
+        strip.appendChild(btn);
+      }
+
+      const labels = document.createElement('div');
+      labels.className = 'rating-labels';
+      labels.innerHTML = `
+        <span>۱ = خیلی ضعیف</span>
+        <span>۵ = عالی و بی‌نقص</span>
+      `;
+
+      wrap.appendChild(strip);
+      wrap.appendChild(labels);
+      return wrap;
+    }
+
+    // رندر فیلد متنی کوتاه
+    function renderTextInput(q) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'survey-text-input';
+      input.placeholder = 'پاسخ خود را بنویسید...';
+
+      input.addEventListener('input', (e) => {
+        const val = e.target.value.trim();
+        if (val) {
+          surveyAnswers[q.id] = val;
+        } else {
+          delete surveyAnswers[q.id];
+        }
+        updateProgressBar();
+      });
+
+      return input;
+    }
+
+    // رندر فیلد متنی تشریحی (Textarea)
+    function renderTextarea(q) {
+      const textarea = document.createElement('textarea');
+      textarea.className = 'survey-textarea';
+      textarea.placeholder = 'دیدگاه‌ها، پیشنهادات و نظرات تفصیلی خود را در اینجا بنویسید...';
+
+      textarea.addEventListener('input', (e) => {
+        const val = e.target.value.trim();
+        if (val) {
+          surveyAnswers[q.id] = val;
+        } else {
+          delete surveyAnswers[q.id];
+        }
+        updateProgressBar();
+      });
+
+      return textarea;
+    }
+
+    // به‌روزرسانی نوار پیشرفت پاسخگویی
+    function updateProgressBar() {
+      if (!currentSurvey) return;
+      const questions = currentSurvey.questions || [];
+      const total = questions.length;
+      if (total === 0) return;
+
+      let answeredCount = 0;
+      questions.forEach(q => {
+        const val = surveyAnswers[q.id];
+        if (val !== undefined && val !== null && val !== '') {
+          if (Array.isArray(val) && val.length === 0) return;
+          answeredCount++;
+        }
+      });
+
+      const percent = Math.round((answeredCount / total) * 100);
+      document.getElementById('progressFillBar').style.width = `${percent}%`;
+      document.getElementById('progressText').textContent = `${answeredCount} از ${total} سوال (${percent}٪)`;
+    }
+
+    // ارسال فرم نظرسنجی
+    document.getElementById('surveyForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const errorBox = document.getElementById('surveyFormError');
+      errorBox.style.display = 'none';
+
+      if (!currentSurvey) return;
+
+      const questions = currentSurvey.questions || [];
+
+      // اعتبارسنجی کد پرسنلی در صورت الزامی بودن
+      let personnelCode = '';
+      let fullName = '';
+
+      if (!currentSurvey.isAnonymous) {
+        personnelCode = toStandardDigits(document.getElementById('surveyPersonnelCodeInput').value).trim();
+        fullName = document.getElementById('surveyFullNameInput').value.trim();
+
+        if (currentSurvey.requirePersonnelCode && !personnelCode) {
+          errorBox.textContent = "لطفاً شماره پرسنلی خود را وارد فرمایید.";
+          errorBox.style.display = 'block';
+          document.getElementById('surveyPersonnelCodeInput').focus();
+          return;
+        }
+
+        // بررسی آیا با این کد پرسنلی قبلاً ثبت‌نام شده؟
+        if (personnelCode && !currentSurvey.allowMultipleResponses) {
+          const hasVotedPCode = localStorage.getItem(`entekhab_survey_voted_${currentSurvey.id}_${personnelCode}`);
+          if (hasVotedPCode) {
+            errorBox.textContent = `همکار گرامی، با شماره پرسنلی ${personnelCode} قبلاً در این نظرسنجی مشارکت ثبت شده است.`;
+            errorBox.style.display = 'block';
+            return;
+          }
+        }
+      }
+
+      // اعتبارسنجی سوالات اجباری
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        if (q.required) {
+          const ans = surveyAnswers[q.id];
+          if (ans === undefined || ans === null || ans === '' || (Array.isArray(ans) && ans.length === 0)) {
+            errorBox.textContent = `لطفاً به سوال اجباری شماره ${i + 1} («${q.text}») پاسخ دهید.`;
+            errorBox.style.display = 'block';
+            const card = document.getElementById(`qCard_${q.id}`);
+            if (card) {
+              card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              card.style.borderColor = '#ef4444';
+              setTimeout(() => { card.style.borderColor = '#e2e8f0'; }, 3000);
+            }
+            return;
+          }
+        }
+      }
+
+      // ارسال داده‌ها
+      const btn = document.getElementById('btnSubmitSurvey');
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner" style="width: 18px; height: 18px; border-width: 2px;"></div> در حال ثبت اطلاعات...`;
+
+      try {
+        const payload = {
+          surveyTitle: currentSurvey.title,
+          personnelCode: personnelCode,
+          fullName: fullName,
+          answers: surveyAnswers
+        };
+
+        await StorageService.submitSurveyResponse(currentSurvey.id, payload);
+
+        showThankYouScreen();
+      } catch (err) {
+        console.error("خطا در ارسال نظرسنجی:", err);
+        errorBox.textContent = "خطا در ثبت پاسخ: " + err.message;
+        errorBox.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> ثبت و ارسال پاسخ‌های نظرسنجی`;
+      }
+    });
+
+    // نمایش صفحه تشکر
+    function showThankYouScreen(customMsg = null) {
+      document.getElementById('surveyLoadingState').style.display = 'none';
+      document.getElementById('surveyFormCard').style.display = 'none';
+      document.getElementById('surveyNotFoundCard').style.display = 'none';
+
+      const thankYouCard = document.getElementById('surveyThankYouCard');
+      thankYouCard.style.display = 'block';
+
+      if (customMsg) {
+        const p = thankYouCard.querySelector('.thank-you-text');
+        if (p) p.textContent = customMsg;
+      }
+
+      document.getElementById('thankYouSurveyTitle').textContent = currentSurvey ? (currentSurvey.title || '-') : '-';
+      document.getElementById('thankYouSurveyTime').textContent = StorageService.toJalaliString(new Date());
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // نمایش لیست سایر نظرسنجی‌های فعال
+    async function showActiveSurveysList(msg) {
+      document.getElementById('surveyLoadingState').style.display = 'none';
+      document.getElementById('surveyFormCard').style.display = 'none';
+      document.getElementById('surveyNotFoundCard').style.display = 'block';
+
+      if (msg) {
+        document.getElementById('surveyNotFoundMessage').textContent = msg;
+      }
+
+      let allSurveys = [];
+      try {
+        allSurveys = await StorageService.getAllSurveys();
+      } catch (e) {}
+
+      const activeList = allSurveys.filter(s => s.status === 'active');
+      const box = document.getElementById('otherActiveSurveysBox');
+      const container = document.getElementById('activeSurveysList');
+
+      if (activeList.length > 0) {
+        box.style.display = 'block';
+        container.innerHTML = '';
+
+        activeList.forEach(s => {
+          const item = document.createElement('a');
+          item.className = 'available-survey-item';
+          item.href = `survey.html?id=${encodeURIComponent(s.id)}`;
+          item.innerHTML = `
+            <div>
+              <div class="available-survey-title">${escapeHtml(s.title || 'نظرسنجی')}</div>
+              <div style="font-size: 0.8rem; color: #64748b;">${(s.questions || []).length} سوال • تاریخ: ${s.jalaliDate || ''}</div>
+            </div>
+            <span style="font-size: 0.82rem; color: #0284c7; font-weight: 700;">ورود &larr;</span>
+          `;
+          container.appendChild(item);
+        });
+      } else {
+        box.style.display = 'none';
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // شروع صفحه
+    window.addEventListener('DOMContentLoaded', initSurveyPage);
+  </script>
+</body>
+</html>

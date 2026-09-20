@@ -19,7 +19,9 @@ const APP_CONFIG = {
         supabaseUrl: "entekhab_supabase_url",
         supabaseKey: "entekhab_supabase_key",
         supabaseTable: "entekhab_supabase_table",
-        cloudUrl: "entekhab_google_script_url"
+        cloudUrl: "entekhab_google_script_url",
+        surveys: "entekhab_surveys_list",
+        surveyResponses: "entekhab_survey_responses_"
     },
 
     // اطلاعات رویدادها

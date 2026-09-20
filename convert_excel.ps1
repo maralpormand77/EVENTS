@@ -1,4 +1,4 @@
-﻿<#
+<#
 ====================================================================
   Entekhab Events Portal - Excel to JavaScript Personnel DB Converter
   تبدیل مستقیم فایل اکسل به دیتابیس جاوااسکریپت پرسنل با پاورشل (بدون نیاز به پایتون)
@@ -265,7 +265,8 @@ $targetPaths = @(
     "$baseDir\1\assets\js\personnel-data.js",
     "$baseDir\2\assets\js\personnel-data.js",
     "$baseDir\3\assets\js\personnel-data.js",
-    "$baseDir\admin\assets\js\personnel-data.js"
+    "$baseDir\admin\assets\js\personnel-data.js",
+    "$baseDir\survey\assets\js\personnel-data.js"
 )
 
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
