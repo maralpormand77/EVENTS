@@ -266,7 +266,10 @@ $targetPaths = @(
     "$baseDir\2\assets\js\personnel-data.js",
     "$baseDir\3\assets\js\personnel-data.js",
     "$baseDir\admin\assets\js\personnel-data.js",
-    "$baseDir\survey\assets\js\personnel-data.js"
+    "$baseDir\survey\assets\js\personnel-data.js",
+    "$baseDir\survey1\assets\js\personnel-data.js",
+    "$baseDir\survey2\assets\js\personnel-data.js",
+    "$baseDir\survey3\assets\js\personnel-data.js"
 )
 
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)

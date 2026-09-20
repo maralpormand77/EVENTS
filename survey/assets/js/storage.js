@@ -1345,44 +1345,17 @@ const StorageService = {
         return surveys;
     },
 
-    // دریافت یک نظرسنجی بر اساس شناسه
+    // دریافت یک نظرسنجی بر اساس شناسه یا شناسه رویداد
     getSurveyById: async function(surveyId) {
         if (!surveyId) return null;
-        let surveys = this.getLocalSurveys();
-        let survey = surveys.find(s => s.id === surveyId);
-
-        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
-        if (spConfig && spConfig.url && spConfig.anonKey) {
-            try {
-                const recordId = `__survey_${surveyId}`;
-                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(recordId)}&select=*`;
-                const res = await fetch(fetchUrl, {
-                    headers: {
-                        'apikey': spConfig.anonKey,
-                        'Authorization': `Bearer ${spConfig.anonKey}`,
-                        'Accept': 'application/json'
-                    }
-                });
-                if (res.ok) {
-                    const rows = await res.json();
-                    if (Array.isArray(rows) && rows.length > 0) {
-                        try {
-                            const parsed = JSON.parse(rows[0].status_text || '{}');
-                            if (parsed && parsed.id) {
-                                survey = parsed;
-                                const idx = surveys.findIndex(s => s.id === surveyId);
-                                if (idx >= 0) surveys[idx] = survey;
-                                else surveys.push(survey);
-                                this.setLocalSurveys(surveys);
-                            }
-                        } catch(err) {}
-                    }
-                }
-            } catch(e) {
-                console.warn("خطا در دریافت نظرسنجی از دیتابیس:", e);
-            }
-        }
-
+        let surveys = await this.getAllSurveys();
+        let survey = surveys.find(s => 
+            s.id === surveyId || 
+            s.eventId === surveyId || 
+            s.id === `survey_${surveyId}` ||
+            (s.id && s.id.replace('survey_', '') === surveyId.replace('survey_', '')) ||
+            (s.eventId && (surveyId.includes(s.eventId) || s.eventId.includes(surveyId)))
+        );
         return survey || null;
     },
 
@@ -1535,9 +1508,10 @@ const StorageService = {
         const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
         if (spConfig && spConfig.url && spConfig.anonKey) {
             try {
+                const normId = surveyId.startsWith('survey_') ? surveyId.replace('survey_', '') : surveyId;
                 const payload = {
                     id: responseId,
-                    event_id: `survey_${surveyId}`,
+                    event_id: `survey_${normId}`,
                     event_title: responseObj.surveyTitle,
                     personnel_code: responseObj.personnelCode || 'ANONYMOUS',
                     full_name: responseObj.fullName,
@@ -1580,7 +1554,8 @@ const StorageService = {
         const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
         if (spConfig && spConfig.url && spConfig.anonKey) {
             try {
-                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.survey_${encodeURIComponent(surveyId)}&select=*&order=created_at.desc`;
+                const normId = surveyId.startsWith('survey_') ? surveyId.replace('survey_', '') : surveyId;
+                const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.survey_${encodeURIComponent(normId)}&select=*&order=created_at.desc`;
                 const res = await fetch(fetchUrl, {
                     headers: {
                         'apikey': spConfig.anonKey,
@@ -1640,7 +1615,8 @@ const StorageService = {
         if (spConfig && spConfig.url && spConfig.anonKey && surveys.length > 0) {
             for (const s of surveys) {
                 try {
-                    const url = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.survey_${encodeURIComponent(s.id)}&select=id`;
+                    const normId = (s.id || '').startsWith('survey_') ? s.id.replace('survey_', '') : (s.id || '');
+                    const url = `${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.survey_${encodeURIComponent(normId)}&select=id`;
                     const r = await fetch(url, {
                         headers: {
                             'apikey': spConfig.anonKey,

@@ -4226,84 +4226,315 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       currentAdminSection = section;
     }
 
-    // دریافت آدرس عمومی صفحه نظرسنجی
-    function getSurveyPublicUrl(surveyId) {
-      let base = window.location.href.split('?')[0].split('#')[0];
-      base = base.replace(/\/admin(\/index\.html|\.html|\/)?$/i, '');
-      if (base.endsWith('/')) base = base.slice(0, -1);
-      return `${base}/survey.html?id=${encodeURIComponent(surveyId)}`;
+    // تنظیمات و سوالات پیش‌فرض نظرسنجی اختصاصی هر رویداد
+    const EVENT_SURVEY_DEFAULTS = {
+      'sobh-hamdeli': {
+        id: 'survey_sobh-hamdeli',
+        eventId: 'sobh-hamdeli',
+        eventNum: 1,
+        folder: 'survey1',
+        title: 'نظرسنجی کیفیت برگزاری رویداد صبح همدلی',
+        description: 'همکار گرامی، خواهشمند است با اعلام نظرات و میزان رضایت خود، ما را در ارتقای کیفیت برنامه‌های آتی یاری فرمایید.',
+        questions: [
+          {
+            id: 'q1_sobh_satisfaction',
+            text: 'میزان رضایت کلی شما از برگزاری رویداد پیاده‌روی صبح همدلی:',
+            type: 'radio',
+            required: true,
+            options: ['بسیار عالی', 'خوب', 'متوسط', 'ضعیف']
+          },
+          {
+            id: 'q2_sobh_schedule',
+            text: 'نحوه اطلاع‌رسانی، زمان‌بندی و هماهنگی‌های صبحگاهی رویداد:',
+            type: 'radio',
+            required: true,
+            options: ['عالی', 'مناسب', 'نیاز به بهبود', 'ضعیف']
+          },
+          {
+            id: 'q3_sobh_location',
+            text: 'مکان گردهمایی (عمارت ماهور)، خدمات ترانسفر و پذیرایی صبحانه:',
+            type: 'radio',
+            required: true,
+            options: ['بسیار مطلوب', 'خوب', 'متوسط', 'نامناسب']
+          },
+          {
+            id: 'q4_sobh_continue',
+            text: 'میزان تمایل شما به تداوم و برگزاری مجدد برنامه‌های پیاده‌روی صبحگاهی:',
+            type: 'radio',
+            required: true,
+            options: ['بسیار زیاد', 'زیاد', 'متوسط', 'تمایلی ندارم']
+          },
+          {
+            id: 'q5_sobh_feedback',
+            text: 'پیشنهادات، انتقادات و نظرات شما جهت بهبود برنامه‌های آتی:',
+            type: 'textarea',
+            required: false,
+            options: []
+          }
+        ]
+      },
+      'kavir-varzaneh': {
+        id: 'survey_kavir-varzaneh',
+        eventId: 'kavir-varzaneh',
+        eventNum: 2,
+        folder: 'survey2',
+        title: 'نظرسنجی کیفیت برگزاری تور کویر ورزنه',
+        description: 'همکار گرامی، خواهشمند است با ارزیابی بخش‌های مختلف تور کویر ورزنه، ما را در برگزاری هرچه بهتر برنامه‌های آتی همراهی فرمایید.',
+        questions: [
+          {
+            id: 'q1_kavir_satisfaction',
+            text: 'میزان رضایت کلی شما از سفر و تور کویر ورزنه:',
+            type: 'radio',
+            required: true,
+            options: ['بسیار عالی', 'خوب', 'متوسط', 'ضعیف']
+          },
+          {
+            id: 'q2_kavir_transport',
+            text: 'کیفیت ترابری، اتوبوس‌ها و نظم زمان‌بندی رفت و برگشت:',
+            type: 'radio',
+            required: true,
+            options: ['بسیار خوب', 'مناسب', 'نیاز به بهبود', 'ضعیف']
+          },
+          {
+            id: 'q3_kavir_catering',
+            text: 'کیفیت پذیرایی، وعده‌های غذایی و میان‌وعده‌های سفر:',
+            type: 'radio',
+            required: true,
+            options: ['عالی', 'خوب', 'متوسط', 'نامناسب']
+          },
+          {
+            id: 'q4_kavir_programs',
+            text: 'میزان جذابیت و کیفیت برنامه‌های رصدی، علمی و تفریحات کویر:',
+            type: 'radio',
+            required: true,
+            options: ['بسیار جذاب', 'خوب', 'متوسط', 'نیازمند ارتقا']
+          },
+          {
+            id: 'q5_kavir_feedback',
+            text: 'پیشنهادات، انتقادات یا نکات تکمیلی شما برای سفرهای بعدی:',
+            type: 'textarea',
+            required: false,
+            options: []
+          }
+        ]
+      },
+      'rafting-markadeh': {
+        id: 'survey_rafting-markadeh',
+        eventId: 'rafting-markadeh',
+        eventNum: 3,
+        folder: 'survey3',
+        title: 'نظرسنجی کیفیت برگزاری تور رفتینگ مارکده',
+        description: 'همکار گرامی، با سپاس از حضور پرشور شما در تور رفتینگ مارکده، لطفاً با تکمیل این فرم ما را در ارزیابی و بهبود خدمات یاری نمایید.',
+        questions: [
+          {
+            id: 'q1_rafting_satisfaction',
+            text: 'میزان رضایت کلی شما از تجربه و هیجان تور رفتینگ مارکده:',
+            type: 'radio',
+            required: true,
+            options: ['بسیار عالی و هیجان‌انگیز', 'خوب و لذت‌بخش', 'متوسط', 'ضعیف']
+          },
+          {
+            id: 'q2_rafting_team',
+            text: 'نحوه هماهنگی، زمان‌بندی و برخورد تیم اجرایی و مربیان قایقرانی:',
+            type: 'radio',
+            required: true,
+            options: ['عالی و حرفه‌ای', 'خوب و مناسب', 'متوسط', 'ضعیف']
+          },
+          {
+            id: 'q3_rafting_safety',
+            text: 'رعایت استانداردهای ایمنی، جلیقه‌ها و تجهیزات رودخانه:',
+            type: 'radio',
+            required: true,
+            options: ['بسیار مطمئن و عالی', 'خوب و استاندارد', 'متوسط', 'نیازمند ارتقا']
+          },
+          {
+            id: 'q4_rafting_catering',
+            text: 'کیفیت ناهار، پذیرایی و خدمات ترابری رفت و برگشت:',
+            type: 'radio',
+            required: true,
+            options: ['عالی', 'مناسب', 'قابل قبول', 'ضعیف']
+          },
+          {
+            id: 'q5_rafting_feedback',
+            text: 'نظرات، پیشنهادات و انتقادات شما برای تورهای طبیعت‌گردی و ورزشی آتی:',
+            type: 'textarea',
+            required: false,
+            options: []
+          }
+        ]
+      }
+    };
+
+    // دریافت آدرس عمومی و اشتراک‌گذاری صفحه نظرسنجی (پشتیبانی هوشمند از Vercel و تنظیمات دستی)
+    function getSurveyPublicUrl(surveyIdOrEventId) {
+      let eventId = surveyIdOrEventId || '';
+      if (typeof eventId === 'string' && eventId.startsWith('survey_')) {
+        eventId = eventId.replace('survey_', '');
+      }
+
+      if (EVENT_SURVEY_DEFAULTS[eventId]) {
+        const def = EVENT_SURVEY_DEFAULTS[eventId];
+        const num = def.eventNum;
+
+        // ۱. اگر ادمین آدرس اختصاصی دستی Vercel ذخیره کرده باشد
+        const custom = localStorage.getItem('survey_custom_url_' + eventId) || localStorage.getItem('survey_custom_url_survey_' + eventId);
+        if (custom && custom.trim()) {
+          let u = custom.trim();
+          if (!u.startsWith('http://') && !u.startsWith('https://')) {
+            u = 'https://' + u;
+          }
+          return u;
+        }
+
+        // ۲. اگر پنل در وب یا ورسل لود شده باشد، آدرس ساب‌پوشه ورسل را برمی‌گرداند
+        if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+          let base = window.location.href.split('?')[0].split('#')[0];
+          base = base.replace(/\/admin(\/index\.html|\.html|\/)?$/i, '');
+          if (base.endsWith('/')) base = base.slice(0, -1);
+          return `${base}/survey${num}/`;
+        }
+
+        // ۳. آدرس پیش‌فرض پروژه مجزای Vercel
+        return `https://entekhab-survey${num}.vercel.app/`;
+      }
+
+      if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+        let base = window.location.href.split('?')[0].split('#')[0];
+        base = base.replace(/\/admin(\/index\.html|\.html|\/)?$/i, '');
+        if (base.endsWith('/')) base = base.slice(0, -1);
+        return `${base}/survey.html?id=${encodeURIComponent(surveyIdOrEventId)}`;
+      }
+      return `./survey.html?id=${encodeURIComponent(surveyIdOrEventId)}`;
+    }
+
+    // دریافت آدرس پیش‌نمایش مستقیم (محلی یا آنلاین)
+    function getSurveyPreviewUrl(eventId, num) {
+      if (window.location.protocol === 'file:') {
+        return `./survey${num}/index.html`;
+      }
+      return getSurveyPublicUrl(eventId);
+    }
+
+    // تنظیم یا ویرایش آدرس اختصاصی دامنه Vercel توسط ادمین
+    function setCustomSurveyUrl(eventId, eventTitle) {
+      const def = EVENT_SURVEY_DEFAULTS[eventId];
+      const num = def ? def.eventNum : 1;
+      const current = localStorage.getItem('survey_custom_url_' + eventId) || getSurveyPublicUrl(eventId);
+      const input = prompt(
+        `🌐 تنظیم آدرس Vercel برای نظرسنجی «${eventTitle}»:\n\nاگر پوشه survey${num} را در پروژه‌ای مجزا در Vercel متصل کرده‌اید، آدرس پروژه را وارد کنید (مثال: https://entekhab-survey${num}.vercel.app)\n\n(برای بازگشت به آدرس خودکار، کادر را خالی بگذارید):`,
+        current
+      );
+      if (input !== null) {
+        const trimmed = input.trim();
+        if (trimmed) {
+          localStorage.setItem('survey_custom_url_' + eventId, trimmed);
+          showAdminToast("✓ آدرس اختصاصی Vercel با موفقیت ذخیره شد.");
+        } else {
+          localStorage.removeItem('survey_custom_url_' + eventId);
+          showAdminToast("آدرس به حالت خودکار بازگردانده شد.");
+        }
+        updateEventSurveyBoxes();
+        if (typeof renderSurveysList === 'function') renderSurveysList();
+      }
+    }
+
+    // کپی لینک مستقیم Vercel برای رویداد
+    function copyEventSurveyLink(eventId, num) {
+      const url = getSurveyPublicUrl(eventId);
+      navigator.clipboard.writeText(url).then(() => {
+        showAdminToast(`✓ لینک نظرسنجی رویداد ${num} با موفقیت کپی شد:\n${url}`);
+      }).catch(() => {
+        prompt("لطفاً آدرس نظرسنجی را دستی کپی نمایید:", url);
+      });
+    }
+
+    // کپی پیامک آماده دعوت به نظرسنجی رویداد
+    function copyEventSurveySms(eventId, num, eventTitle) {
+      const url = getSurveyPublicUrl(eventId);
+      const text = `همکار گرامی گروه توسعه سرمایه‌گذاری انتخاب\nبا سلام، خواهشمند است با تکمیل نظرسنجی «${eventTitle}»، ما را در بهبود کیفیت و خدمات رویدادهای سازمانی یاری فرمایید:\n🔗 ${url}`;
+      navigator.clipboard.writeText(text).then(() => {
+        showAdminToast("✓ متن پیامک دعوت به نظرسنجی با موفقیت در کلیپ‌بورد کپی شد.");
+      }).catch(() => {
+        prompt("متن پیامک آماده:", text);
+      });
     }
 
     // به‌روزرسانی بخش نظرسنجی زیر هر یک از کارت‌های ۳ رویداد
     function updateEventSurveyBoxes() {
       const events = [
-        { id: 'sobh-hamdeli', title: 'صبح همدلی', boxId: 'eventSurveyBox_sobh-hamdeli' },
-        { id: 'kavir-varzaneh', title: 'تور کویر ورزنه', boxId: 'eventSurveyBox_kavir-varzaneh' },
-        { id: 'rafting-markadeh', title: 'تور رفتینگ مارکده', boxId: 'eventSurveyBox_rafting-markadeh' }
+        { id: 'sobh-hamdeli', num: 1, title: 'صبح همدلی', boxId: 'eventSurveyBox_sobh-hamdeli' },
+        { id: 'kavir-varzaneh', num: 2, title: 'تور کویر ورزنه', boxId: 'eventSurveyBox_kavir-varzaneh' },
+        { id: 'rafting-markadeh', num: 3, title: 'تور رفتینگ مارکده', boxId: 'eventSurveyBox_rafting-markadeh' }
       ];
 
       events.forEach(ev => {
         const box = document.getElementById(ev.boxId);
         if (!box) return;
 
-        // جستجوی نظرسنجی این رویداد
+        // جستجوی نظرسنجی ذخیره‌شده این رویداد در کش
         const survey = (cachedSurveys || []).find(s => 
           s.eventId === ev.id || 
+          s.id === ('survey_' + ev.id) ||
           (s.title && s.title.includes(ev.title)) ||
           (s.id && s.id.includes(ev.id))
         );
 
-        if (!survey) {
-          // فقط یک دکمه تمیز برای ایجاد نظرسنجی این رویداد
-          box.innerHTML = `
-            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
-              <button type="button" class="btn btn-outline" style="width: 100%; padding: 8px 10px; font-size: 0.82rem; font-weight: 700; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;" onclick="openSurveyModalForEvent('${ev.id}', '${ev.title}')" onmouseover="this.style.background='#e0f2fe'" onmouseout="this.style.background='#f0f9ff'">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                ➕ ایجاد نظرسنجی این رویداد
-              </button>
-            </div>
-          `;
-        } else {
-          // نظرسنجی فعال است -> ویجت اختصاصی زیر رویداد
-          const respCount = (cachedSurveysResponseCounts && cachedSurveysResponseCounts[survey.id]) || 0;
-          const isActive = survey.status === 'active';
-          const safeTitle = escapeHtml(survey.title || ev.title);
+        const surveyId = survey ? survey.id : ('survey_' + ev.id);
+        const respCount = (cachedSurveysResponseCounts && (cachedSurveysResponseCounts[surveyId] || cachedSurveysResponseCounts[ev.id])) || 0;
+        const publicUrl = getSurveyPublicUrl(ev.id);
+        const previewUrl = getSurveyPreviewUrl(ev.id, ev.num);
+        const safeTitle = escapeHtml(survey ? survey.title : `نظرسنجی ${ev.title}`);
+        const isActive = survey ? (survey.status === 'active') : true;
 
-          box.innerHTML = `
-            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed ${isActive ? '#86efac' : '#cbd5e1'};">
-              <div style="background: ${isActive ? '#f0fdf4' : '#f8fafc'}; border: 1.5px solid ${isActive ? '#86efac' : '#cbd5e1'}; border-radius: 8px; padding: 8px 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                  <span style="font-size: 0.78rem; font-weight: 700; color: ${isActive ? '#166534' : '#64748b'}; display: flex; align-items: center; gap: 5px;">
-                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${isActive ? '#22c55e' : '#94a3b8'};"></span>
-                    ${isActive ? 'نظرسنجی فعال رویداد' : 'نظرسنجی بسته‌شده'}
-                  </span>
-                  <span style="font-size: 0.74rem; font-weight: 700; color: ${isActive ? '#15803d' : '#475569'}; background: ${isActive ? '#dcfce7' : '#e2e8f0'}; padding: 2px 7px; border-radius: 10px;">
-                    ${respCount.toLocaleString('fa-IR')} پاسخ
-                  </span>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                  <button type="button" class="btn btn-primary" style="padding: 5px 6px; font-size: 0.76rem; background: #16a34a; justify-content: center;" onclick="copySurveyLink('${survey.id}')" title="کپی لینک مستقیم نظرسنجی">
-                    📋 کپی لینک
-                  </button>
-                  <button type="button" class="btn btn-secondary" style="padding: 5px 6px; font-size: 0.76rem; justify-content: center;" onclick="copySurveySms('${survey.id}', '${safeTitle}')" title="کپی متن پیامک آماده نظرسنجی">
-                    📱 پیامک
-                  </button>
-                  <button type="button" class="btn btn-secondary" style="padding: 5px 6px; font-size: 0.76rem; justify-content: center;" onclick="openSurveyResultsModal('${survey.id}')" title="مشاهده آمار و دانلود اکسل">
-                    📊 آمار و نتایج
-                  </button>
-                  <div style="display: flex; gap: 3px;">
-                    <button type="button" class="btn btn-outline" style="flex: 1; padding: 5px 4px; font-size: 0.76rem; justify-content: center;" onclick="openSurveyModalForEvent('${ev.id}', '${escapeHtml(ev.title)}', '${survey.id}')" title="ویرایش نظرسنجی">
-                      ⚙️ ویرایش
-                    </button>
-                    <button type="button" class="btn btn-outline" style="padding: 5px 6px; font-size: 0.76rem; color: #dc2626; border-color: #fca5a5;" onclick="deleteSurveyConfirm('${survey.id}', '${safeTitle}')" title="حذف نظرسنجی">
-                      🗑️
-                    </button>
-                  </div>
-                </div>
+        box.innerHTML = `
+          <div style="margin-top: 12px; padding-top: 10px; border-top: 1.5px dashed #86efac;">
+            <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+              <!-- هدر وضعیت نظرسنجی رویداد -->
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 0.8rem; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);"></span>
+                  صفحه نظرسنجی Vercel آماده است
+                </span>
+                <span style="font-size: 0.74rem; font-weight: 700; color: #15803d; background: #dcfce7; padding: 2px 8px; border-radius: 10px; border: 1px solid #bbf7d0;">
+                  ${respCount.toLocaleString('fa-IR')} پاسخ دریافتی
+                </span>
+              </div>
+
+              <!-- نمایش آدرس اختصاصی نظرسنجی به همراه ویرایش دامنه -->
+              <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; font-size: 0.73rem; color: #334155;">
+                <span style="direction: ltr; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px;" title="${publicUrl}">
+                  ${publicUrl}
+                </span>
+                <button type="button" class="btn btn-outline" style="padding: 2px 6px; font-size: 0.69rem; border-color: #86efac; color: #15803d; line-height: 1.2; flex-shrink: 0;" onclick="setCustomSurveyUrl('${ev.id}', '${escapeHtml(ev.title)}')" title="تغییر آدرس دامنه Vercel">
+                  ✏️ تغییر دامنه
+                </button>
+              </div>
+
+              <!-- کلیدهای عملیاتی کپی لینک، پیامک، آمار و ویرایش سوالات -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                <button type="button" class="btn btn-primary" style="padding: 6px 8px; font-size: 0.77rem; background: #16a34a; justify-content: center; font-weight: 700;" onclick="copyEventSurveyLink('${ev.id}', ${ev.num})" title="کپی لینک اختصاصی نظرسنجی جهت اشتراک‌گذاری">
+                  📋 کپی لینک
+                </button>
+                <button type="button" class="btn btn-secondary" style="padding: 6px 8px; font-size: 0.77rem; justify-content: center;" onclick="copyEventSurveySms('${ev.id}', ${ev.num}, '${escapeHtml(ev.title)}')" title="کپی متن پیامک آماده نظرسنجی">
+                  📱 پیامک دعوت
+                </button>
+                <button type="button" class="btn btn-secondary" style="padding: 6px 8px; font-size: 0.77rem; justify-content: center;" onclick="openSurveyResultsModal('${surveyId}')" title="مشاهده آمار و نمودارهای تحلیل پاسخ‌ها">
+                  📊 آمار و نتایج
+                </button>
+                <button type="button" class="btn btn-outline" style="padding: 6px 8px; font-size: 0.77rem; justify-content: center; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff;" onclick="openSurveyModalForEvent('${ev.id}', '${escapeHtml(ev.title)}', '${survey ? survey.id : ''}')" title="ویرایش یا افزودن سوالات نظرسنجی">
+                  ⚙️ ویرایش سوالات
+                </button>
+              </div>
+
+              <!-- لینک مشاهده صفحه نظرسنجی -->
+              <div style="margin-top: 7px; text-align: center;">
+                <a href="${previewUrl}" target="_blank" style="font-size: 0.72rem; color: #0284c7; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                  🔗 باز کردن صفحه نظرسنجی رویداد ${ev.num} ↗
+                </a>
               </div>
             </div>
-          `;
-        }
+          </div>
+        `;
       });
     }
 
@@ -4535,65 +4766,78 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       if (qContainer) qContainer.innerHTML = '';
       if (eventIdInput) eventIdInput.value = eventId || '';
 
+      let survey = null;
       if (surveyId) {
-        const survey = (cachedSurveys || []).find(s => s.id === surveyId);
-        if (survey) {
-          if (titleEl) titleEl.textContent = '⚙️ ویرایش نظرسنجی: ' + (survey.title || eventTitle || '');
-          if (idInput) idInput.value = survey.id;
-          if (eventIdInput) eventIdInput.value = survey.eventId || eventId || '';
-          if (titleInput) titleInput.value = survey.title || '';
-          if (descInput) descInput.value = survey.description || '';
-          if (statusSelect) statusSelect.value = survey.status || 'active';
+        survey = (cachedSurveys || []).find(s => s.id === surveyId || s.eventId === eventId);
+      }
+      if (!survey && eventId) {
+        survey = (cachedSurveys || []).find(s => s.eventId === eventId || s.id === ('survey_' + eventId) || (s.id && s.id.includes(eventId)));
+      }
 
-          if (survey.requirePersonnelCode) {
-            if (identitySelect) identitySelect.value = 'required';
-          } else if (survey.isAnonymous) {
-            if (identitySelect) identitySelect.value = 'anonymous';
-          } else {
-            if (identitySelect) identitySelect.value = 'optional';
-          }
+      if (survey) {
+        if (titleEl) titleEl.textContent = '⚙️ ویرایش نظرسنجی: ' + (survey.title || eventTitle || '');
+        if (idInput) idInput.value = survey.id;
+        if (eventIdInput) eventIdInput.value = survey.eventId || eventId || '';
+        if (titleInput) titleInput.value = survey.title || '';
+        if (descInput) descInput.value = survey.description || '';
+        if (statusSelect) statusSelect.value = survey.status || 'active';
 
-          if (multipleCheck) multipleCheck.checked = Boolean(survey.allowMultipleResponses);
-
-          const questions = survey.questions || [];
-          questions.forEach(q => {
-            addQuestionToBuilder(q);
-          });
+        if (survey.requirePersonnelCode) {
+          if (identitySelect) identitySelect.value = 'required';
+        } else if (survey.isAnonymous) {
+          if (identitySelect) identitySelect.value = 'anonymous';
+        } else {
+          if (identitySelect) identitySelect.value = 'optional';
         }
+
+        if (multipleCheck) multipleCheck.checked = Boolean(survey.allowMultipleResponses);
+
+        const questions = survey.questions || [];
+        questions.forEach(q => {
+          addQuestionToBuilder(q);
+        });
       } else {
-        const fullTitle = eventTitle ? `نظرسنجی کیفیت برگزاری ${eventTitle}` : 'نظرسنجی کیفیت برگزاری رویداد';
-        if (titleEl) titleEl.textContent = '➕ ایجاد ' + fullTitle;
-        if (idInput) idInput.value = '';
+        const def = EVENT_SURVEY_DEFAULTS[eventId];
+        const fullTitle = (def && def.title) || (eventTitle ? `نظرسنجی کیفیت برگزاری ${eventTitle}` : 'نظرسنجی کیفیت برگزاری رویداد');
+        const fullDesc = (def && def.description) || 'همکار گرامی، خواهشمند است با اعلام نظرات سازنده خود، ما را در ارتقای کیفیت و خدمات رویدادهای سازمانی یاری فرمایید.';
+
+        if (titleEl) titleEl.textContent = '⚙️ ویرایش و شخصی‌سازی ' + fullTitle;
+        if (idInput) idInput.value = (def && def.id) || (eventId ? `survey_${eventId}` : '');
         if (titleInput) titleInput.value = fullTitle;
-        if (descInput) descInput.value = 'همکار گرامی، خواهشمند است با اعلام نظرات سازنده خود، ما را در ارتقای کیفیت و خدمات رویدادهای سازمانی یاری فرمایید.';
+        if (descInput) descInput.value = fullDesc;
         if (statusSelect) statusSelect.value = 'active';
         if (identitySelect) identitySelect.value = 'optional';
         if (multipleCheck) multipleCheck.checked = false;
 
-        // ۴ سوال پیش‌فرض استاندارد سنجش رضایت برای رویداد
-        addQuestionToBuilder({
-          text: 'میزان رضایت کلی شما از برگزاری این رویداد:',
-          type: 'radio',
-          required: true,
-          options: ['بسیار عالی', 'خوب', 'متوسط', 'ضعیف']
-        });
-        addQuestionToBuilder({
-          text: 'کیفیت اطلاع‌رسانی، زمان‌بندی و نظم برنامه:',
-          type: 'radio',
-          required: true,
-          options: ['عالی', 'خوب', 'متوسط', 'ضعیف']
-        });
-        addQuestionToBuilder({
-          text: 'کیفیت پذیرایی، ترانسفر و خدمات ارائه‌شده:',
-          type: 'radio',
-          required: true,
-          options: ['بسیار مناسب', 'قابل قبول', 'نیاز به بهبود', 'نامناسب']
-        });
-        addQuestionToBuilder({
-          text: 'پیشنهادات، انتقادات یا نکات تکمیلی شما برای رویدادهای بعدی:',
-          type: 'textarea',
-          required: false,
-          options: []
+        const defaultQuestions = (def && def.questions && def.questions.length > 0) ? def.questions : [
+          {
+            text: 'میزان رضایت کلی شما از برگزاری این رویداد:',
+            type: 'radio',
+            required: true,
+            options: ['بسیار عالی', 'خوب', 'متوسط', 'ضعیف']
+          },
+          {
+            text: 'کیفیت اطلاع‌رسانی، زمان‌بندی و نظم برنامه:',
+            type: 'radio',
+            required: true,
+            options: ['عالی', 'خوب', 'متوسط', 'ضعیف']
+          },
+          {
+            text: 'کیفیت پذیرایی، ترانسفر و خدمات ارائه‌شده:',
+            type: 'radio',
+            required: true,
+            options: ['بسیار مناسب', 'قابل قبول', 'نیاز به بهبود', 'نامناسب']
+          },
+          {
+            text: 'پیشنهادات، انتقادات یا نکات تکمیلی شما برای رویدادهای بعدی:',
+            type: 'textarea',
+            required: false,
+            options: []
+          }
+        ];
+
+        defaultQuestions.forEach(q => {
+          addQuestionToBuilder(q);
         });
       }
 
@@ -4936,9 +5180,15 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       thead.innerHTML = '';
       tbody.innerHTML = '';
 
-      let survey = cachedSurveys.find(s => s.id === surveyId);
+      let survey = (cachedSurveys || []).find(s => s.id === surveyId || s.eventId === surveyId || ('survey_' + s.eventId) === surveyId || (s.id && s.id.includes(surveyId)));
       if (!survey) {
         survey = await StorageService.getSurveyById(surveyId);
+      }
+      if (!survey) {
+        const cleanId = (surveyId || '').replace('survey_', '');
+        if (EVENT_SURVEY_DEFAULTS && EVENT_SURVEY_DEFAULTS[cleanId]) {
+          survey = EVENT_SURVEY_DEFAULTS[cleanId];
+        }
       }
 
       const responses = await StorageService.getSurveyResponses(surveyId);

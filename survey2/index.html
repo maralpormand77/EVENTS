@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظرسنجی تور کویر ورزنه | گروه توسعه سرمایه گذاری انتخاب</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="icon" type="image/png" href="assets/images/logo.png">
+  <style>
+    :root {
+      --survey-primary: #b45309;
+      --survey-primary-dark: #78350f;
+      --survey-accent: #f59e0b;
+    }
+
+    body {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #f1f5f9 100%);
+      min-height: 100vh;
+      padding-bottom: 50px;
+    }
+
+    .survey-container {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    .survey-main-card {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      box-shadow: 0 10px 30px rgba(180, 83, 9, 0.09);
+      overflow: hidden;
+      border: 1px solid rgba(180, 83, 9, 0.12);
+      margin-bottom: 24px;
+    }
+
+    .survey-hero {
+      background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
+      color: #ffffff;
+      padding: 32px 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .survey-hero h1 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin: 10px 0 6px 0;
+      line-height: 1.5;
+    }
+
+    .survey-hero p {
+      font-size: 0.92rem;
+      opacity: 0.94;
+      line-height: 1.7;
+      margin: 0 auto;
+      max-width: 620px;
+    }
+
+    .survey-meta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(8px);
+      padding: 5px 14px;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .survey-body {
+      padding: 26px 22px;
+    }
+
+    /* نوار پیشرفت تکمیل فرم */
+    .survey-progress-wrapper {
+      background: #fffdf5;
+      border-bottom: 1px solid #fef3c7;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .progress-bar-track {
+      flex: 1;
+      height: 8px;
+      background: #fde68a;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #d97706, #b45309);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #78350f;
+      white-space: nowrap;
+    }
+
+    /* مشخصات پرسنل */
+    .user-info-section {
+      background: #fefce8;
+      border: 1px solid #fef08a;
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-bottom: 24px;
+      border-right: 4px solid var(--survey-primary);
+    }
+
+    .user-info-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: #713f12;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* کارت‌های هر سوال */
+    .question-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-lg);
+      padding: 20px 22px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .question-card:hover {
+      border-color: #fcd34d;
+      box-shadow: 0 4px 14px rgba(180, 83, 9, 0.08);
+    }
+
+    .question-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .question-num-pill {
+      background: #fef3c7;
+      color: #b45309;
+      font-size: 0.78rem;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 8px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .question-title-text {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: #1e293b;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .question-required-mark {
+      color: #ef4444;
+      font-weight: bold;
+      margin-right: 3px;
+    }
+
+    /* گزینه‌ها */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .option-item-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      font-size: 0.94rem;
+      color: #334155;
+      position: relative;
+      user-select: none;
+    }
+
+    .option-item-label:hover {
+      background: #fffbeb;
+      border-color: #fde68a;
+    }
+
+    .option-item-label input[type="radio"],
+    .option-item-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--survey-primary);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .option-item-label.selected {
+      background: #fefce8;
+      border-color: #d97706;
+      color: #92400e;
+      font-weight: 600;
+    }
+
+    /* ستاره‌های امتیازدهی */
+    .rating-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+    }
+
+    .rating-stars {
+      display: flex;
+      gap: 8px;
+      direction: ltr;
+    }
+
+    .star-btn {
+      background: none;
+      border: none;
+      font-size: 32px;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: transform 0.15s ease, color 0.15s ease;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .star-btn:hover {
+      transform: scale(1.2);
+    }
+
+    .star-btn.active {
+      color: #d97706;
+    }
+
+    /* پیام تشکر و تایید */
+    .thank-you-card {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      padding: 45px 24px;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(180, 83, 9, 0.2);
+    }
+
+    .thank-you-icon {
+      width: 72px;
+      height: 72px;
+      background: #fef3c7;
+      color: #b45309;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .thank-you-icon svg {
+      width: 38px;
+      height: 38px;
+    }
+
+    .thank-you-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #92400e;
+      margin-bottom: 10px;
+    }
+
+    .thank-you-text {
+      color: #475569;
+      font-size: 0.95rem;
+      line-height: 1.8;
+      max-width: 520px;
+      margin: 0 auto 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- هدر بالای صفحه -->
+  <header class="page-header" style="background: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 12px 20px; margin-bottom: 20px;">
+    <div style="max-width: 740px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="assets/images/logo.png" onerror="this.src='../assets/images/logo.png'" alt="لوگو انتخاب" style="height: 38px; width: auto;">
+        <div>
+          <div style="font-weight: 800; color: #b45309; font-size: 0.92rem;">گروه توسعه سرمایه گذاری انتخاب</div>
+          <div style="font-size: 0.76rem; color: #64748b;">سامانه هوشمند نظرسنجی و افکارسنجی رویدادها</div>
+        </div>
+      </div>
+      <a href="https://entekhab-kavir.vercel.app/" target="_blank" class="btn btn-outline" style="padding: 6px 12px; font-size: 0.78rem; text-decoration: none; border-color: #f59e0b; color: #b45309;">
+        🔗 صفحه اصلی رویداد
+      </a>
+    </div>
+  </header>
+
+  <main class="survey-container">
+
+    <!-- کارت وضعیت پایان‌یافته یا پیام -->
+    <div id="surveyStatusNotice" style="display: none;" class="survey-main-card">
+      <div style="padding: 40px 20px; text-align: center;">
+        <div style="width: 60px; height: 60px; background: #fee2e2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <h3 id="surveyStatusNoticeTitle" style="font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 8px;">مهلت ثبت نظر به پایان رسیده است</h3>
+        <p id="surveyStatusNoticeDesc" style="color: #64748b; font-size: 0.9rem; max-width: 480px; margin: 0 auto; line-height: 1.7;">
+          از همراهی و توجه شما در تور کویر ورزنه سپاسگزاریم. پاسخ‌ها جهت ارتقای خدمات ثبت گردیده‌اند.
+        </p>
+      </div>
+    </div>
+
+    <!-- فرم اصلی نظرسنجی -->
+    <div id="surveyFormCard" class="survey-main-card">
+      <!-- هیرو نظرسنجی -->
+      <div class="survey-hero">
+        <div class="survey-meta-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          رویداد علمی تفریحی گروه توسعه سرمایه گذاری انتخاب
+        </div>
+        <h1 id="surveyTitleDisplay">نظرسنجی کیفیت برگزاری تور کویر ورزنه</h1>
+        <p id="surveyDescDisplay">همکار گرامی، خواهشمند است با ارزیابی بخش‌های مختلف تور کویر ورزنه، ما را در برگزاری هرچه بهتر برنامه‌های آتی همراهی فرمایید.</p>
+      </div>
+
+      <!-- نوار پیشرفت -->
+      <div class="survey-progress-wrapper">
+        <span class="progress-label" id="progressText">۰ از ۵ پاسخ داده شده</span>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="progressBarFill"></div>
+        </div>
+        <span class="progress-label" id="progressPercent" style="color: #b45309;">۰٪</span>
+      </div>
+
+      <div class="survey-body">
+        <form id="surveyForm" novalidate>
+
+          <!-- بخش هویت و اطلاعات پرسنلی همکار -->
+          <div id="userInfoSection" class="user-info-section">
+            <div class="user-info-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>مشخصات همکار</span>
+              <span id="userInfoRequirementTag" style="font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; margin-right: 6px; font-weight: 700; background: #e2e8f0; color: #475569;">اختیاری</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 14px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="surveyPersonnelCodeInput" class="form-label" style="font-size: 0.82rem;">شماره پرسنلی:</label>
+                <div class="input-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <input type="text" id="surveyPersonnelCodeInput" class="form-input" placeholder="شماره پرسنلی" inputmode="numeric" style="padding: 10px 38px 10px 12px; font-size: 0.9rem;">
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 0;">
+                <label for="surveyFullNameInput" class="form-label" style="font-size: 0.82rem;">نام و نام خانوادگی:</label>
+                <div class="input-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+                  <input type="text" id="surveyFullNameInput" class="form-input" placeholder="نام همکار (خودکار)" style="padding: 10px 38px 10px 12px; font-size: 0.9rem; background: #f1f5f9;">
+                </div>
+              </div>
+            </div>
+            <div id="personnelLookupMsg" style="font-size: 0.78rem; margin-top: 6px; display: none;"></div>
+          </div>
+
+          <!-- پیام نظرسنجی محرمانه -->
+          <div id="anonymousNotice" style="display: none; background: #fefce8; border: 1px solid #fef08a; border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 24px; color: #854d0e; font-size: 0.86rem; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            این نظرسنجی کاملاً <strong>محرمانه و بدون ثبت هویت</strong> برگزار می‌گردد؛ پاسخ‌های شما بدون نام ثبت خواهند شد.
+          </div>
+
+          <!-- لیست سوالات نظرسنجی -->
+          <div id="surveyQuestionsContainer">
+            <!-- با جاوااسکریپت پر می‌شود -->
+          </div>
+
+          <!-- پیام خطا -->
+          <div id="surveySubmitError" class="login-error" style="display: none; margin-bottom: 16px;">
+            لطفاً به تمامی سوالات الزامی پاسخ دهید.
+          </div>
+
+          <!-- دکمه ثبت نهایی -->
+          <div style="margin-top: 28px; text-align: center;">
+            <button type="submit" id="btnSubmitSurvey" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 1.05rem; font-weight: 800; background: linear-gradient(135deg, #b45309 0%, #d97706 100%); box-shadow: 0 4px 16px rgba(180, 83, 9, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              ثبت و ارسال پاسخ‌های نظرسنجی
+            </button>
+            <div style="font-size: 0.78rem; color: #64748b; margin-top: 10px;">
+              اطلاعات شما در سرور امن گروه توسعه سرمایه گذاری انتخاب ذخیره می‌گردد.
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- کارت تایید و تشکر پس از ثبت نظر -->
+    <div id="surveyThankYouCard" class="thank-you-card" style="display: none;">
+      <div class="thank-you-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 class="thank-you-title">پاسخ شما با موفقیت ثبت شد</h2>
+      <p class="thank-you-text">
+        همکار گرامی، از اینکه با ثبت نظرات سازنده خود درباره تور کویر ورزنه ما را در ارتقای کیفیت برنامه‌ها و سفرهای آینده یاری نمودید، سپاسگزاریم.
+      </p>
+
+      <div style="background: #fefce8; border: 1px solid #fef08a; border-radius: var(--radius-md); padding: 14px; max-width: 440px; margin: 0 auto 24px; font-size: 0.85rem; color: #713f12; text-align: right; line-height: 1.8;">
+        <div><strong>رویداد:</strong> تور کویر ورزنه (رویداد علمی تفریحی)</div>
+        <div><strong>زمان ثبت:</strong> <span id="thankYouTimeText">-</span></div>
+        <div><strong>وضعیت:</strong> <span style="color: #b45309; font-weight: 700;">✓ تایید و دریافت در سامانه</span></div>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+        <a href="https://entekhab-kavir.vercel.app/" class="btn btn-outline" style="padding: 10px 20px; font-size: 0.88rem; text-decoration: none; border-color: #d97706; color: #b45309;">
+          بازگشت به صفحه رویداد
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="page-footer" style="text-align: center; font-size: 0.8rem; color: #94a3b8; padding: 20px 0;">
+    سامانه رویدادها و نظرسنجی گروه توسعه سرمایه گذاری انتخاب &copy; ۱۴۰۵
+  </footer>
+
+  <!-- اسکریپت‌ها -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/storage.js"></script>
+  <script src="assets/js/personnel-data.js"></script>
+
+  <script>
+    // تنظیمات اختصاصی نظرسنجی رویداد ۲ (تور کویر ورزنه)
+    const EVENT_ID = 'kavir-varzaneh';
+    const EVENT_NUM = 2;
+    const EVENT_TITLE = 'تور کویر ورزنه';
+
+    // قالب و سوالات پیش‌فرض استاندارد
+    const DEFAULT_SURVEY = {
+      id: 'survey_kavir-varzaneh',
+      eventId: 'kavir-varzaneh',
+      title: 'نظرسنجی کیفیت برگزاری تور کویر ورزنه',
+      description: 'همکار گرامی، خواهشمند است با ارزیابی بخش‌های مختلف تور کویر ورزنه، ما را در برگزاری هرچه بهتر برنامه‌های آتی همراهی فرمایید.',
+      status: 'active',
+      requirePersonnelCode: false,
+      isAnonymous: false,
+      allowMultipleResponses: false,
+      questions: [
+        {
+          id: 'q1_kavir_satisfaction',
+          text: 'میزان رضایت کلی شما از سفر و تور کویر ورزنه:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار عالی', 'خوب', 'متوسط', 'ضعیف']
+        },
+        {
+          id: 'q2_kavir_transport',
+          text: 'کیفیت ترابری، اتوبوس‌ها و نظم زمان‌بندی رفت و برگشت:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار خوب', 'مناسب', 'نیاز به بهبود', 'ضعیف']
+        },
+        {
+          id: 'q3_kavir_catering',
+          text: 'کیفیت پذیرایی، وعده‌های غذایی و میان‌وعده‌های سفر:',
+          type: 'radio',
+          required: true,
+          options: ['عالی', 'خوب', 'متوسط', 'نامناسب']
+        },
+        {
+          id: 'q4_kavir_programs',
+          text: 'میزان جذابیت و کیفیت برنامه‌های رصدی، علمی و تفریحات کویر:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار جذاب', 'خوب', 'متوسط', 'نیازمند ارتقا']
+        },
+        {
+          id: 'q5_kavir_feedback',
+          text: 'پیشنهادات، انتقادات یا نکات تکمیلی شما برای سفرهای بعدی:',
+          type: 'textarea',
+          required: false,
+          options: []
+        }
+      ]
+    };
+
+    let activeSurvey = Object.assign({}, DEFAULT_SURVEY);
+    let surveyAnswers = {};
+
+    function toStandardDigits(str) {
+      return (str || '').replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+                         .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+    }
+
+    // بررسی اولیه و بارگذاری زنده از دیتابیس ابری
+    async function initEventSurveyPage() {
+      // ۱. رندر سریع با تنظیمات پیش‌فرض تا کاربر معطل لودینگ نماند
+      renderSurveyUI(activeSurvey);
+
+      // ۲. دریافت آخرین تغییرات و ویرایش‌های اعمال‌شده توسط ادمین در پنل
+      try {
+        const cloudSurvey = await StorageService.getSurveyById(EVENT_ID);
+        if (cloudSurvey && cloudSurvey.questions && cloudSurvey.questions.length > 0) {
+          activeSurvey = Object.assign({}, DEFAULT_SURVEY, cloudSurvey);
+          renderSurveyUI(activeSurvey);
+        }
+      } catch (e) {
+        console.warn("استفاده از تنظیمات پیش‌فرض به دلیل عدم دسترسی به سرور:", e);
+      }
+
+      // ۳. بررسی وضعیت باز یا بسته بودن
+      if (activeSurvey.status === 'closed') {
+        document.getElementById('surveyFormCard').style.display = 'none';
+        document.getElementById('surveyStatusNotice').style.display = 'block';
+        return;
+      }
+
+      // ۴. بررسی آیا کاربر قبلاً با این دستگاه پاسخ داده است؟
+      if (!activeSurvey.allowMultipleResponses) {
+        const voted = localStorage.getItem(`entekhab_survey_voted_${EVENT_ID}`) || localStorage.getItem(`entekhab_survey_voted_survey_${EVENT_ID}`);
+        if (voted) {
+          showThankYouScreen("شما قبلاً در نظرسنجی این رویداد شرکت کرده‌اید. از همراهی شما سپاسگزاریم.");
+        }
+      }
+    }
+
+    // رندر المان‌های فرم بر اساس تنظیمات نظرسنجی
+    function renderSurveyUI(survey) {
+      document.getElementById('surveyTitleDisplay').textContent = survey.title || DEFAULT_SURVEY.title;
+      document.getElementById('surveyDescDisplay').textContent = survey.description || DEFAULT_SURVEY.description;
+      document.title = `${survey.title || DEFAULT_SURVEY.title} | گروه توسعه سرمایه گذاری انتخاب`;
+
+      // مدیریت نمایش اطلاعات هویتی
+      const userInfoSection = document.getElementById('userInfoSection');
+      const anonymousNotice = document.getElementById('anonymousNotice');
+      const reqTag = document.getElementById('userInfoRequirementTag');
+      const codeInput = document.getElementById('surveyPersonnelCodeInput');
+
+      if (survey.isAnonymous) {
+        userInfoSection.style.display = 'none';
+        anonymousNotice.style.display = 'flex';
+      } else {
+        userInfoSection.style.display = 'block';
+        anonymousNotice.style.display = 'none';
+        if (survey.requirePersonnelCode) {
+          reqTag.textContent = 'الزامی';
+          reqTag.style.background = '#fee2e2';
+          reqTag.style.color = '#dc2626';
+          codeInput.required = true;
+        } else {
+          reqTag.textContent = 'اختیاری';
+          reqTag.style.background = '#e2e8f0';
+          reqTag.style.color = '#475569';
+          codeInput.required = false;
+        }
+      }
+
+      // رندر کارت‌های سوالات
+      const container = document.getElementById('surveyQuestionsContainer');
+      container.innerHTML = '';
+
+      const questions = survey.questions || [];
+      questions.forEach((q, idx) => {
+        const card = document.createElement('div');
+        card.className = 'question-card';
+        card.id = `qCard_${q.id}`;
+
+        let fieldHtml = '';
+
+        if (q.type === 'radio') {
+          fieldHtml = `<div class="options-list">`;
+          (q.options || []).forEach((opt, optIdx) => {
+            const optId = `opt_${q.id}_${optIdx}`;
+            fieldHtml += `
+              <label class="option-item-label" for="${optId}">
+                <input type="radio" id="${optId}" name="q_${q.id}" value="${escapeHtml(opt)}" onchange="onRadioChange('${q.id}', this)">
+                <span>${escapeHtml(opt)}</span>
+              </label>
+            `;
+          });
+          fieldHtml += `</div>`;
+        } else if (q.type === 'checkbox') {
+          fieldHtml = `<div class="options-list">`;
+          (q.options || []).forEach((opt, optIdx) => {
+            const optId = `opt_${q.id}_${optIdx}`;
+            fieldHtml += `
+              <label class="option-item-label" for="${optId}">
+                <input type="checkbox" id="${optId}" name="q_${q.id}" value="${escapeHtml(opt)}" onchange="onCheckboxChange('${q.id}')">
+                <span>${escapeHtml(opt)}</span>
+              </label>
+            `;
+          });
+          fieldHtml += `</div>`;
+        } else if (q.type === 'rating') {
+          fieldHtml = `
+            <div class="rating-container">
+              <div class="rating-stars" id="stars_${q.id}">
+                ${[1, 2, 3, 4, 5].map(star => `
+                  <button type="button" class="star-btn" data-val="${star}" onclick="onRatingSelect('${q.id}', ${star}, this)">★</button>
+                `).join('')}
+              </div>
+              <div style="font-size: 0.85rem; color: #64748b;" id="ratingText_${q.id}">امتیاز دهید (۱ تا ۵)</div>
+            </div>
+          `;
+        } else if (q.type === 'textarea') {
+          fieldHtml = `
+            <textarea class="form-input" rows="4" style="resize: vertical; min-height: 85px;" placeholder="نظرات و پیشنهادات خود را اینجا بنویسید..." oninput="onTextInput('${q.id}', this.value)"></textarea>
+          `;
+        } else {
+          fieldHtml = `
+            <input type="text" class="form-input" placeholder="پاسخ شما..." oninput="onTextInput('${q.id}', this.value)">
+          `;
+        }
+
+        card.innerHTML = `
+          <div class="question-header">
+            <span class="question-num-pill">سوال ${idx + 1}</span>
+            <div class="question-title-text">
+              ${escapeHtml(q.text)}
+              ${q.required ? '<span class="question-required-mark">*</span>' : ''}
+            </div>
+          </div>
+          ${fieldHtml}
+        `;
+
+        container.appendChild(card);
+      });
+
+      updateProgressBar();
+    }
+
+    // رویدادهای تغییر پاسخ‌ها
+    function onRadioChange(qId, input) {
+      surveyAnswers[qId] = input.value;
+      const card = document.getElementById(`qCard_${qId}`);
+      if (card) {
+        card.querySelectorAll('.option-item-label').forEach(lbl => lbl.classList.remove('selected'));
+        if (input.closest('.option-item-label')) {
+          input.closest('.option-item-label').classList.add('selected');
+        }
+      }
+      updateProgressBar();
+    }
+
+    function onCheckboxChange(qId) {
+      const card = document.getElementById(`qCard_${qId}`);
+      if (!card) return;
+      const checkedVals = [];
+      card.querySelectorAll(`input[name="q_${qId}"]:checked`).forEach(chk => {
+        checkedVals.push(chk.value);
+      });
+      surveyAnswers[qId] = checkedVals;
+
+      card.querySelectorAll('.option-item-label').forEach(lbl => {
+        const inp = lbl.querySelector('input');
+        if (inp && inp.checked) lbl.classList.add('selected');
+        else lbl.classList.remove('selected');
+      });
+      updateProgressBar();
+    }
+
+    function onRatingSelect(qId, val, btn) {
+      surveyAnswers[qId] = val;
+      const container = document.getElementById(`stars_${qId}`);
+      if (container) {
+        container.querySelectorAll('.star-btn').forEach(b => {
+          const bVal = parseInt(b.dataset.val, 10);
+          if (bVal <= val) b.classList.add('active');
+          else b.classList.remove('active');
+        });
+      }
+      const textEl = document.getElementById(`ratingText_${qId}`);
+      if (textEl) {
+        const labels = { 1: 'بسیار ضعیف (۱)', 2: 'ضعیف (۲)', 3: 'متوسط (۳)', 4: 'خوب (۴)', 5: 'عالی و فوق‌العاده (۵)' };
+        textEl.textContent = labels[val] || `${val} ستاره`;
+      }
+      updateProgressBar();
+    }
+
+    function onTextInput(qId, val) {
+      surveyAnswers[qId] = val.trim();
+      updateProgressBar();
+    }
+
+    // به‌روزرسانی نوار پیشرفت
+    function updateProgressBar() {
+      const questions = activeSurvey.questions || [];
+      if (questions.length === 0) return;
+
+      let answeredCount = 0;
+      questions.forEach(q => {
+        const val = surveyAnswers[q.id];
+        if (val !== undefined && val !== null && val !== '') {
+          if (Array.isArray(val)) {
+            if (val.length > 0) answeredCount++;
+          } else {
+            answeredCount++;
+          }
+        }
+      });
+
+      const pct = Math.round((answeredCount / questions.length) * 100);
+      document.getElementById('progressText').textContent = `${answeredCount} از ${questions.length} پاسخ داده شده`;
+      document.getElementById('progressBarFill').style.width = `${pct}%`;
+      document.getElementById('progressPercent').textContent = `${pct}٪`;
+    }
+
+    // بررسی و جستجوی کد پرسنلی در بانک اطلاعاتی انتخاب
+    const codeInput = document.getElementById('surveyPersonnelCodeInput');
+    const nameInput = document.getElementById('surveyFullNameInput');
+    const lookupMsg = document.getElementById('personnelLookupMsg');
+
+    if (codeInput) {
+      codeInput.addEventListener('input', () => {
+        const val = toStandardDigits(codeInput.value).trim();
+        codeInput.value = val;
+        lookupMsg.style.display = 'none';
+
+        if (!val) {
+          nameInput.value = '';
+          return;
+        }
+
+        if (typeof PERSONNEL_MAP !== 'undefined' && PERSONNEL_MAP && PERSONNEL_MAP[val]) {
+          const person = PERSONNEL_MAP[val];
+          nameInput.value = person.name || '';
+          lookupMsg.textContent = `✓ ${person.name || ''} ${person.department ? '(' + person.department + ')' : ''}`;
+          lookupMsg.style.color = '#b45309';
+          lookupMsg.style.display = 'block';
+        } else {
+          nameInput.value = '';
+        }
+      });
+    }
+
+    // ارسال پاسخ‌های فرم نظرسنجی
+    document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorBox = document.getElementById('surveySubmitError');
+      errorBox.style.display = 'none';
+
+      let personnelCode = toStandardDigits(document.getElementById('surveyPersonnelCodeInput').value).trim();
+      let fullName = document.getElementById('surveyFullNameInput').value.trim();
+
+      if (!activeSurvey.isAnonymous && activeSurvey.requirePersonnelCode && !personnelCode) {
+        errorBox.textContent = "لطفاً شماره پرسنلی خود را وارد فرمایید.";
+        errorBox.style.display = 'block';
+        document.getElementById('surveyPersonnelCodeInput').focus();
+        return;
+      }
+
+      // اعتبارسنجی سوالات الزامی
+      const questions = activeSurvey.questions || [];
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        if (q.required) {
+          const ans = surveyAnswers[q.id];
+          if (ans === undefined || ans === null || ans === '' || (Array.isArray(ans) && ans.length === 0)) {
+            errorBox.textContent = `لطفاً به سوال اجباری شماره ${i + 1} («${q.text}») پاسخ دهید.`;
+            errorBox.style.display = 'block';
+            const card = document.getElementById(`qCard_${q.id}`);
+            if (card) {
+              card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              card.style.borderColor = '#ef4444';
+              setTimeout(() => { card.style.borderColor = '#e2e8f0'; }, 3000);
+            }
+            return;
+          }
+        }
+      }
+
+      const btn = document.getElementById('btnSubmitSurvey');
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner" style="width: 18px; height: 18px; border-width: 2px;"></div> در حال ثبت اطلاعات...`;
+
+      try {
+        const payload = {
+          surveyTitle: activeSurvey.title || DEFAULT_SURVEY.title,
+          personnelCode: personnelCode,
+          fullName: fullName,
+          answers: surveyAnswers
+        };
+
+        await StorageService.submitSurveyResponse(EVENT_ID, payload);
+        showThankYouScreen();
+      } catch (err) {
+        console.error("خطا در ارسال پاسخ نظرسنجی:", err);
+        errorBox.textContent = "خطا در ثبت پاسخ: " + err.message;
+        errorBox.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> ثبت و ارسال پاسخ‌های نظرسنجی`;
+      }
+    });
+
+    // نمایش صفحه تشکر
+    function showThankYouScreen(customMsg = null) {
+      document.getElementById('surveyFormCard').style.display = 'none';
+      document.getElementById('surveyStatusNotice').style.display = 'none';
+      const thankYouCard = document.getElementById('surveyThankYouCard');
+      thankYouCard.style.display = 'block';
+
+      if (customMsg) {
+        const p = thankYouCard.querySelector('.thank-you-text');
+        if (p) p.textContent = customMsg;
+      }
+
+      document.getElementById('thankYouTimeText').textContent = StorageService.toJalaliString(new Date());
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    window.addEventListener('DOMContentLoaded', initEventSurveyPage);
+  </script>
+</body>
+</html>
