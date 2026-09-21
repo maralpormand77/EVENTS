@@ -5086,7 +5086,9 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     // ==========================================
     // بخش مشاهده نتایج و آمار نظرسنجی
     // ==========================================
-    async function openSurveyResultsModal(surveyId) {
+    let currentResultsSurveyId = null;
+    async function openSurveyResultsModal(surveyId, initialTab = null) {
+      if (!surveyId) return;
       currentResultsSurveyId = surveyId;
       const modal = document.getElementById('surveyResultsModal');
       const titleEl = document.getElementById('resultsModalTitle');
@@ -5096,7 +5098,9 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       const tbody = document.getElementById('resultsTableBody');
 
       modal.classList.add('active');
-      switchResultsTab('analytics');
+      const isTableTabActive = document.getElementById('btnTabResultsTable') && document.getElementById('btnTabResultsTable').classList.contains('active');
+      const activeTabToUse = initialTab || (isTableTabActive ? 'table' : 'analytics');
+      switchResultsTab(activeTabToUse);
 
       titleEl.textContent = 'در حال دریافت نتایج نظرسنجی...';
       countEl.textContent = '...';
@@ -5437,7 +5441,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
         rowsHtml += `
             <td style="text-align: center;">
-              <button type="button" class="action-btn btn-delete" title="حذف این پاسخ" onclick="deleteSingleSurveyResponse('${survey.id}', '${resp.id}')" style="padding: 4px 8px;">
+              <button type="button" class="action-btn btn-delete" title="حذف این پاسخ" onclick="deleteSingleSurveyResponse(event, '${survey.id}', '${resp.id}', '${escapeHtml(resp.personnelCode || '')}', this)" style="padding: 4px 8px;">
                 🗑️
               </button>
             </td>
@@ -5449,16 +5453,44 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     }
 
     // حذف یک پاسخ خاص از نظرسنجی
-    async function deleteSingleSurveyResponse(surveyId, responseId) {
+    async function deleteSingleSurveyResponse(arg1, arg2, arg3, arg4, arg5) {
+      let e = null, surveyId = null, responseId = null, personnelCode = null, btn = null;
+
+      if (arg1 && typeof arg1 === 'object' && arg1.target) {
+        e = arg1;
+        surveyId = arg2;
+        responseId = arg3;
+        personnelCode = arg4;
+        btn = arg5;
+      } else {
+        surveyId = arg1;
+        responseId = arg2;
+        personnelCode = arg3;
+        btn = arg4;
+      }
+
+      if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
       if (!confirm("آیا از حذف این رکورد پاسخ اطمینان دارید؟")) return;
 
+      let origHtml = '';
+      if (btn) {
+        origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<span style="display:inline-block; animation: spin 1s infinite linear;">⌛</span>`;
+      }
+
       try {
-        await StorageService.deleteSurveyResponse(surveyId, responseId);
+        await StorageService.deleteSurveyResponse(surveyId, responseId, personnelCode);
         showAdminToast("پاسخ مورد نظر با موفقیت حذف گردید.");
-        openSurveyResultsModal(surveyId);
-        loadSurveysData(true);
+        await openSurveyResultsModal(surveyId, 'table');
+        await loadSurveysData(true);
       } catch (err) {
-        alert("خطا در حذف رکورد: " + err.message);
+        console.error("خطا در حذف پاسخ نظرسنجی:", err);
+        alert("خطا در حذف رکورد: " + (err.message || err));
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origHtml;
+        }
       }
     }
 

@@ -1443,28 +1443,29 @@ const StorageService = {
     deleteSurvey: async function(surveyId) {
         if (!surveyId) return { success: false };
 
-        let surveys = this.getLocalSurveys().filter(s => s.id !== surveyId);
+        const normId = surveyId.startsWith('survey_') ? surveyId.replace('survey_', '') : surveyId;
+
+        let surveys = this.getLocalSurveys().filter(s => s.id !== surveyId && s.id !== normId && s.id !== ('survey_' + normId));
         this.setLocalSurveys(surveys);
         localStorage.removeItem(this.SURVEY_RESPONSES_PREFIX + surveyId);
+        localStorage.removeItem(this.SURVEY_RESPONSES_PREFIX + normId);
+        localStorage.removeItem(this.SURVEY_RESPONSES_PREFIX + 'survey_' + normId);
 
         const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
         if (spConfig && spConfig.url && spConfig.anonKey) {
+            const headers = {
+                'apikey': spConfig.anonKey,
+                'Authorization': `Bearer ${spConfig.anonKey}`,
+                'Prefer': 'return=minimal'
+            };
             try {
-                const recordId = `__survey_${surveyId}`;
-                await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(recordId)}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'apikey': spConfig.anonKey,
-                        'Authorization': `Bearer ${spConfig.anonKey}`
-                    }
-                });
-                await fetch(`${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.survey_${encodeURIComponent(surveyId)}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'apikey': spConfig.anonKey,
-                        'Authorization': `Bearer ${spConfig.anonKey}`
-                    }
-                });
+                const promises = [
+                    fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent('__survey_' + normId)}`, { method: 'DELETE', headers }),
+                    fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent('__survey_' + surveyId)}`, { method: 'DELETE', headers }),
+                    fetch(`${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.survey_${encodeURIComponent(normId)}`, { method: 'DELETE', headers }),
+                    fetch(`${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.${encodeURIComponent(surveyId)}`, { method: 'DELETE', headers })
+                ];
+                await Promise.all(promises);
             } catch(e) {
                 console.warn("خطا در حذف نظرسنجی از Supabase:", e);
             }
@@ -1550,6 +1551,91 @@ const StorageService = {
         return { success: true, response: responseObj };
     },
 
+    // حذف یک پاسخ خاص از نظرسنجی (پشتیبانی جامع از حافظه محلی و پایگاه داده ابری)
+    deleteSurveyResponse: async function(surveyId, responseId, personnelCode = null) {
+        if (!surveyId || !responseId) {
+            throw new Error("شناسه نظرسنجی یا شناسه پاسخ مشخص نیست.");
+        }
+
+        const normId = surveyId.startsWith('survey_') ? surveyId.replace('survey_', '') : surveyId;
+
+        // ۱. بازیابی و حذف از حافظه محلی
+        let pCode = personnelCode ? String(personnelCode).trim() : null;
+        const removeLocal = (kId) => {
+            if (!kId) return;
+            let list = this.getLocalSurveyResponses(kId);
+            const found = list.find(r => r.id === responseId || String(r.id) === String(responseId));
+            if (found && found.personnelCode && !pCode) {
+                pCode = String(found.personnelCode).trim();
+            }
+            list = list.filter(r => r.id !== responseId && String(r.id) !== String(responseId));
+            this.setLocalSurveyResponses(kId, list);
+        };
+
+        removeLocal(surveyId);
+        removeLocal(normId);
+        removeLocal('survey_' + normId);
+
+        // ۲. پاکسازی پرچم شرکت کاربر در نظرسنجی از localStorage
+        if (pCode && pCode !== 'ANONYMOUS' && pCode !== '__SURVEY__') {
+            try {
+                localStorage.removeItem(`entekhab_survey_voted_${surveyId}_${pCode}`);
+                localStorage.removeItem(`entekhab_survey_voted_${normId}_${pCode}`);
+                localStorage.removeItem(`entekhab_survey_voted_survey_${normId}_${pCode}`);
+            } catch(e) {}
+        }
+
+        // ۳. حذف قطعی از Supabase PostgreSQL
+        const spConfig = typeof getActiveSupabaseConfig === 'function' ? getActiveSupabaseConfig() : null;
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+            const headers = {
+                'apikey': spConfig.anonKey,
+                'Authorization': `Bearer ${spConfig.anonKey}`,
+                'Prefer': 'return=minimal'
+            };
+
+            let deleteError = null;
+            try {
+                const deletePromises = [];
+                // حذف مستقیم بر اساس id رکورد در جدول registrations
+                if (responseId) {
+                    deletePromises.push(
+                        fetch(`${spConfig.url}/rest/v1/${spConfig.table}?id=eq.${encodeURIComponent(responseId)}`, {
+                            method: 'DELETE',
+                            headers: headers
+                        })
+                    );
+                }
+
+                // در صورت وجود کد پرسنلی، حذف تضمینی متناظر
+                if (pCode && pCode !== 'ANONYMOUS' && pCode !== '__SURVEY__') {
+                    deletePromises.push(
+                        fetch(`${spConfig.url}/rest/v1/${spConfig.table}?event_id=eq.survey_${encodeURIComponent(normId)}&personnel_code=eq.${encodeURIComponent(pCode)}`, {
+                            method: 'DELETE',
+                            headers: headers
+                        })
+                    );
+                }
+
+                const results = await Promise.all(deletePromises);
+                const failed = results.find(r => !r.ok && r.status !== 404);
+                if (failed) {
+                    const txt = await failed.text();
+                    console.warn("هشدار در پاسخ حذف از Supabase:", txt);
+                }
+            } catch(e) {
+                console.error("خطا در حذف پاسخ نظرسنجی از Supabase:", e);
+                deleteError = e;
+            }
+
+            if (deleteError) {
+                throw new Error("خطا در برقراری ارتباط با دیتابیس ابری جهت حذف پاسخ: " + (deleteError.message || deleteError));
+            }
+        }
+
+        return { success: true };
+    },
+
     // دریافت پاسخ‌های یک نظرسنجی
     getSurveyResponses: async function(surveyId) {
         if (!surveyId) return [];
@@ -1600,12 +1686,12 @@ const StorageService = {
                             };
                         });
 
-                        const map = new Map();
-                        responses.forEach(item => map.set(item.id, item));
-                        cloudResponses.forEach(item => map.set(item.id, item));
-                        responses = Array.from(map.values());
+                        responses = cloudResponses;
                         responses.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
                         this.setLocalSurveyResponses(surveyId, responses);
+                        if (normId !== surveyId) {
+                            this.setLocalSurveyResponses(normId, responses);
+                        }
                     }
                 }
             } catch(e) {
