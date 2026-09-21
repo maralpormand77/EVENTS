@@ -1,0 +1,559 @@
+/**
+ * ماژول نظرسنجی اختصاصی درون‌صفحه‌ای رویدادهای گروه انتخاب
+ * Entekhab In-Page Event Survey Module
+ * پشتیبانی کامل از رویدادهای صبح همدلی، کویر ورزنه و رفتینگ مارکده
+ * همراه با قابلیت ارسال با نام و ارسال به‌صورت ناشناس
+ */
+
+(function (window) {
+  'use strict';
+
+  // سوالات و قالب‌های پیش‌فرض هر ۳ رویداد
+  const EVENT_SURVEY_DEFAULTS = {
+    'sobh-hamdeli': {
+      id: 'survey_sobh-hamdeli',
+      eventId: 'sobh-hamdeli',
+      title: 'نظرسنجی کیفیت برگزاری رویداد صبح همدلی',
+      description: 'همکار گرامی، خواهشمند است با اعلام نظرات و ارزیابی بخش‌های مختلف برنامه پیاده‌روی صبح همدلی، ما را در ارتقای کیفیت برنامه‌های آتی یاری فرمایید.',
+      questions: [
+        {
+          id: 'q1_sobh_satisfaction',
+          text: 'میزان رضایت کلی شما از برگزاری رویداد پیاده‌روی صبح همدلی:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار عالی', 'خوب', 'متوسط', 'ضعیف']
+        },
+        {
+          id: 'q2_sobh_schedule',
+          text: 'نحوه اطلاع‌رسانی، زمان‌بندی و هماهنگی‌های صبحگاهی رویداد:',
+          type: 'radio',
+          required: true,
+          options: ['عالی', 'مناسب', 'نیاز به بهبود', 'ضعیف']
+        },
+        {
+          id: 'q3_sobh_location',
+          text: 'مکان گردهمایی (عمارت ماهور)، خدمات ترانسفر و پذیرایی صبحانه:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار مطلوب', 'خوب', 'متوسط', 'نامناسب']
+        },
+        {
+          id: 'q4_sobh_continue',
+          text: 'میزان تمایل شما به تداوم و برگزاری مجدد برنامه‌های پیاده‌روی صبحگاهی:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار زیاد', 'زیاد', 'متوسط', 'تمایلی ندارم']
+        },
+        {
+          id: 'q5_sobh_feedback',
+          text: 'پیشنهادات، انتقادات و نظرات شما جهت بهبود برنامه‌های آتی:',
+          type: 'textarea',
+          required: false,
+          options: []
+        }
+      ]
+    },
+    'kavir-varzaneh': {
+      id: 'survey_kavir-varzaneh',
+      eventId: 'kavir-varzaneh',
+      title: 'نظرسنجی کیفیت برگزاری تور کویر ورزنه',
+      description: 'همکار گرامی، خواهشمند است با ارزیابی بخش‌های مختلف تور کویر ورزنه، ما را در برگزاری هرچه بهتر برنامه‌های آتی همراهی فرمایید.',
+      questions: [
+        {
+          id: 'q1_kavir_satisfaction',
+          text: 'میزان رضایت کلی شما از سفر و تور کویر ورزنه:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار عالی', 'خوب', 'متوسط', 'ضعیف']
+        },
+        {
+          id: 'q2_kavir_transport',
+          text: 'کیفیت ترابری، اتوبوس‌ها و نظم زمان‌بندی رفت و برگشت:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار خوب', 'مناسب', 'نیاز به بهبود', 'ضعیف']
+        },
+        {
+          id: 'q3_kavir_catering',
+          text: 'کیفیت پذیرایی، وعده‌های غذایی و میان‌وعده‌های سفر:',
+          type: 'radio',
+          required: true,
+          options: ['عالی', 'خوب', 'متوسط', 'نامناسب']
+        },
+        {
+          id: 'q4_kavir_programs',
+          text: 'میزان جذابیت و کیفیت برنامه‌های رصدی، علمی و تفریحات کویر:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار جذاب', 'خوب', 'متوسط', 'نیازمند ارتقا']
+        },
+        {
+          id: 'q5_kavir_feedback',
+          text: 'پیشنهادات، انتقادات یا نکات تکمیلی شما برای سفرهای بعدی:',
+          type: 'textarea',
+          required: false,
+          options: []
+        }
+      ]
+    },
+    'rafting-markadeh': {
+      id: 'survey_rafting-markadeh',
+      eventId: 'rafting-markadeh',
+      title: 'نظرسنجی کیفیت برگزاری تور رفتینگ مارکده',
+      description: 'همکار گرامی، با سپاس از حضور پرشور شما در تور رفتینگ مارکده، لطفاً با تکمیل این فرم ما را در ارزیابی و بهبود خدمات یاری نمایید.',
+      questions: [
+        {
+          id: 'q1_rafting_satisfaction',
+          text: 'میزان رضایت کلی شما از تجربه و هیجان تور رفتینگ مارکده:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار عالی و هیجان‌انگیز', 'خوب و لذت‌بخش', 'متوسط', 'ضعیف']
+        },
+        {
+          id: 'q2_rafting_team',
+          text: 'نحوه هماهنگی، زمان‌بندی و برخورد تیم اجرایی و مربیان قایقرانی:',
+          type: 'radio',
+          required: true,
+          options: ['عالی و حرفه‌ای', 'خوب و مناسب', 'متوسط', 'ضعیف']
+        },
+        {
+          id: 'q3_rafting_safety',
+          text: 'رعایت استانداردهای ایمنی، جلیقه‌ها و تجهیزات رودخانه:',
+          type: 'radio',
+          required: true,
+          options: ['بسیار مطمئن و عالی', 'خوب و استاندارد', 'متوسط', 'نیازمند ارتقا']
+        },
+        {
+          id: 'q4_rafting_catering',
+          text: 'کیفیت ناهار، پذیرایی و خدمات ترابری رفت و برگشت:',
+          type: 'radio',
+          required: true,
+          options: ['عالی', 'مناسب', 'قابل قبول', 'ضعیف']
+        },
+        {
+          id: 'q5_rafting_feedback',
+          text: 'نظرات، پیشنهادات و انتقادات شما برای تورهای طبیعت‌گردی و ورزشی آتی:',
+          type: 'textarea',
+          required: false,
+          options: []
+        }
+      ]
+    }
+  };
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // بررسی وضعیت ثبت قبلی نظر توسط کاربر
+  function getUserExistingVote(surveyId, personnelCode) {
+    if (!personnelCode) return null;
+    const key = `entekhab_survey_voted_${surveyId}_${personnelCode}`;
+    const votedFlag = localStorage.getItem(key);
+
+    if (typeof StorageService !== 'undefined') {
+      const localList = StorageService.getLocalSurveyResponses(surveyId);
+      const found = localList.find(r => r.personnelCode === personnelCode);
+      if (found) return found;
+    }
+    return votedFlag ? { personnelCode: personnelCode } : null;
+  }
+
+  // راه‌اندازی و تزریق نظرسنجی به صفحه رویداد
+  async function initEventSurvey(eventId, user) {
+    if (!eventId || !user) return;
+
+    // ۱. پیدا کردن یا ساخت کانتینر در صفحه
+    let container = document.getElementById('eventSurveyContainer');
+    if (!container) {
+      container = document.createElement('section');
+      container.id = 'eventSurveyContainer';
+      const mainCard = document.querySelector('.event-card');
+      if (mainCard && mainCard.parentNode) {
+        mainCard.parentNode.insertBefore(container, mainCard.nextSibling);
+      } else {
+        const mainWrap = document.getElementById('mainContainer');
+        if (mainWrap) mainWrap.appendChild(container);
+      }
+    }
+
+    if (!container) return;
+
+    // ۲. بارگذاری پیکربندی نظرسنجی (پیش‌فرض یا تغییرات ادمین)
+    let surveyConfig = EVENT_SURVEY_DEFAULTS[eventId] || {
+      id: 'survey_' + eventId,
+      eventId: eventId,
+      title: 'نظرسنجی کیفیت برگزاری رویداد',
+      description: 'همکار گرامی، خواهشمند است با اعلام نظرات خود، ما را در ارتقای کیفیت برنامه‌ها یاری فرمایید.',
+      questions: []
+    };
+
+    if (typeof StorageService !== 'undefined' && StorageService.getSurveyById) {
+      try {
+        const cloudSurvey = await StorageService.getSurveyById(eventId);
+        if (cloudSurvey && cloudSurvey.questions && cloudSurvey.questions.length > 0) {
+          surveyConfig = Object.assign({}, surveyConfig, cloudSurvey);
+        }
+      } catch (err) {
+        console.warn('استفاده از سوالات پیش‌فرض نظرسنجی رویداد:', err);
+      }
+    }
+
+    // ۳. بررسی شرکت قبلی کاربر
+    const existingVote = getUserExistingVote(surveyConfig.id, user.personnelCode);
+
+    // ۴. اضافه کردن دکمه پرش به نظرسنجی در نوار بالای کاربر
+    injectTopSurveyLink(existingVote !== null);
+
+    // ۵. رندر محتوای کارت نظرسنجی
+    if (existingVote) {
+      renderCompletedView(container, surveyConfig, user, existingVote);
+    } else {
+      renderSurveyForm(container, surveyConfig, user);
+    }
+
+    // ۶. بررسی اسکرول خودکار به نظرسنجی اگر در URL درخواست شده باشد
+    checkAutoScrollToSurvey();
+  }
+
+  // تزریق لینک سریع در هدر کاربر
+  function injectTopSurveyLink(hasVoted) {
+    const userBar = document.querySelector('.user-header-bar');
+    if (!userBar || document.getElementById('btnTopSurveyJump')) return;
+
+    const link = document.createElement('a');
+    link.id = 'btnTopSurveyJump';
+    link.href = '#eventSurveyContainer';
+    link.className = 'btn-top-survey-jump';
+    link.innerHTML = hasVoted
+      ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> <span>نظرسنجی ثبت شده</span>`
+      : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg> <span>نظرسنجی کیفیت رویداد</span>`;
+
+    if (hasVoted) {
+      link.classList.add('voted');
+    }
+
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const target = document.getElementById('eventSurveyContainer');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+
+    const logoutBtn = document.getElementById('btnLogoutUser');
+    if (logoutBtn && logoutBtn.parentNode === userBar) {
+      userBar.insertBefore(link, logoutBtn);
+    } else {
+      userBar.appendChild(link);
+    }
+  }
+
+  // رندر فرم سوالات نظرسنجی
+  function renderSurveyForm(container, survey, user) {
+    const questions = survey.questions || [];
+
+    let questionsHtml = '';
+    questions.forEach((q, idx) => {
+      const qNum = (idx + 1).toLocaleString('fa-IR');
+      const reqBadge = q.required ? '<span class="survey-req-star" title="پاسخ به این سوال الزامی است">* الزامی</span>' : '<span class="survey-opt-badge">اختیاری</span>';
+
+      let optionsHtml = '';
+      if (q.type === 'radio' && Array.isArray(q.options)) {
+        optionsHtml = `
+          <div class="survey-options-grid">
+            ${q.options.map((opt, optIdx) => `
+              <label class="survey-option-label" for="opt_${q.id}_${optIdx}">
+                <input type="radio" name="${q.id}" id="opt_${q.id}_${optIdx}" value="${escapeHtml(opt)}" ${q.required ? 'required' : ''}>
+                <span class="survey-option-custom"></span>
+                <span class="survey-option-text">${escapeHtml(opt)}</span>
+              </label>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        optionsHtml = `
+          <div class="survey-textarea-wrap">
+            <textarea class="survey-textarea" name="${q.id}" id="input_${q.id}" rows="3" placeholder="دیدگاه‌ها، پیشنهادات یا انتقادات سازنده خود را در این بخش بنویسید..."></textarea>
+          </div>
+        `;
+      }
+
+      questionsHtml += `
+        <div class="survey-question-card" id="card_${q.id}">
+          <div class="survey-question-header">
+            <div class="survey-q-badge">سوال ${qNum}</div>
+            <div class="survey-q-text">${escapeHtml(q.text)}</div>
+            ${reqBadge}
+          </div>
+          <div class="survey-question-body">
+            ${optionsHtml}
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = `
+      <div class="event-survey-card" id="eventSurveySection">
+        <div class="event-survey-banner">
+          <div class="survey-banner-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div>
+            <span class="survey-mini-badge">نظرسنجی کیفیت برگزاری رویداد</span>
+            <h2 class="survey-main-title">${escapeHtml(survey.title)}</h2>
+            <p class="survey-main-desc">${escapeHtml(survey.description)}</p>
+          </div>
+        </div>
+
+        <div class="survey-inner-body">
+          <div class="survey-user-strip">
+            <div class="survey-user-details">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>همکار گرامی: <strong>${escapeHtml(user.fullName)}</strong> (شماره پرسنلی: <strong>${escapeHtml(user.personnelCode)}</strong>)</span>
+            </div>
+          </div>
+
+          <form id="eventSurveyForm" novalidate>
+            <div class="survey-questions-list">
+              ${questionsHtml}
+            </div>
+
+            <!-- پیام اعتبارسنجی خطا -->
+            <div id="surveyValidationMsg" class="survey-validation-alert" style="display: none;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <span>لطفاً به تمامی سوالات الزامی پاسخ دهید.</span>
+            </div>
+
+            <!-- بخش انتخاب نحوه ارسال و دکمه‌ها -->
+            <div class="survey-submission-section">
+              <div class="survey-privacy-box">
+                <div class="privacy-box-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div class="privacy-box-text">
+                  <strong>حق انتخاب در نحوه ثبت نظر:</strong>
+                  <p>پاسخ‌های شما با هدف سنجش کیفیت و ارتقای خدمات گردآوری می‌شود. شما می‌توانید نظر خود را <strong>با مشخصات هویتی خود</strong> یا <strong>به‌صورت کاملاً ناشناس</strong> ارسال فرمایید.</p>
+                </div>
+              </div>
+
+              <div class="survey-buttons-grid">
+                <!-- دکمه ۱: ارسال با نام -->
+                <button type="button" class="btn-survey-action btn-submit-named" id="btnSurveyNamed">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <div class="btn-text-wrap">
+                    <span class="btn-title">ثبت نظر به نام من</span>
+                    <span class="btn-sub">(${escapeHtml(user.fullName)})</span>
+                  </div>
+                </button>
+
+                <!-- دکمه ۲: ارسال به‌صورت ناشناس -->
+                <button type="button" class="btn-survey-action btn-submit-anonymous" id="btnSurveyAnonymous">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <div class="btn-text-wrap">
+                    <span class="btn-title">ارسال به‌صورت ناشناس</span>
+                    <span class="btn-sub">(بدون درج نام در گزارش‌های عمومی)</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    // تنظیم رویدادهای دکمه‌ها
+    const btnNamed = document.getElementById('btnSurveyNamed');
+    const btnAnon = document.getElementById('btnSurveyAnonymous');
+
+    if (btnNamed) {
+      btnNamed.addEventListener('click', () => handleSurveySubmission(container, survey, user, false));
+    }
+    if (btnAnon) {
+      btnAnon.addEventListener('click', () => handleSurveySubmission(container, survey, user, true));
+    }
+  }
+
+  // اعتبارسنجی و ثبت پاسخ
+  async function handleSurveySubmission(container, survey, user, isAnonymous) {
+    const questions = survey.questions || [];
+    const answers = {};
+    let hasError = false;
+    let firstErrorElement = null;
+
+    const valMsg = document.getElementById('surveyValidationMsg');
+    if (valMsg) valMsg.style.display = 'none';
+
+    // پاکسازی خطاهای قبلی
+    document.querySelectorAll('.survey-question-card').forEach(c => c.classList.remove('has-error'));
+
+    for (const q of questions) {
+      if (q.type === 'radio') {
+        const selected = document.querySelector(`input[name="${q.id}"]:checked`);
+        if (selected) {
+          answers[q.id] = selected.value;
+        } else if (q.required) {
+          hasError = true;
+          const card = document.getElementById(`card_${q.id}`);
+          if (card) {
+            card.classList.add('has-error');
+            if (!firstErrorElement) firstErrorElement = card;
+          }
+        }
+      } else {
+        const textEl = document.getElementById(`input_${q.id}`);
+        const val = textEl ? textEl.value.trim() : '';
+        if (val) {
+          answers[q.id] = val;
+        } else if (q.required) {
+          hasError = true;
+          const card = document.getElementById(`card_${q.id}`);
+          if (card) {
+            card.classList.add('has-error');
+            if (!firstErrorElement) firstErrorElement = card;
+          }
+        }
+      }
+    }
+
+    if (hasError) {
+      if (valMsg) valMsg.style.display = 'flex';
+      if (firstErrorElement) {
+        firstErrorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return;
+    }
+
+    // قفل دکمه‌ها و نمایش حالت ارسال
+    const btnNamed = document.getElementById('btnSurveyNamed');
+    const btnAnon = document.getElementById('btnSurveyAnonymous');
+    if (btnNamed) btnNamed.disabled = true;
+    if (btnAnon) btnAnon.disabled = true;
+
+    const activeBtn = isAnonymous ? btnAnon : btnNamed;
+    const oldText = activeBtn ? activeBtn.innerHTML : '';
+    if (activeBtn) {
+      activeBtn.innerHTML = `
+        <span class="survey-spinner"></span>
+        <span class="btn-title">در حال ثبت پاسخ در سامانه...</span>
+      `;
+    }
+
+    try {
+      const responsePayload = {
+        surveyTitle: survey.title,
+        personnelCode: user.personnelCode,
+        fullName: user.fullName,
+        isAnonymous: isAnonymous,
+        answers: answers
+      };
+
+      if (typeof StorageService !== 'undefined' && StorageService.submitSurveyResponse) {
+        await StorageService.submitSurveyResponse(survey.id, responsePayload);
+      } else {
+        // حالت لوکال
+        localStorage.setItem(`entekhab_survey_voted_${survey.id}_${user.personnelCode}`, '1');
+      }
+
+      // به‌روزرسانی لینک هدر
+      const topLink = document.getElementById('btnTopSurveyJump');
+      if (topLink) {
+        topLink.classList.add('voted');
+        topLink.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> <span>نظرسنجی ثبت شده</span>`;
+      }
+
+      // رندر نمای تشکر
+      renderCompletedView(container, survey, user, {
+        personnelCode: user.personnelCode,
+        fullName: user.fullName,
+        isAnonymous: isAnonymous,
+        jalaliDate: (typeof StorageService !== 'undefined' && StorageService.toJalaliString) ? StorageService.toJalaliString(new Date()) : ''
+      });
+
+      // اسکرول نرم به بالای باکس نظرسنجی
+      container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (err) {
+      console.error('خطا در ثبت نظرسنجی:', err);
+      alert('خطا در برقراری ارتباط با سرور: ' + (err.message || 'لطفاً دوباره تلاش فرمایید.'));
+      if (btnNamed) btnNamed.disabled = false;
+      if (btnAnon) btnAnon.disabled = false;
+      if (activeBtn) activeBtn.innerHTML = oldText;
+    }
+  }
+
+  // نمایش پیام تشکر و وضعیت ثبت نظرسنجی
+  function renderCompletedView(container, survey, user, record) {
+    const isAnon = Boolean(record && record.isAnonymous);
+
+    const privacyBadge = isAnon
+      ? `<span class="completed-mode-badge mode-anon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> نظر شما به‌صورت ناشناس ثبت گردید</span>`
+      : `<span class="completed-mode-badge mode-named"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> نظر با مشخصات همکار ثبت گردید</span>`;
+
+    const subText = isAnon
+      ? 'پاسخ شما با موفقیت و در کمال محرمانگی ثبت شد و مشخصات هویتی شما در گزارش‌های عمومی بازخوردها درج نخواهد شد.'
+      : `همکار ارجمند ${escapeHtml(user.fullName)}، پاسخ شما به همراه مشخصات پرسنلی با موفقیت در سامانه رویدادها دریافت شد.`;
+
+    container.innerHTML = `
+      <div class="event-survey-card survey-completed-card" id="eventSurveySection">
+        <div class="survey-completed-body">
+          <div class="survey-check-icon">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h3 class="completed-title">پاسخ شما با موفقیت در سامانه ثبت شد</h3>
+          <p class="completed-desc">${subText}</p>
+          
+          <div class="completed-meta-box">
+            ${privacyBadge}
+            <div class="completed-meta-item">
+              <span>رویداد:</span>
+              <strong>${escapeHtml(survey.title)}</strong>
+            </div>
+            ${record.jalaliDate ? `
+              <div class="completed-meta-item">
+                <span>زمان ثبت:</span>
+                <strong>${escapeHtml(record.jalaliDate)}</strong>
+              </div>
+            ` : ''}
+          </div>
+
+          <div style="margin-top: 20px;">
+            <button type="button" class="btn-survey-reedit" id="btnReOpenSurvey">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              ویرایش یا ارسال مجدد نظرسنجی
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const reEditBtn = document.getElementById('btnReOpenSurvey');
+    if (reEditBtn) {
+      reEditBtn.addEventListener('click', () => {
+        if (confirm('آیا مایل به بازنگری و ارسال مجدد پاسخ‌های این نظرسنجی هستید؟')) {
+          renderSurveyForm(container, survey, user);
+        }
+      });
+    }
+  }
+
+  // پرش خودکار به نظرسنجی در صورت ارسال لینک با پارامتر survey
+  function checkAutoScrollToSurvey() {
+    const url = window.location.href.toLowerCase();
+    if (url.includes('survey') || window.location.hash.includes('survey')) {
+      setTimeout(() => {
+        const el = document.getElementById('eventSurveyContainer');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 500);
+    }
+  }
+
+  // اکسپورت به سراسر صفحه
+  window.initEventSurvey = initEventSurvey;
+
+})(window);

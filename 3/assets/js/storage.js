@@ -1480,12 +1480,14 @@ const StorageService = {
         const now = new Date();
         const responseId = `resp_${surveyId}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
+        const isAnon = Boolean(responseData.isAnonymous);
         const responseObj = {
             id: responseId,
             surveyId: surveyId,
             surveyTitle: responseData.surveyTitle || 'نظرسنجی',
             personnelCode: (responseData.personnelCode || '').trim(),
             fullName: (responseData.fullName || (responseData.personnelCode ? 'همکار انتخاب' : 'ناشناس')).trim(),
+            isAnonymous: isAnon,
             answers: responseData.answers || {},
             timestamp: now.toISOString(),
             jalaliDate: this.toJalaliString(now),
@@ -1515,8 +1517,11 @@ const StorageService = {
                     event_title: responseObj.surveyTitle,
                     personnel_code: responseObj.personnelCode || 'ANONYMOUS',
                     full_name: responseObj.fullName,
-                    status: 'submitted',
-                    status_text: JSON.stringify(responseObj.answers),
+                    status: responseObj.isAnonymous ? 'submitted_anonymous' : 'submitted',
+                    status_text: JSON.stringify({
+                        isAnonymous: responseObj.isAnonymous,
+                        answers: responseObj.answers
+                    }),
                     timestamp: responseObj.timestamp,
                     jalali_date: responseObj.jalaliDate,
                     user_agent: responseObj.userAgent
@@ -1569,15 +1574,25 @@ const StorageService = {
                     if (Array.isArray(rows)) {
                         const cloudResponses = rows.map(r => {
                             let parsedAnswers = {};
+                            let isAnonymous = (r.status === 'submitted_anonymous');
                             try {
-                                parsedAnswers = JSON.parse(r.status_text || '{}');
+                                const parsed = JSON.parse(r.status_text || '{}');
+                                if (parsed && typeof parsed === 'object') {
+                                    if (parsed.isAnonymous !== undefined) {
+                                        isAnonymous = Boolean(parsed.isAnonymous);
+                                        parsedAnswers = parsed.answers || {};
+                                    } else {
+                                        parsedAnswers = parsed;
+                                    }
+                                }
                             } catch(err) {}
 
                             return {
                                 id: r.id,
                                 surveyId: surveyId,
-                                personnelCode: (r.personnel_code === 'ANONYMOUS' || r.personnel_code === '__SURVEY__') ? '' : r.personnel_code,
+                                personnelCode: (r.personnel_code === '__SURVEY__') ? '' : r.personnel_code,
                                 fullName: r.full_name || '',
+                                isAnonymous: isAnonymous,
                                 answers: parsedAnswers,
                                 timestamp: r.timestamp || r.created_at,
                                 jalaliDate: r.jalali_date || (r.timestamp ? this.toJalaliString(r.timestamp) : ''),
@@ -1665,6 +1680,7 @@ const StorageService = {
             "ردیف",
             "کد پرسنلی",
             "نام و نام خانوادگی",
+            "نوع ارسال",
             "تاریخ و زمان ثبت"
         ];
 
@@ -1675,10 +1691,12 @@ const StorageService = {
         const rows = [headers];
 
         responses.forEach((resp, rIdx) => {
+            const isAnon = resp.isAnonymous || (resp.status === 'submitted_anonymous');
             const rowData = [
                 rIdx + 1,
-                resp.personnelCode || 'ناشناس',
-                resp.fullName || 'ناشناس',
+                resp.personnelCode || 'نامشخص',
+                resp.fullName || 'نامشخص',
+                isAnon ? 'ارسال به‌صورت ناشناس' : 'ارسال با نام',
                 resp.jalaliDate || resp.timestamp || ''
             ];
 

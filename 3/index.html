@@ -259,6 +259,9 @@
       </div>
     </main>
 
+    <!-- بخش اختصاصی نظرسنجی رویداد -->
+    <div id="eventSurveyContainer"></div>
+
     <footer class="page-footer">
       گروه توسعه سرمایه گذاری انتخاب &copy; تمامی حقوق محفوظ است.
     </footer>
@@ -304,6 +307,7 @@
   <script src="assets/js/config.js"></script>
   <script src="assets/js/storage.js"></script>
   <script src="assets/js/personnel-data.js"></script>
+  <script src="assets/js/event-survey.js"></script>
   <script>
     const EVENT_ID = "rafting-markadeh";
     const EVENT_TITLE = "تور رفتینگ مارکده";
@@ -482,6 +486,9 @@
           loginScreen.style.display = 'none';
           mainContainer.style.display = 'block';
           loadUserStatus();
+          if (typeof initEventSurvey === 'function') {
+            initEventSurvey(EVENT_ID, currentUser);
+          }
           return true;
         } catch (e) {
           sessionStorage.removeItem(SESSION_KEY);

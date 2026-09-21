@@ -5258,6 +5258,30 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
       container.innerHTML = '';
 
+      // نوار آمار تفکیک ارسال با نام و ناشناس
+      const anonCount = responses.filter(r => r.isAnonymous || r.status === 'submitted_anonymous').length;
+      const namedCount = totalResponses - anonCount;
+      const anonPct = Math.round((anonCount / (totalResponses || 1)) * 100);
+      const namedPct = 100 - anonPct;
+
+      const summaryStrip = document.createElement('div');
+      summaryStrip.style.cssText = 'display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 22px;';
+      summaryStrip.innerHTML = `
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; text-align: center;">
+          <div style="font-size: 0.82rem; color: #64748b; margin-bottom: 4px;">📊 کل مشارکت‌کنندگان</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">${totalResponses.toLocaleString('fa-IR')} <span style="font-size: 0.85rem; font-weight: 500;">نفر</span></div>
+        </div>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 14px 18px; text-align: center;">
+          <div style="font-size: 0.82rem; color: #166534; margin-bottom: 4px;">👤 ثبت با مشخصات همکار</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: #15803d;">${namedCount.toLocaleString('fa-IR')} <span style="font-size: 0.85rem; font-weight: 500;">نفر (${namedPct}٪)</span></div>
+        </div>
+        <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px 18px; text-align: center;">
+          <div style="font-size: 0.82rem; color: #92400e; margin-bottom: 4px;">🕶️ ارسال به‌صورت ناشناس</div>
+          <div style="font-size: 1.5rem; font-weight: 800; color: #b45309;">${anonCount.toLocaleString('fa-IR')} <span style="font-size: 0.85rem; font-weight: 500;">نفر (${anonPct}٪)</span></div>
+        </div>
+      `;
+      container.appendChild(summaryStrip);
+
       survey.questions.forEach((q, idx) => {
         const box = document.createElement('div');
         box.className = 'result-stat-row';
@@ -5443,6 +5467,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           <th style="width: 45px; text-align: center;">#</th>
           <th style="width: 100px;">کد پرسنلی</th>
           <th style="width: 140px;">نام و نام خانوادگی</th>
+          <th style="width: 130px; text-align: center;">حالت ارسال</th>
           <th style="width: 130px;">تاریخ ثبت</th>
       `;
 
@@ -5456,7 +5481,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       if (!responses || responses.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="${questions.length + 5}" style="text-align: center; padding: 30px; color: #94a3b8;">
+            <td colspan="${questions.length + 6}" style="text-align: center; padding: 30px; color: #94a3b8;">
               هنوز پاسخی برای این نظرسنجی ثبت نشده است.
             </td>
           </tr>
@@ -5466,11 +5491,17 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
       let rowsHtml = '';
       responses.forEach((resp, rIdx) => {
+        const isAnon = Boolean(resp.isAnonymous || resp.status === 'submitted_anonymous');
+        const badgeHtml = isAnon
+          ? '<span style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 3px 8px; border-radius: 12px; font-size: 0.76rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">🕶️ ناشناس (بله)</span>'
+          : '<span style="background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; padding: 3px 8px; border-radius: 12px; font-size: 0.76rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">👤 با نام (خیر)</span>';
+
         rowsHtml += `
           <tr>
             <td style="text-align: center;">${(rIdx + 1).toLocaleString('fa-IR')}</td>
-            <td><strong>${escapeHtml(resp.personnelCode || 'ناشناس')}</strong></td>
-            <td>${escapeHtml(resp.fullName || 'ناشناس')}</td>
+            <td><strong>${escapeHtml(resp.personnelCode || 'نامشخص')}</strong></td>
+            <td>${escapeHtml(resp.fullName || 'نامشخص')}</td>
+            <td style="text-align: center;">${badgeHtml}</td>
             <td style="font-size: 0.8rem; color: #64748b;">${escapeHtml(resp.jalaliDate || '')}</td>
         `;
 
