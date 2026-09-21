@@ -4234,7 +4234,6 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         eventNum: 1,
         folder: 'survey1',
         title: 'نظرسنجی کیفیت برگزاری رویداد صبح همدلی',
-        vercelUrl: 'https://sobh-survey.vercel.app/',
         description: 'همکار گرامی، خواهشمند است با اعلام نظرات و میزان رضایت خود، ما را در ارتقای کیفیت برنامه‌های آتی یاری فرمایید.',
         questions: [
           {
@@ -4280,7 +4279,6 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         eventNum: 2,
         folder: 'survey2',
         title: 'نظرسنجی کیفیت برگزاری تور کویر ورزنه',
-        vercelUrl: 'https://kavir-survey.vercel.app/',
         description: 'همکار گرامی، خواهشمند است با ارزیابی بخش‌های مختلف تور کویر ورزنه، ما را در برگزاری هرچه بهتر برنامه‌های آتی همراهی فرمایید.',
         questions: [
           {
@@ -4326,7 +4324,6 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         eventNum: 3,
         folder: 'survey3',
         title: 'نظرسنجی کیفیت برگزاری تور رفتینگ مارکده',
-        vercelUrl: 'https://rafting-survey.vercel.app/',
         description: 'همکار گرامی، با سپاس از حضور پرشور شما در تور رفتینگ مارکده، لطفاً با تکمیل این فرم ما را در ارزیابی و بهبود خدمات یاری نمایید.',
         questions: [
           {
@@ -4368,99 +4365,37 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       }
     };
 
-    // دریافت آدرس عمومی و اشتراک‌گذاری صفحه نظرسنجی (پشتیبانی هوشمند از Vercel و تنظیمات دستی)
+    // دریافت آدرس صفحه رویداد جهت نظرسنجی درون‌صفحه‌ای
     function getSurveyPublicUrl(surveyIdOrEventId) {
       let eventId = surveyIdOrEventId || '';
       if (typeof eventId === 'string' && eventId.startsWith('survey_')) {
         eventId = eventId.replace('survey_', '');
       }
 
-      if (EVENT_SURVEY_DEFAULTS[eventId]) {
-        const def = EVENT_SURVEY_DEFAULTS[eventId];
-
-        // ۱. اگر ادمین آدرس اختصاصی دستی Vercel ذخیره کرده باشد
-        const custom = localStorage.getItem('survey_custom_url_' + eventId) || localStorage.getItem('survey_custom_url_survey_' + eventId);
-        if (custom && custom.trim()) {
-          let u = custom.trim();
-          if (!u.startsWith('http://') && !u.startsWith('https://')) {
-            u = 'https://' + u;
-          }
-          return u;
-        }
-
-        // ۲. آدرس فعال رسمی Vercel متصل شده برای این نظرسنجی
-        if (def.vercelUrl) {
-          return def.vercelUrl;
-        }
-
-        const num = def.eventNum;
-        // ۳. اگر پنل در وب یا ورسل لود شده باشد، آدرس ساب‌پوشه ورسل را برمی‌گرداند
-        if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-          let base = window.location.href.split('?')[0].split('#')[0];
-          base = base.replace(/\/admin(\/index\.html|\.html|\/)?$/i, '');
-          if (base.endsWith('/')) base = base.slice(0, -1);
-          return `${base}/survey${num}/`;
-        }
-
-        // ۴. آدرس پیش‌فرض پروژه مجزای Vercel
-        return `https://entekhab-survey${num}.vercel.app/`;
-      }
-
-      if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-        let base = window.location.href.split('?')[0].split('#')[0];
-        base = base.replace(/\/admin(\/index\.html|\.html|\/)?$/i, '');
-        if (base.endsWith('/')) base = base.slice(0, -1);
-        return `${base}/survey.html?id=${encodeURIComponent(surveyIdOrEventId)}`;
-      }
-      return `./survey.html?id=${encodeURIComponent(surveyIdOrEventId)}`;
+      const numMap = {
+        'sobh-hamdeli': 1,
+        'kavir-varzaneh': 2,
+        'rafting-markadeh': 3
+      };
+      const num = numMap[eventId] || 1;
+      const eventUrl = getEventUrl(num);
+      return eventUrl.endsWith('/') ? `${eventUrl}?survey=1` : `${eventUrl}/?survey=1`;
     }
 
-    // دریافت آدرس پیش‌نمایش مستقیم (آنلاین Vercel یا محلی)
-    function getSurveyPreviewUrl(eventId, num) {
-      const def = EVENT_SURVEY_DEFAULTS[eventId];
-      if (def && def.vercelUrl) {
-        return def.vercelUrl;
-      }
-      return getSurveyPublicUrl(eventId);
-    }
-
-    // تنظیم یا ویرایش آدرس اختصاصی دامنه Vercel توسط ادمین
-    function setCustomSurveyUrl(eventId, eventTitle) {
-      const def = EVENT_SURVEY_DEFAULTS[eventId];
-      const defaultUrl = (def && def.vercelUrl) ? def.vercelUrl : getSurveyPublicUrl(eventId);
-      const current = localStorage.getItem('survey_custom_url_' + eventId) || defaultUrl;
-      const input = prompt(
-        `🌐 تنظیم یا تغییر آدرس Vercel برای نظرسنجی «${eventTitle}»:\n\nآدرس فعلی متصل‌شده: ${defaultUrl}\n\n(جهت تغییر، آدرس جدید را وارد کنید یا برای بازگشت به آدرس پیش‌فرض، کادر را خالی بگذارید):`,
-        current
-      );
-      if (input !== null) {
-        const trimmed = input.trim();
-        if (trimmed && trimmed !== defaultUrl) {
-          localStorage.setItem('survey_custom_url_' + eventId, trimmed);
-          showAdminToast("✓ آدرس اختصاصی Vercel با موفقیت ذخیره شد.");
-        } else {
-          localStorage.removeItem('survey_custom_url_' + eventId);
-          showAdminToast("آدرس به دامنه رسمی Vercel متصل گردید.");
-        }
-        updateEventSurveyBoxes();
-        if (typeof renderSurveysList === 'function') renderSurveysList();
-      }
-    }
-
-    // کپی لینک مستقیم Vercel برای رویداد
+    // کپی لینک صفحه رویداد جهت نظرسنجی
     function copyEventSurveyLink(eventId, num) {
       const url = getSurveyPublicUrl(eventId);
       navigator.clipboard.writeText(url).then(() => {
-        showAdminToast(`✓ لینک نظرسنجی رویداد ${num} با موفقیت کپی شد:\n${url}`);
+        showAdminToast(`✓ لینک صفحه رویداد ${num} جهت نظرسنجی کپی شد:\n${url}`);
       }).catch(() => {
-        prompt("لطفاً آدرس نظرسنجی را دستی کپی نمایید:", url);
+        prompt("لطفاً آدرس رویداد را کپی نمایید:", url);
       });
     }
 
-    // کپی پیامک آماده دعوت به نظرسنجی رویداد
+    // کپی پیامک آماده دعوت به نظرسنجی درون‌صفحه‌ای
     function copyEventSurveySms(eventId, num, eventTitle) {
       const url = getSurveyPublicUrl(eventId);
-      const text = `همکار گرامی گروه توسعه سرمایه‌گذاری انتخاب\nبا سلام، خواهشمند است با تکمیل نظرسنجی «${eventTitle}»، ما را در بهبود کیفیت و خدمات رویدادهای سازمانی یاری فرمایید:\n🔗 ${url}`;
+      const text = `همکار گرامی گروه توسعه سرمایه‌گذاری انتخاب\nبا سلام، خواهشمند است با ورود به سامانه رویداد «${eventTitle}»، در نظرسنجی کیفیت برگزاری برنامه مشارکت فرمایید:\n🔗 ${url}`;
       navigator.clipboard.writeText(text).then(() => {
         showAdminToast("✓ متن پیامک دعوت به نظرسنجی با موفقیت در کلیپ‌بورد کپی شد.");
       }).catch(() => {
@@ -4491,55 +4426,35 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         const surveyId = survey ? survey.id : ('survey_' + ev.id);
         const respCount = (cachedSurveysResponseCounts && (cachedSurveysResponseCounts[surveyId] || cachedSurveysResponseCounts[ev.id])) || 0;
         const publicUrl = getSurveyPublicUrl(ev.id);
-        const previewUrl = getSurveyPreviewUrl(ev.id, ev.num);
-        const safeTitle = escapeHtml(survey ? survey.title : `نظرسنجی ${ev.title}`);
-        const isActive = survey ? (survey.status === 'active') : true;
 
         box.innerHTML = `
           <div style="margin-top: 12px; padding-top: 10px; border-top: 1.5px dashed #86efac;">
-            <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
               <!-- هدر وضعیت نظرسنجی رویداد -->
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <span style="font-size: 0.8rem; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
                   <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);"></span>
-                  نظرسنجی آنلاین Vercel
+                  نظرسنجی درون‌صفحه‌ای رویداد
                 </span>
                 <span style="font-size: 0.74rem; font-weight: 700; color: #15803d; background: #dcfce7; padding: 2px 8px; border-radius: 10px; border: 1px solid #bbf7d0;">
                   ${respCount.toLocaleString('fa-IR')} پاسخ دریافتی
                 </span>
               </div>
 
-              <!-- نمایش آدرس اختصاصی نظرسنجی به همراه ویرایش دامنه -->
-              <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 6px; padding: 5px 8px; margin-bottom: 8px; font-size: 0.73rem; color: #334155; gap: 6px;">
-                <a href="${publicUrl}" target="_blank" style="direction: ltr; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; color: #0284c7; text-decoration: none; font-weight: 700;" title="مشاهده مستقیم صفحه نظرسنجی">
-                  ${publicUrl}
-                </a>
-                <button type="button" class="btn btn-outline" style="padding: 2px 6px; font-size: 0.69rem; border-color: #86efac; color: #15803d; line-height: 1.2; flex-shrink: 0;" onclick="setCustomSurveyUrl('${ev.id}', '${escapeHtml(ev.title)}')" title="تغییر آدرس دامنه Vercel">
-                  ✏️ تغییر دامنه
-                </button>
-              </div>
-
-              <!-- کلیدهای عملیاتی کپی لینک، پیامک، آمار و ویرایش سوالات -->
+              <!-- کلیدهای عملیاتی آمار، تنظیم سوالات، کپی لینک و پیامک -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                <button type="button" class="btn btn-primary" style="padding: 6px 8px; font-size: 0.77rem; background: #16a34a; justify-content: center; font-weight: 700;" onclick="copyEventSurveyLink('${ev.id}', ${ev.num})" title="کپی لینک اختصاصی نظرسنجی جهت اشتراک‌گذاری">
-                  📋 کپی لینک Vercel
-                </button>
-                <button type="button" class="btn btn-secondary" style="padding: 6px 8px; font-size: 0.77rem; justify-content: center;" onclick="copyEventSurveySms('${ev.id}', ${ev.num}, '${escapeHtml(ev.title)}')" title="کپی متن پیامک آماده نظرسنجی">
-                  📱 پیامک دعوت
-                </button>
-                <button type="button" class="btn btn-secondary" style="padding: 6px 8px; font-size: 0.77rem; justify-content: center;" onclick="openSurveyResultsModal('${surveyId}')" title="مشاهده آمار و نمودارهای تحلیل پاسخ‌ها">
+                <button type="button" class="btn btn-secondary" style="padding: 7px 10px; font-size: 0.78rem; justify-content: center; font-weight: 700;" onclick="openSurveyResultsModal('${surveyId}')" title="مشاهده آمار و نمودارهای تحلیل پاسخ‌ها">
                   📊 آمار و نتایج
                 </button>
-                <button type="button" class="btn btn-outline" style="padding: 6px 8px; font-size: 0.77rem; justify-content: center; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff;" onclick="openSurveyModalForEvent('${ev.id}', '${escapeHtml(ev.title)}', '${survey ? survey.id : ''}')" title="ویرایش یا افزودن سوالات نظرسنجی">
-                  ⚙️ ویرایش سوالات
+                <button type="button" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.78rem; justify-content: center; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff;" onclick="openSurveyModalForEvent('${ev.id}', '${escapeHtml(ev.title)}', '${survey ? survey.id : ''}')" title="ویرایش یا افزودن سوالات نظرسنجی">
+                  ⚙️ تنظیم سوالات
                 </button>
-              </div>
-
-              <!-- لینک مشاهده صفحه نظرسنجی -->
-              <div style="margin-top: 7px; text-align: center;">
-                <a href="${publicUrl}" target="_blank" style="font-size: 0.72rem; color: #0284c7; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-                  🌐 باز کردن صفحه نظرسنجی در ورسل ↗
-                </a>
+                <button type="button" class="btn btn-primary" style="padding: 7px 10px; font-size: 0.78rem; background: #16a34a; justify-content: center; font-weight: 700;" onclick="copyEventSurveyLink('${ev.id}', ${ev.num})" title="کپی لینک مستقیم صفحه رویداد جهت نظرسنجی">
+                  📋 کپی لینک رویداد
+                </button>
+                <button type="button" class="btn btn-secondary" style="padding: 7px 10px; font-size: 0.78rem; justify-content: center;" onclick="copyEventSurveySms('${ev.id}', ${ev.num}, '${escapeHtml(ev.title)}')" title="کپی متن پیامک آماده نظرسنجی">
+                  📱 پیامک دعوت
+                </button>
               </div>
             </div>
           </div>

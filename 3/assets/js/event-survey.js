@@ -520,24 +520,13 @@
             ` : ''}
           </div>
 
-          <div style="margin-top: 20px;">
-            <button type="button" class="btn-survey-reedit" id="btnReOpenSurvey">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              ویرایش یا ارسال مجدد نظرسنجی
-            </button>
+          <div style="margin-top: 18px; color: #166534; font-size: 0.86rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>✓ پاسخ شما نهایی گردیده و امکان تغییر آن وجود ندارد.</span>
           </div>
         </div>
       </div>
     `;
-
-    const reEditBtn = document.getElementById('btnReOpenSurvey');
-    if (reEditBtn) {
-      reEditBtn.addEventListener('click', () => {
-        if (confirm('آیا مایل به بازنگری و ارسال مجدد پاسخ‌های این نظرسنجی هستید؟')) {
-          renderSurveyForm(container, survey, user);
-        }
-      });
-    }
   }
 
   // پرش خودکار به نظرسنجی در صورت ارسال لینک با پارامتر survey
