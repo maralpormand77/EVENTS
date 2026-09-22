@@ -162,9 +162,78 @@
     return votedFlag ? { personnelCode: personnelCode } : null;
   }
 
+  // تشخیص فعال بودن حالت نظرسنجی (بر اساس URL یا تنظیمات دیتابیس ادمین)
+  function isSurveyModeActive(eventId, eventSetting) {
+    const url = (window.location.href || '').toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('survey') === '1' || params.get('mode') === 'survey' || url.includes('survey=1') || window.location.hash.includes('survey')) {
+      return true;
+    }
+    if (eventSetting && (eventSetting.activeMode === 'survey' || eventSetting.isSurveyActive === true)) {
+      return true;
+    }
+    try {
+      const raw = localStorage.getItem('entekhab_event_deadlines');
+      if (raw && eventId) {
+        const all = JSON.parse(raw);
+        if (all && all[eventId] && (all[eventId].activeMode === 'survey' || all[eventId].isSurveyActive === true)) {
+          return true;
+        }
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  // اعمال تغییرات پوسته در صورت فعال بودن نظرسنجی
+  function applySurveyModeLayout(eventId) {
+    document.body.classList.add('survey-active-mode');
+
+    // مخفی‌سازی کامل بخش فرم ثبت‌نام و پیام‌های انقضا
+    const regSection = document.getElementById('registrationSection');
+    if (regSection) {
+      regSection.style.display = 'none';
+    }
+
+    const deadlineExpired = document.getElementById('statusDeadlineExpired');
+    if (deadlineExpired) deadlineExpired.style.display = 'none';
+
+    const capacityFull = document.getElementById('statusCapacityFull');
+    if (capacityFull) capacityFull.style.display = 'none';
+
+    const loading = document.getElementById('statusLoading');
+    if (loading) loading.style.display = 'none';
+
+    // اضافه کردن نشانگر حالت نظرسنجی در بالای محتوای کارت رویداد
+    const eventContent = document.querySelector('.event-content');
+    if (eventContent && !document.getElementById('surveyNoticePill')) {
+      const pill = document.createElement('div');
+      pill.id = 'surveyNoticePill';
+      pill.className = 'survey-active-notice-pill';
+      pill.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>بخش ارزیابی و نظرسنجی کیفیت برگزاری رویداد</span>
+      `;
+      eventContent.insertBefore(pill, eventContent.firstChild);
+    }
+  }
+
   // راه‌اندازی و تزریق نظرسنجی به صفحه رویداد
   async function initEventSurvey(eventId, user) {
     if (!eventId || !user) return;
+
+    // بارگذاری تنظیمات رویداد
+    let eventSetting = null;
+    if (typeof StorageService !== 'undefined' && StorageService.getEventSettings) {
+      try {
+        eventSetting = await StorageService.getEventSettings(eventId);
+      } catch (e) {}
+    }
+
+    const inSurveyMode = isSurveyModeActive(eventId, eventSetting);
+
+    if (inSurveyMode) {
+      applySurveyModeLayout(eventId);
+    }
 
     // ۱. پیدا کردن یا ساخت کانتینر در صفحه
     let container = document.getElementById('eventSurveyContainer');
@@ -205,8 +274,10 @@
     // ۳. بررسی شرکت قبلی کاربر
     const existingVote = getUserExistingVote(surveyConfig.id, user.personnelCode);
 
-    // ۴. اضافه کردن دکمه پرش به نظرسنجی در نوار بالای کاربر
-    injectTopSurveyLink(existingVote !== null);
+    // ۴. اضافه کردن دکمه پرش به نظرسنجی در نوار بالای کاربر در حالت عادی
+    if (!inSurveyMode) {
+      injectTopSurveyLink(existingVote !== null);
+    }
 
     // ۵. رندر محتوای کارت نظرسنجی
     if (existingVote) {
@@ -216,7 +287,9 @@
     }
 
     // ۶. بررسی اسکرول خودکار به نظرسنجی اگر در URL درخواست شده باشد
-    checkAutoScrollToSurvey();
+    if (!inSurveyMode) {
+      checkAutoScrollToSurvey();
+    }
   }
 
   // تزریق لینک سریع در هدر کاربر
@@ -252,9 +325,11 @@
     }
   }
 
-  // رندر فرم سوالات نظرسنجی
+  // رندر فرم سوالات نظرسنجی با تم مدرن و نوار پیشرفت زنده
   function renderSurveyForm(container, survey, user) {
     const questions = survey.questions || [];
+    const eventId = survey.eventId || '';
+    const themeClass = (eventId === 'kavir-varzaneh') ? 'theme-kavir' : ((eventId === 'rafting-markadeh') ? 'theme-rafting' : 'theme-sobh');
 
     let questionsHtml = '';
     questions.forEach((q, idx) => {
@@ -267,7 +342,7 @@
           <div class="survey-options-grid">
             ${q.options.map((opt, optIdx) => `
               <label class="survey-option-label" for="opt_${q.id}_${optIdx}">
-                <input type="radio" name="${q.id}" id="opt_${q.id}_${optIdx}" value="${escapeHtml(opt)}" ${q.required ? 'required' : ''}>
+                <input type="radio" name="${q.id}" id="opt_${q.id}_${optIdx}" value="${escapeHtml(opt)}" ${q.required ? 'required' : ''} data-qid="${q.id}">
                 <span class="survey-option-custom"></span>
                 <span class="survey-option-text">${escapeHtml(opt)}</span>
               </label>
@@ -277,7 +352,7 @@
       } else {
         optionsHtml = `
           <div class="survey-textarea-wrap">
-            <textarea class="survey-textarea" name="${q.id}" id="input_${q.id}" rows="3" placeholder="دیدگاه‌ها، پیشنهادات یا انتقادات سازنده خود را در این بخش بنویسید..."></textarea>
+            <textarea class="survey-textarea" name="${q.id}" id="input_${q.id}" data-qid="${q.id}" rows="3" placeholder="دیدگاه‌ها، پیشنهادات یا انتقادات سازنده خود را در این بخش بنویسید..."></textarea>
           </div>
         `;
       }
@@ -298,7 +373,7 @@
 
     container.innerHTML = `
       <div class="event-survey-card" id="eventSurveySection">
-        <div class="event-survey-banner">
+        <div class="event-survey-banner ${themeClass}">
           <div class="survey-banner-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
           </div>
@@ -310,6 +385,17 @@
         </div>
 
         <div class="survey-inner-body">
+          <!-- نوار پیشرفت پاسخ به سوالات -->
+          <div class="survey-progress-card">
+            <div class="survey-progress-header">
+              <span>میزان تکمیل فرم نظرسنجی:</span>
+              <span id="surveyProgressLabel">۰ از ${questions.length.toLocaleString('fa-IR')} سوال (۰٪)</span>
+            </div>
+            <div class="survey-progress-track">
+              <div class="survey-progress-fill" id="surveyProgressFill" style="width: 0%;"></div>
+            </div>
+          </div>
+
           <div class="survey-user-strip">
             <div class="survey-user-details">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -325,25 +411,25 @@
             <!-- پیام اعتبارسنجی خطا -->
             <div id="surveyValidationMsg" class="survey-validation-alert" style="display: none;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              <span>لطفاً به تمامی سوالات الزامی پاسخ دهید.</span>
+              <span>لطفاً به تمامی سوالات الزامی مشخص شده پاسخ دهید.</span>
             </div>
 
             <!-- بخش انتخاب نحوه ارسال و دکمه‌ها -->
             <div class="survey-submission-section">
               <div class="survey-privacy-box">
                 <div class="privacy-box-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </div>
                 <div class="privacy-box-text">
                   <strong>حق انتخاب در نحوه ثبت نظر:</strong>
-                  <p>پاسخ‌های شما با هدف سنجش کیفیت و ارتقای خدمات گردآوری می‌شود. شما می‌توانید نظر خود را <strong>با مشخصات هویتی خود</strong> یا <strong>به‌صورت کاملاً ناشناس</strong> ارسال فرمایید.</p>
+                  <p>پاسخ‌های شما با هدف سنجش کیفیت و ارتقای خدمات رویدادها گردآوری می‌شود. شما می‌توانید نظر ارزشمند خود را <strong>با مشخصات هویتی خود</strong> یا <strong>به‌صورت کاملاً ناشناس</strong> ارسال فرمایید.</p>
                 </div>
               </div>
 
               <div class="survey-buttons-grid">
                 <!-- دکمه ۱: ارسال با نام -->
                 <button type="button" class="btn-survey-action btn-submit-named" id="btnSurveyNamed">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   <div class="btn-text-wrap">
                     <span class="btn-title">ثبت نظر به نام من</span>
                     <span class="btn-sub">(${escapeHtml(user.fullName)})</span>
@@ -352,10 +438,10 @@
 
                 <!-- دکمه ۲: ارسال به‌صورت ناشناس -->
                 <button type="button" class="btn-survey-action btn-submit-anonymous" id="btnSurveyAnonymous">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                   <div class="btn-text-wrap">
-                    <span class="btn-title">ارسال به‌صورت ناشناس</span>
-                    <span class="btn-sub">(بدون درج نام در گزارش‌های عمومی)</span>
+                    <span class="btn-title">ارسال به‌صورت کاملاً ناشناس</span>
+                    <span class="btn-sub">(عدم درج نام در گزارش‌ها)</span>
                   </div>
                 </button>
               </div>
@@ -364,6 +450,37 @@
         </div>
       </div>
     `;
+
+    // محاسبه زنده پیشرفت پاسخ‌ها
+    function updateProgress() {
+      let answeredCount = 0;
+      questions.forEach(q => {
+        if (q.type === 'radio') {
+          if (document.querySelector(`input[name="${q.id}"]:checked`)) {
+            answeredCount++;
+          }
+        } else {
+          const txt = document.getElementById(`input_${q.id}`);
+          if (txt && txt.value.trim().length > 0) {
+            answeredCount++;
+          }
+        }
+      });
+
+      const total = questions.length || 1;
+      const pct = Math.round((answeredCount / total) * 100);
+      const fillEl = document.getElementById('surveyProgressFill');
+      const labelEl = document.getElementById('surveyProgressLabel');
+
+      if (fillEl) fillEl.style.width = pct + '%';
+      if (labelEl) labelEl.textContent = `${answeredCount.toLocaleString('fa-IR')} از ${total.toLocaleString('fa-IR')} سوال (${pct.toLocaleString('fa-IR')}٪)`;
+    }
+
+    const formEl = document.getElementById('eventSurveyForm');
+    if (formEl) {
+      formEl.addEventListener('change', updateProgress);
+      formEl.addEventListener('input', updateProgress);
+    }
 
     // تنظیم رویدادهای دکمه‌ها
     const btnNamed = document.getElementById('btnSurveyNamed');
@@ -494,7 +611,7 @@
       : `<span class="completed-mode-badge mode-named"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> نظر با مشخصات همکار ثبت گردید</span>`;
 
     const subText = isAnon
-      ? 'پاسخ شما با موفقیت و در کمال محرمانگی ثبت شد و مشخصات هویتی شما در گزارش‌های عمومی بازخوردها درج نخواهد شد.'
+      ? 'پاسخ شما با موفقیت و در کمال محرمانگی ثبت شد و مشخصات هویتی شما در گزارش‌های بازخورد درج نخواهد شد.'
       : `همکار ارجمند ${escapeHtml(user.fullName)}، پاسخ شما به همراه مشخصات پرسنلی با موفقیت در سامانه رویدادها دریافت شد.`;
 
     container.innerHTML = `
@@ -522,7 +639,7 @@
 
           <div style="margin-top: 18px; color: #166534; font-size: 0.86rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <span>✓ پاسخ شما نهایی گردیده و امکان تغییر آن وجود ندارد.</span>
+            <span>✓ پاسخ شما نهایی گردیده و در ارزیابی و بهبود خدمات رویدادها اعمال خواهد شد.</span>
           </div>
         </div>
       </div>
@@ -531,18 +648,53 @@
 
   // پرش خودکار به نظرسنجی در صورت ارسال لینک با پارامتر survey
   function checkAutoScrollToSurvey() {
-    const url = window.location.href.toLowerCase();
+    const url = (window.location.href || '').toLowerCase();
     if (url.includes('survey') || window.location.hash.includes('survey')) {
       setTimeout(() => {
         const el = document.getElementById('eventSurveyContainer');
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 500);
+      }, 400);
     }
+  }
+
+  // سازگار کردن صفحه لاگین با حالت نظرسنجی در بدو ورود
+  function adaptLoginScreenForSurvey() {
+    const url = (window.location.href || '').toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    const isSurvey = params.get('survey') === '1' || params.get('mode') === 'survey' || url.includes('survey=1') || window.location.hash.includes('survey');
+    if (!isSurvey) return;
+
+    document.body.classList.add('survey-active-mode');
+
+    const badge = document.querySelector('.login-header .org-badge, .brand-header .org-badge');
+    if (badge) {
+      badge.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> سامانه نظرسنجی رویدادهای انتخاب`;
+    }
+    const title = document.querySelector('.login-card h2');
+    if (title) {
+      title.textContent = 'ورود به بخش نظرسنجی رویداد';
+    }
+    const desc = document.querySelector('.login-card p');
+    if (desc) {
+      desc.textContent = 'جهت شرکت در نظرسنجی و ارزیابی کیفیت برگزاری رویداد، لطفاً با مشخصات سازمانی خود وارد شوید:';
+    }
+    const btn = document.querySelector('#loginForm button[type="submit"]');
+    if (btn) {
+      btn.innerHTML = 'ورود به فرم نظرسنجی &larr;';
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', adaptLoginScreenForSurvey);
+  } else {
+    adaptLoginScreenForSurvey();
   }
 
   // اکسپورت به سراسر صفحه
   window.initEventSurvey = initEventSurvey;
+  window.isSurveyModeActive = isSurveyModeActive;
+  window.applySurveyModeLayout = applySurveyModeLayout;
 
 })(window);

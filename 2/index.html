@@ -528,6 +528,14 @@
       if (deadlineExpired) deadlineExpired.style.display = 'none';
       if (capacityFull) capacityFull.style.display = 'none';
 
+      // در صورت ورود به حالت نظرسنجی، بخش ثبت‌نام و پیام‌های انقضا پنهان شوند
+      if (typeof isSurveyModeActive === 'function' && isSurveyModeActive(EVENT_ID)) {
+        loading.style.display = 'none';
+        const regSection = document.getElementById('registrationSection');
+        if (regSection) regSection.style.display = 'none';
+        return;
+      }
+
       // دریافت آخرین تنظیمات مهلت و متون رویداد از سرور
       try {
         if (typeof StorageService !== 'undefined' && StorageService.getEventSettings) {

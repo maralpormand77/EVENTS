@@ -608,8 +608,8 @@
               <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 8px; font-size: 0.8rem;" onclick="showEventParticipants('sobh-hamdeli')">
                 👥 شرکت‌کنندگان
               </button>
-              <a href="https://entekhab-sobh.vercel.app/" id="viewBtn1" target="_blank" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem; text-decoration: none;" title="مشاهده صفحه اختصاصی رویداد">
-                🔗 مشاهده
+              <a href="https://entekhab-sobh.vercel.app/" id="viewBtn1" target="_blank" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem; text-decoration: none;" title="مشاهده صفحه ثبت‌نام و اطلاعات رویداد">
+                🚀 شروع رویداد
               </a>
               <button type="button" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem;" onclick="copySms(1)" title="کپی پیامک دعوت همکاران">
                 📱 پیامک
@@ -678,8 +678,8 @@
               <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 8px; font-size: 0.8rem;" onclick="showEventParticipants('kavir-varzaneh')">
                 👥 شرکت‌کنندگان
               </button>
-              <a href="https://entekhab-kavir.vercel.app/" id="viewBtn2" target="_blank" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem; text-decoration: none;" title="مشاهده صفحه اختصاصی رویداد">
-                🔗 مشاهده
+              <a href="https://entekhab-kavir.vercel.app/" id="viewBtn2" target="_blank" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem; text-decoration: none;" title="مشاهده صفحه ثبت‌نام و اطلاعات رویداد">
+                🚀 شروع رویداد
               </a>
               <button type="button" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem;" onclick="copySms(2)" title="کپی پیامک دعوت همکاران">
                 📱 پیامک
@@ -748,8 +748,8 @@
               <button type="button" class="btn btn-secondary" style="flex: 1; padding: 7px 8px; font-size: 0.8rem;" onclick="showEventParticipants('rafting-markadeh')">
                 👥 شرکت‌کنندگان
               </button>
-              <a href="https://entekhab-rafting.vercel.app/" id="viewBtn3" target="_blank" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem; text-decoration: none;" title="مشاهده صفحه اختصاصی رویداد">
-                🔗 مشاهده
+              <a href="https://entekhab-rafting.vercel.app/" id="viewBtn3" target="_blank" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem; text-decoration: none;" title="مشاهده صفحه ثبت‌نام و اطلاعات رویداد">
+                🚀 شروع رویداد
               </a>
               <button type="button" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.8rem;" onclick="copySms(3)" title="کپی پیامک دعوت همکاران">
                 📱 پیامک
@@ -1161,6 +1161,27 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
               <button type="button" class="btn btn-decline" id="cfgBtnToggleClose" style="padding: 7px 14px; font-size: 0.82rem;" onclick="toggleCurrentEventClosure()">
                 بستن فوری ثبت‌نام
               </button>
+            </div>
+          </div>
+
+          <!-- بخش ۷: انتخاب حالت فعال رویداد (شروع رویداد / شروع نظرسنجی) -->
+          <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
+            <div style="font-size: 0.9rem; font-weight: 800; color: #166534; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              حالت جاری رویداد برای مراجعین و همکاران:
+            </div>
+            <p style="font-size: 0.82rem; color: #15803d; margin: 0 0 10px 0; line-height: 1.6;">
+              مشخص فرمایید که مراجعین هنگام ورود به این رویداد، صفحه ثبت‌نام و حضور را ببینند یا مستقیماً وارد بخش نظرسنجی کیفیت شوند (بدون نمایش پیام پایان مهلت ثبت‌نام):
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <label style="display: flex; align-items: center; gap: 8px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; cursor: pointer;">
+                <input type="radio" name="cfgEventActiveMode" id="cfgModeEvent" value="event" checked>
+                <span style="font-size: 0.86rem; font-weight: 700; color: #004b93;">🚀 شروع رویداد (ثبت‌نام فعال)</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; background: #ffffff; border: 1.5px solid #86efac; border-radius: 10px; padding: 10px 14px; cursor: pointer;">
+                <input type="radio" name="cfgEventActiveMode" id="cfgModeSurvey" value="survey">
+                <span style="font-size: 0.86rem; font-weight: 700; color: #166534;">📝 شروع نظرسنجی (نظرسنجی فعال)</span>
+              </label>
             </div>
           </div>
 
@@ -2914,6 +2935,14 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       const cap = setting.capacity !== undefined ? setting.capacity : ((def && def.capacity) || 0);
       setVal('cfgCapacity', cap > 0 ? cap : '');
 
+      const isSurveyMode = (setting.activeMode === 'survey' || setting.isSurveyActive === true);
+      const modeEventRadio = document.getElementById('cfgModeEvent');
+      const modeSurveyRadio = document.getElementById('cfgModeSurvey');
+      if (modeEventRadio && modeSurveyRadio) {
+        modeEventRadio.checked = !isSurveyMode;
+        modeSurveyRadio.checked = isSurveyMode;
+      }
+
       const attendingCount = currentRegistrations.filter(r => r.eventId === eventId && r.status === 'attending').length;
       const countEl = document.getElementById('cfgCapacityCurrentCount');
       if (countEl) {
@@ -3056,11 +3085,17 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         deadlineDesc: (document.getElementById('cfgDeadlineDesc').value || '').trim()
       };
 
+      const modeSurveyRadio = document.getElementById('cfgModeSurvey');
+      const activeMode = (modeSurveyRadio && modeSurveyRadio.checked) ? 'survey' : 'event';
+      const isSurveyActive = (activeMode === 'survey');
+
       try {
         const res = await StorageService.saveEventSettings(activeSettingsEventId, {
           deadlineDate: dateNorm,
           deadlineTime: timeNorm,
           capacity: capacity,
+          activeMode: activeMode,
+          isSurveyActive: isSurveyActive,
           customTexts: customTexts
         });
 
@@ -4441,19 +4476,22 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
                 </span>
               </div>
 
-              <!-- کلیدهای عملیاتی آمار، تنظیم سوالات، کپی لینک و پیامک -->
+              <!-- کلیدهای عملیاتی نظرسنجی و رویداد -->
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
-                <button type="button" class="btn btn-secondary" style="padding: 7px 10px; font-size: 0.78rem; justify-content: center; font-weight: 700;" onclick="openSurveyResultsModal('${surveyId}')" title="مشاهده آمار و نمودارهای تحلیل پاسخ‌ها">
+                <button type="button" class="btn btn-secondary" style="padding: 7px 8px; font-size: 0.78rem; justify-content: center; font-weight: 700;" onclick="openSurveyResultsModal('${surveyId}')" title="مشاهده آمار و نمودارهای تحلیل پاسخ‌ها">
                   📊 آمار و نتایج
                 </button>
-                <button type="button" class="btn btn-outline" style="padding: 7px 10px; font-size: 0.78rem; justify-content: center; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff;" onclick="openSurveyModalForEvent('${ev.id}', '${escapeHtml(ev.title)}', '${survey ? survey.id : ''}')" title="ویرایش یا افزودن سوالات نظرسنجی">
+                <button type="button" class="btn btn-outline" style="padding: 7px 8px; font-size: 0.78rem; justify-content: center; color: #0284c7; border-color: #7dd3fc; background: #f0f9ff;" onclick="openSurveyModalForEvent('${ev.id}', '${escapeHtml(ev.title)}', '${survey ? survey.id : ''}')" title="ویرایش یا افزودن سوالات نظرسنجی">
                   ⚙️ تنظیم سوالات
                 </button>
-                <button type="button" class="btn btn-primary" style="padding: 7px 10px; font-size: 0.78rem; background: #16a34a; justify-content: center; font-weight: 700;" onclick="copyEventSurveyLink('${ev.id}', ${ev.num})" title="کپی لینک مستقیم صفحه رویداد جهت نظرسنجی">
-                  📋 کپی لینک رویداد
+                <a href="${publicUrl}" target="_blank" class="btn btn-outline" style="padding: 7px 8px; font-size: 0.78rem; justify-content: center; color: #166534; border-color: #86efac; background: #ffffff; text-decoration: none;" title="ورود مستقیم به بخش نظرسنجی این رویداد">
+                  📝 شروع نظرسنجی
+                </a>
+                <button type="button" class="btn btn-primary" style="padding: 7px 8px; font-size: 0.78rem; background: #16a34a; justify-content: center; font-weight: 700;" onclick="copyEventSurveyLink('${ev.id}', ${ev.num})" title="کپی لینک مستقیم صفحه رویداد جهت نظرسنجی">
+                  📋 کپی لینک نظرسنجی
                 </button>
-                <button type="button" class="btn btn-secondary" style="padding: 7px 10px; font-size: 0.78rem; justify-content: center;" onclick="copyEventSurveySms('${ev.id}', ${ev.num}, '${escapeHtml(ev.title)}')" title="کپی متن پیامک آماده نظرسنجی">
-                  📱 پیامک دعوت
+                <button type="button" class="btn btn-secondary" style="grid-column: 1 / -1; padding: 7px 10px; font-size: 0.78rem; justify-content: center;" onclick="copyEventSurveySms('${ev.id}', ${ev.num}, '${escapeHtml(ev.title)}')" title="کپی متن پیامک آماده نظرسنجی">
+                  📱 پیامک دعوت به نظرسنجی
                 </button>
               </div>
             </div>
