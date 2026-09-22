@@ -63,6 +63,15 @@ const StorageService = {
         const defaults = {
             'sobh-hamdeli': {
                 eventId: 'sobh-hamdeli',
+                lifecycleState: 'ACTIVE',
+                isSurveyActive: false,
+                activeMode: 'event',
+                surveyActivationRequested: false,
+                surveyActivationDismissed: false,
+                surveyApprovedAt: null,
+                eventEndDate: '1405/06/22',
+                eventEndTime: '11:00',
+                eventEndTimestamp: 1789284600000,
                 isClosed: false,
                 capacity: 0,
                 deadlineDate: '',
@@ -93,6 +102,15 @@ const StorageService = {
             },
             'kavir-varzaneh': {
                 eventId: 'kavir-varzaneh',
+                lifecycleState: 'ACTIVE',
+                isSurveyActive: false,
+                activeMode: 'event',
+                surveyActivationRequested: false,
+                surveyActivationDismissed: false,
+                surveyApprovedAt: null,
+                eventEndDate: '1405/06/26',
+                eventEndTime: '13:00',
+                eventEndTimestamp: 1789637400000,
                 isClosed: false,
                 capacity: 0,
                 deadlineDate: '1405/06/22',
@@ -123,6 +141,15 @@ const StorageService = {
             },
             'rafting-markadeh': {
                 eventId: 'rafting-markadeh',
+                lifecycleState: 'ACTIVE',
+                isSurveyActive: false,
+                activeMode: 'event',
+                surveyActivationRequested: false,
+                surveyActivationDismissed: false,
+                surveyApprovedAt: null,
+                eventEndDate: '1405/07/02',
+                eventEndTime: '18:00',
+                eventEndTimestamp: 1790173800000,
                 isClosed: false,
                 capacity: 0,
                 deadlineDate: '',
@@ -155,6 +182,15 @@ const StorageService = {
 
         return defaults[eventId] || {
             eventId: eventId,
+            lifecycleState: 'ACTIVE',
+            isSurveyActive: false,
+            activeMode: 'event',
+            surveyActivationRequested: false,
+            surveyActivationDismissed: false,
+            surveyApprovedAt: null,
+            eventEndDate: '',
+            eventEndTime: '',
+            eventEndTimestamp: 0,
             isClosed: false,
             capacity: 0,
             deadlineDate: '',
@@ -237,6 +273,168 @@ const StorageService = {
             console.warn("خطا در تبدیل تاریخ شمسی به تایم‌استمپ:", e);
             return 0;
         }
+    },
+
+    // استخراج بخش‌های تاریخ جلالی از متن‌های مختلف (مثلاً ۱۴۰۵/۰۶/۲۲ یا ۲۲/۰۶/۱۴۰۵)
+    parseJalaliDateToParts: function(text) {
+        if (!text || typeof text !== 'string') return null;
+        const clean = text.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+                          .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+        // تطبیق فرمت استاندارد YYYY/MM/DD
+        const m = clean.match(/(1[34]\d{2})[\/\-\.](0?[1-9]|1[0-2])[\/\-\.](0?[1-9]|[12]\d|3[01])/);
+        if (m) {
+            return {
+                dateStr: `${m[1]}/${m[2].padStart(2, '0')}/${m[3].padStart(2, '0')}`,
+                year: parseInt(m[1], 10),
+                month: parseInt(m[2], 10),
+                day: parseInt(m[3], 10)
+            };
+        }
+        // تطبیق فرمت معکوس DD/MM/YYYY
+        const mInv = clean.match(/(0?[1-9]|[12]\d|3[01])[\/\-\.](0?[1-9]|1[0-2])[\/\-\.](1[34]\d{2})/);
+        if (mInv) {
+            return {
+                dateStr: `${mInv[3]}/${mInv[2].padStart(2, '0')}/${mInv[1].padStart(2, '0')}`,
+                year: parseInt(mInv[3], 10),
+                month: parseInt(mInv[2], 10),
+                day: parseInt(mInv[1], 10)
+            };
+        }
+        return null;
+    },
+
+    // استخراج ساعت و دقیقه از رشته متنی
+    parseTimeToParts: function(text) {
+        if (!text || typeof text !== 'string') return "23:59";
+        const clean = text.replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+                          .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+        const m = clean.match(/(0?\d|1\d|2[0-3])[:]([0-5]\d)/);
+        if (m) {
+            return `${m[1].padStart(2, '0')}:${m[2]}`;
+        }
+        return "23:59";
+    },
+
+    // محاسبه دقیق زمان میلی‌ثانیه‌ای پایان برگزاری رویداد
+    getEventEndTimestamp: function(eventId, setting = null) {
+        if (!setting) {
+            try {
+                const raw = localStorage.getItem(this.DEADLINES_KEY);
+                if (raw) {
+                    const all = JSON.parse(raw);
+                    if (all && all[eventId]) setting = all[eventId];
+                }
+            } catch(e) {}
+        }
+        if (!setting) {
+            setting = this.getDefaultEventSettings(eventId);
+        }
+
+        if (setting.eventEndTimestamp && setting.eventEndTimestamp > 0) {
+            return setting.eventEndTimestamp;
+        }
+
+        if (setting.eventEndDate && setting.eventEndDate.trim()) {
+            const time = setting.eventEndTime || "23:59";
+            const ts = this.jalaliToTimestamp(setting.eventEndDate, time);
+            if (ts > 0) return ts;
+        }
+
+        // بررسی و استخراج از متون رویداد (زمان بازگشت یا برگزاری)
+        const custom = setting.customTexts || {};
+        const textToCheck = `${custom.timeText || ''} ${custom.dateText || ''}`;
+        const parsedDate = this.parseJalaliDateToParts(textToCheck);
+        const parsedTime = this.parseTimeToParts(custom.timeText || custom.dateText || '');
+
+        if (parsedDate) {
+            const ts = this.jalaliToTimestamp(parsedDate.dateStr, parsedTime);
+            if (ts > 0) return ts;
+        }
+
+        // مقادیر پیش‌فرض برای هر رویداد در صورت عدم ثبت دستی
+        const defaults = {
+            'sobh-hamdeli': { date: '1405/06/22', time: '11:00' },
+            'kavir-varzaneh': { date: '1405/06/26', time: '13:00' },
+            'rafting-markadeh': { date: '1405/07/02', time: '18:00' }
+        };
+        if (defaults[eventId]) {
+            return this.jalaliToTimestamp(defaults[eventId].date, defaults[eventId].time);
+        }
+        return 0;
+    },
+
+    /**
+     * سیستم ماشین وضعیت چرخه حیات رویداد (Event Lifecycle State Machine)
+     * حالات ممکن:
+     * ۱. 'ACTIVE': رویداد هنوز به پایان نرسیده و در حال برنامه‌ریزی/ثبت‌نام است. صفحه رویداد به طور کامل فعال است.
+     * ۲. 'ENDED_PENDING_SURVEY': رویداد به پایان رسیده ولی نظرسنجی هنوز به تایید ادمین نرسیده است. نظرسنجی خودکار فعال نمی‌شود و به ادمین اعلان داده می‌شود.
+     * ۳. 'SURVEY_ACTIVE': نظرسنجی توسط ادمین تایید و فعال شده است. در صفحه رویداد، ثبت‌نام حذف و فرم نظرسنجی جایگزین می‌شود.
+     */
+    getEventLifecycleState: function(eventId, cachedSettings = null) {
+        let setting = null;
+        if (cachedSettings && cachedSettings[eventId]) {
+            setting = cachedSettings[eventId];
+        } else if (cachedSettings && cachedSettings.eventId === eventId) {
+            setting = cachedSettings;
+        } else {
+            try {
+                const raw = localStorage.getItem(this.DEADLINES_KEY);
+                if (raw) {
+                    const all = JSON.parse(raw);
+                    setting = all[eventId];
+                }
+            } catch (e) {}
+        }
+        if (!setting) {
+            setting = this.getDefaultEventSettings(eventId);
+        }
+
+        // ۱. اگر نظرسنجی قبلاً توسط ادمین تایید و فعال شده باشد:
+        if (setting.lifecycleState === 'SURVEY_ACTIVE' || setting.isSurveyActive === true || setting.activeMode === 'survey') {
+            return 'SURVEY_ACTIVE';
+        }
+
+        // ۲. بررسی اتمام رویداد بر اساس زمان واقعی:
+        const endTs = this.getEventEndTimestamp(eventId, setting);
+        const now = Date.now();
+        if (endTs > 0 && now >= endTs) {
+            // زمان رویداد به پایان رسیده است؛ وارد حالت انتظار تایید نظرسنجی می‌شود
+            return 'ENDED_PENDING_SURVEY';
+        }
+
+        // ۳. در غیر این صورت رویداد فعال و جاری است
+        return 'ACTIVE';
+    },
+
+    // تایید و فعال‌سازی نظرسنجی توسط ادمین (انتقال به SURVEY_ACTIVE)
+    approveSurveyActivation: async function(eventId) {
+        return await this.saveEventSettings(eventId, {
+            lifecycleState: 'SURVEY_ACTIVE',
+            isSurveyActive: true,
+            activeMode: 'survey',
+            surveyActivationRequested: true,
+            surveyActivationDismissed: false,
+            surveyApprovedAt: new Date().toISOString()
+        });
+    },
+
+    // رد یا به تعویق انداختن فعال‌سازی نظرسنجی توسط ادمین
+    dismissSurveyActivation: async function(eventId) {
+        return await this.saveEventSettings(eventId, {
+            surveyActivationDismissed: true,
+            surveyActivationRequested: true
+        });
+    },
+
+    // بازنشانی وضعیت رویداد به حالت فعال رویداد (در صورت تمایل ادمین)
+    resetEventLifecycle: async function(eventId, targetState = 'ACTIVE') {
+        return await this.saveEventSettings(eventId, {
+            lifecycleState: targetState,
+            isSurveyActive: (targetState === 'SURVEY_ACTIVE'),
+            activeMode: (targetState === 'SURVEY_ACTIVE') ? 'survey' : 'event',
+            surveyActivationDismissed: false,
+            surveyActivationRequested: false
+        });
     },
 
     // دریافت تنظیمات ثبت‌نام تمام رویدادها (با همگام‌سازی از دیتابیس متمرکز)
@@ -431,6 +629,34 @@ const StorageService = {
         merged.isClosed = isClosed;
         merged.capacity = capacity;
         merged.updatedAt = new Date().toISOString();
+
+        // مدیریت چرخه حیات و حالت نظرسنجی
+        if (newSetting.lifecycleState !== undefined) {
+            merged.lifecycleState = newSetting.lifecycleState;
+            merged.isSurveyActive = (newSetting.lifecycleState === 'SURVEY_ACTIVE');
+            merged.activeMode = (newSetting.lifecycleState === 'SURVEY_ACTIVE') ? 'survey' : 'event';
+        } else if (newSetting.isSurveyActive !== undefined || newSetting.activeMode !== undefined) {
+            const isSurvey = (newSetting.isSurveyActive === true || newSetting.activeMode === 'survey');
+            merged.isSurveyActive = isSurvey;
+            merged.activeMode = isSurvey ? 'survey' : 'event';
+            if (isSurvey) merged.lifecycleState = 'SURVEY_ACTIVE';
+        }
+
+        if (newSetting.surveyActivationRequested !== undefined) {
+            merged.surveyActivationRequested = Boolean(newSetting.surveyActivationRequested);
+        }
+        if (newSetting.surveyActivationDismissed !== undefined) {
+            merged.surveyActivationDismissed = Boolean(newSetting.surveyActivationDismissed);
+        }
+        if (newSetting.surveyApprovedAt !== undefined) {
+            merged.surveyApprovedAt = newSetting.surveyApprovedAt;
+        }
+
+        if (merged.eventEndDate && merged.eventEndDate.trim()) {
+            merged.eventEndTimestamp = this.jalaliToTimestamp(merged.eventEndDate, merged.eventEndTime || "23:59");
+        } else if (!merged.eventEndTimestamp || merged.eventEndTimestamp === 0) {
+            merged.eventEndTimestamp = this.getEventEndTimestamp(eventId, merged);
+        }
 
         if (newSetting.customTexts || existing.customTexts || def.customTexts) {
             merged.customTexts = Object.assign({}, def.customTexts || {}, existing.customTexts || {}, newSetting.customTexts || {});

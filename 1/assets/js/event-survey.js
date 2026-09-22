@@ -162,22 +162,37 @@
     return votedFlag ? { personnelCode: personnelCode } : null;
   }
 
-  // تشخیص فعال بودن حالت نظرسنجی (بر اساس URL یا تنظیمات دیتابیس ادمین)
+  // تشخیص فعال بودن حالت نظرسنجی (بر اساس چرخه حیات رویداد، URL یا تایید ادمین)
   function isSurveyModeActive(eventId, eventSetting) {
     const url = (window.location.href || '').toLowerCase();
     const params = new URLSearchParams(window.location.search);
     if (params.get('survey') === '1' || params.get('mode') === 'survey' || url.includes('survey=1') || window.location.hash.includes('survey')) {
       return true;
     }
-    if (eventSetting && (eventSetting.activeMode === 'survey' || eventSetting.isSurveyActive === true)) {
-      return true;
+
+    if (eventSetting) {
+      if (eventSetting.lifecycleState === 'SURVEY_ACTIVE' || eventSetting.isSurveyActive === true || eventSetting.activeMode === 'survey') {
+        return true;
+      }
+      if (eventSetting.lifecycleState === 'ENDED_PENDING_SURVEY' || eventSetting.lifecycleState === 'ACTIVE') {
+        return false;
+      }
     }
+
     try {
-      const raw = localStorage.getItem('entekhab_event_deadlines');
+      if (typeof StorageService !== 'undefined' && StorageService.getEventLifecycleState && eventId) {
+        const state = StorageService.getEventLifecycleState(eventId);
+        if (state === 'SURVEY_ACTIVE') return true;
+        if (state === 'ENDED_PENDING_SURVEY' || state === 'ACTIVE') return false;
+      }
+      const raw = localStorage.getItem('entekhab_events_deadlines_config') || localStorage.getItem('entekhab_event_deadlines');
       if (raw && eventId) {
         const all = JSON.parse(raw);
-        if (all && all[eventId] && (all[eventId].activeMode === 'survey' || all[eventId].isSurveyActive === true)) {
-          return true;
+        if (all && all[eventId]) {
+          const ev = all[eventId];
+          if (ev.lifecycleState === 'SURVEY_ACTIVE' || ev.isSurveyActive === true || ev.activeMode === 'survey') {
+            return true;
+          }
         }
       }
     } catch (e) {}
@@ -185,14 +200,12 @@
   }
 
   // اعمال تغییرات پوسته در صورت فعال بودن نظرسنجی
-  function applySurveyModeLayout(eventId) {
+  function applySurveyModeLayout(eventId, eventSetting = null) {
     document.body.classList.add('survey-active-mode');
 
-    // مخفی‌سازی کامل بخش فرم ثبت‌نام و پیام‌های انقضا
+    // مخفی‌سازی کامل فرم ثبت‌نام و پیام‌های انقضا و نکات قبل رویداد
     const regSection = document.getElementById('registrationSection');
-    if (regSection) {
-      regSection.style.display = 'none';
-    }
+    if (regSection) regSection.style.display = 'none';
 
     const deadlineExpired = document.getElementById('statusDeadlineExpired');
     if (deadlineExpired) deadlineExpired.style.display = 'none';
@@ -203,17 +216,32 @@
     const loading = document.getElementById('statusLoading');
     if (loading) loading.style.display = 'none';
 
-    // اضافه کردن نشانگر حالت نظرسنجی در بالای محتوای کارت رویداد
+    const notesBox = document.querySelector('.notes-box');
+    if (notesBox) notesBox.style.display = 'none';
+
+    // اضافه کردن پیام شاخص پایان رویداد و شروع نظرسنجی
     const eventContent = document.querySelector('.event-content');
-    if (eventContent && !document.getElementById('surveyNoticePill')) {
-      const pill = document.createElement('div');
-      pill.id = 'surveyNoticePill';
-      pill.className = 'survey-active-notice-pill';
-      pill.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-        <span>بخش ارزیابی و نظرسنجی کیفیت برگزاری رویداد</span>
+    if (eventContent && !document.getElementById('eventEndedSurveyCard')) {
+      const eventTitle = (eventSetting && eventSetting.customTexts && eventSetting.customTexts.title) 
+        || (document.querySelector('.event-title') ? document.querySelector('.event-title').textContent.trim() : 'رویداد');
+
+      const banner = document.createElement('div');
+      banner.id = 'eventEndedSurveyCard';
+      banner.className = 'event-ended-survey-card';
+      banner.innerHTML = `
+        <div class="ended-card-badge-wrap">
+          <div class="ended-card-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>رویداد با موفقیت به پایان رسید</span>
+          </div>
+          <span class="ended-card-time-note">سامانه ارزیابی و نظرسنجی کیفیت رویداد</span>
+        </div>
+        <h3 class="ended-card-title">رویداد «${escapeHtml(eventTitle)}» به پایان رسیده است</h3>
+        <p class="ended-card-desc">
+          همکار ارجمند؛ با سپاس صمیمانه از حضور و مشارکت پرشور شما در این رویداد، خواهشمند است با تکمیل فرم نظرسنجی زیر و بیان دیدگاه‌های ارزشمند خود، ما را در ارزیابی خدمات و ارتقای هرچه بهتر کیفیت برنامه‌های آتی یاری فرمایید.
+        </p>
       `;
-      eventContent.insertBefore(pill, eventContent.firstChild);
+      eventContent.appendChild(banner);
     }
   }
 
@@ -231,9 +259,20 @@
 
     const inSurveyMode = isSurveyModeActive(eventId, eventSetting);
 
-    if (inSurveyMode) {
-      applySurveyModeLayout(eventId);
+    if (!inSurveyMode) {
+      // رویداد هنوز به پایان نرسیده یا نظرسنجی توسط ادمین فعال نشده است؛ صفحه در وضعیت ثبت‌نام رویداد بدون نظرسنجی باقی می‌ماند
+      const existingContainer = document.getElementById('eventSurveyContainer');
+      if (existingContainer) {
+        existingContainer.innerHTML = '';
+        existingContainer.style.display = 'none';
+      }
+      const existingBadge = document.getElementById('userSurveyNavBadge');
+      if (existingBadge) existingBadge.remove();
+      document.body.classList.remove('survey-active-mode');
+      return;
     }
+
+    applySurveyModeLayout(eventId, eventSetting);
 
     // ۱. پیدا کردن یا ساخت کانتینر در صفحه
     let container = document.getElementById('eventSurveyContainer');
@@ -250,6 +289,7 @@
     }
 
     if (!container) return;
+    container.style.display = 'block';
 
     // ۲. بارگذاری پیکربندی نظرسنجی (پیش‌فرض یا تغییرات ادمین)
     let surveyConfig = EVENT_SURVEY_DEFAULTS[eventId] || {
@@ -274,21 +314,11 @@
     // ۳. بررسی شرکت قبلی کاربر
     const existingVote = getUserExistingVote(surveyConfig.id, user.personnelCode);
 
-    // ۴. اضافه کردن دکمه پرش به نظرسنجی در نوار بالای کاربر در حالت عادی
-    if (!inSurveyMode) {
-      injectTopSurveyLink(existingVote !== null);
-    }
-
-    // ۵. رندر محتوای کارت نظرسنجی
+    // ۴. رندر محتوای کارت نظرسنجی
     if (existingVote) {
       renderCompletedView(container, surveyConfig, user, existingVote);
     } else {
       renderSurveyForm(container, surveyConfig, user);
-    }
-
-    // ۶. بررسی اسکرول خودکار به نظرسنجی اگر در URL درخواست شده باشد
-    if (!inSurveyMode) {
-      checkAutoScrollToSurvey();
     }
   }
 
@@ -663,14 +693,27 @@
   function adaptLoginScreenForSurvey() {
     const url = (window.location.href || '').toLowerCase();
     const params = new URLSearchParams(window.location.search);
-    const isSurvey = params.get('survey') === '1' || params.get('mode') === 'survey' || url.includes('survey=1') || window.location.hash.includes('survey');
+    let isSurvey = params.get('survey') === '1' || params.get('mode') === 'survey' || url.includes('survey=1') || window.location.hash.includes('survey');
+
+    let currentEvId = window.EVENT_ID || null;
+    if (!currentEvId) {
+      const path = (window.location.pathname || '').toLowerCase();
+      if (path.includes('/1') || path.includes('sobh')) currentEvId = 'sobh-hamdeli';
+      else if (path.includes('/2') || path.includes('kavir')) currentEvId = 'kavir-varzaneh';
+      else if (path.includes('/3') || path.includes('rafting')) currentEvId = 'rafting-markadeh';
+    }
+
+    if (!isSurvey && currentEvId) {
+      isSurvey = isSurveyModeActive(currentEvId);
+    }
+
     if (!isSurvey) return;
 
     document.body.classList.add('survey-active-mode');
 
     const badge = document.querySelector('.login-header .org-badge, .brand-header .org-badge');
     if (badge) {
-      badge.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> سامانه نظرسنجی رویدادهای انتخاب`;
+      badge.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> سامانه نظرسنجی رویدادهای انتخاب`;
     }
     const title = document.querySelector('.login-card h2');
     if (title) {

@@ -528,15 +528,7 @@
       if (deadlineExpired) deadlineExpired.style.display = 'none';
       if (capacityFull) capacityFull.style.display = 'none';
 
-      // در صورت ورود به حالت نظرسنجی، بخش ثبت‌نام و پیام‌های انقضا پنهان شوند
-      if (typeof isSurveyModeActive === 'function' && isSurveyModeActive(EVENT_ID)) {
-        loading.style.display = 'none';
-        const regSection = document.getElementById('registrationSection');
-        if (regSection) regSection.style.display = 'none';
-        return;
-      }
-
-      // دریافت آخرین تنظیمات مهلت و متون رویداد از سرور
+      // ۱. دریافت آخرین تنظیمات مهلت و متون رویداد از سرور
       try {
         if (typeof StorageService !== 'undefined' && StorageService.getEventSettings) {
           const setting = await StorageService.getEventSettings(EVENT_ID);
@@ -544,7 +536,7 @@
         }
       } catch (e) {}
 
-      // بررسی دسترسی کاربر به این رویداد
+      // ۲. بررسی دسترسی کاربر به این رویداد (در صورت محدود بودن به لیست اکسل)
       if (typeof StorageService !== 'undefined' && StorageService.isPersonnelAllowed) {
         const isAllowed = StorageService.isPersonnelAllowed(EVENT_ID, currentUser.personnelCode, currentUser.nationalCode);
         if (!isAllowed) {
@@ -565,17 +557,35 @@
               <div style="width: 46px; height: 46px; background: #ffedd5; color: #ea580c; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px auto;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
               </div>
-              <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; color: #9a3412;">عدم دسترسی به ثبت‌نام در رویداد «${EVENT_TITLE}»</h4>
-              <p style="font-size: 0.88rem; line-height: 1.7; color: #7c2d12; margin: 0;">همکار گرامی، این رویداد ویژه گروه مشخصی از همکاران تعریف شده است و شماره پرسنلی شما در لیست مجاز این برنامه ثبت نگردیده است.</p>
+              <h4 style="font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; color: #9a3412;">عدم دسترسی به رویداد «${EVENT_TITLE}»</h4>
+              <p style="font-size: 0.88rem; line-height: 1.7; color: #7c2d12; margin: 0;">همکار گرامی، این برنامه ویژه گروه مشخصی از همکاران تعریف شده است و شماره پرسنلی شما در لیست مجاز این برنامه ثبت نگردیده است.</p>
             `;
             loading.parentNode.insertBefore(notAllowedCard, loading.nextSibling);
           }
           notAllowedCard.style.display = 'block';
+
+          // کانتینر نظرسنجی را نیز مخفی می‌کنیم تا کاربر غیرمجاز دسترسی نداشته باشد
+          const surveyCont = document.getElementById('eventSurveyContainer');
+          if (surveyCont) surveyCont.style.display = 'none';
           return;
         } else {
           const notAllowedCard = document.getElementById('statusNotAllowedCard');
           if (notAllowedCard) notAllowedCard.style.display = 'none';
         }
+      }
+
+      // ۳. در صورت فعال بودن نظرسنجی پس از پایان رویداد، بخش ثبت‌نام و پیام‌های انقضا و قوانین پنهان شوند
+      if (typeof isSurveyModeActive === 'function' && isSurveyModeActive(EVENT_ID)) {
+        loading.style.display = 'none';
+        const regSection = document.getElementById('registrationSection');
+        if (regSection) regSection.style.display = 'none';
+        const deadlineExp = document.getElementById('statusDeadlineExpired');
+        if (deadlineExp) deadlineExp.style.display = 'none';
+        const capFull = document.getElementById('statusCapacityFull');
+        if (capFull) capFull.style.display = 'none';
+        const notesBox = document.querySelector('.notes-box');
+        if (notesBox) notesBox.style.display = 'none';
+        return;
       }
 
       const isExpired = isRegistrationExpired();

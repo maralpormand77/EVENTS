@@ -539,6 +539,9 @@
       </div>
     </div>
 
+    <!-- بخش اعلان‌ها و تایید پایان رویداد و نظرسنجی -->
+    <div id="adminNotificationsArea" class="admin-notifications-area" style="margin-bottom: 20px; display: none;"></div>
+
     <!-- بخش خلاصه رویدادها (در پنل کلی فقط رویدادها را نشان می‌دهد) -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
       <h2 style="font-size: 1.18rem; font-weight: 800; color: var(--primary); margin: 0; display: flex; align-items: center; gap: 8px;">
@@ -1146,8 +1149,8 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
               </div>
             </div>
 
-            <!-- مهلت زمانی -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+            <!-- مهلت زمانی ثبت‌نام -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
               <div>
                 <label style="font-size: 0.76rem; color: #475569; display: block; margin-bottom: 4px;">تاریخ پایان ثبت‌نام (شمسی):</label>
                 <input type="text" id="cfgDeadlineDate" class="form-input" placeholder="مثال: 1405/06/22" style="text-align: center;">
@@ -1157,6 +1160,24 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
                 <input type="text" id="cfgDeadlineTime" class="form-input" placeholder="مثال: 13:00" style="text-align: center;">
               </div>
             </div>
+
+            <!-- تاریخ و ساعت پایان برگزاری رویداد (جهت تشخیص خودکار اتمام برنامه) -->
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">
+              <div style="font-size: 0.8rem; font-weight: 700; color: #1e40af; margin-bottom: 6px;">
+                🏁 زمان پایان برگزاری رویداد (جهت تشخیص هوشمند اتمام برنامه و پیشنهاد فعالسازی نظرسنجی):
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                  <label style="font-size: 0.74rem; color: #475569; display: block; margin-bottom: 3px;">تاریخ پایان رویداد (شمسی):</label>
+                  <input type="text" id="cfgEventEndDate" class="form-input" placeholder="مثال: 1405/06/22" style="text-align: center;">
+                </div>
+                <div>
+                  <label style="font-size: 0.74rem; color: #475569; display: block; margin-bottom: 3px;">ساعت پایان رویداد:</label>
+                  <input type="text" id="cfgEventEndTime" class="form-input" placeholder="مثال: 11:00" style="text-align: center;">
+                </div>
+              </div>
+            </div>
+
             <div style="display: flex; justify-content: flex-end;">
               <button type="button" class="btn btn-decline" id="cfgBtnToggleClose" style="padding: 7px 14px; font-size: 0.82rem;" onclick="toggleCurrentEventClosure()">
                 بستن فوری ثبت‌نام
@@ -1164,23 +1185,27 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
             </div>
           </div>
 
-          <!-- بخش ۷: انتخاب حالت فعال رویداد (شروع رویداد / شروع نظرسنجی) -->
+          <!-- بخش ۷: وضعیت چرخه حیات و حالت نظرسنجی رویداد -->
           <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;">
             <div style="font-size: 0.9rem; font-weight: 800; color: #166534; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              حالت جاری رویداد برای مراجعین و همکاران:
+              وضعیت چرخه حیات و نحوه نمایش رویداد به همکاران:
             </div>
             <p style="font-size: 0.82rem; color: #15803d; margin: 0 0 10px 0; line-height: 1.6;">
-              مشخص فرمایید که مراجعین هنگام ورود به این رویداد، صفحه ثبت‌نام و حضور را ببینند یا مستقیماً وارد بخش نظرسنجی کیفیت شوند (بدون نمایش پیام پایان مهلت ثبت‌نام):
+              مشخص فرمایید که صفحه این رویداد در چه وضعیتی به همکاران نمایش داده شود:
             </p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-              <label style="display: flex; align-items: center; gap: 8px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; cursor: pointer;">
-                <input type="radio" name="cfgEventActiveMode" id="cfgModeEvent" value="event" checked>
-                <span style="font-size: 0.86rem; font-weight: 700; color: #004b93;">🚀 شروع رویداد (ثبت‌نام فعال)</span>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <label style="display: flex; align-items: center; gap: 8px; background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; cursor: pointer;">
+                <input type="radio" name="cfgLifecycleState" id="cfgModeActive" value="ACTIVE" checked>
+                <span style="font-size: 0.82rem; font-weight: 700; color: #004b93;">🟢 رویداد جاری (ACTIVE)</span>
               </label>
-              <label style="display: flex; align-items: center; gap: 8px; background: #ffffff; border: 1.5px solid #86efac; border-radius: 10px; padding: 10px 14px; cursor: pointer;">
-                <input type="radio" name="cfgEventActiveMode" id="cfgModeSurvey" value="survey">
-                <span style="font-size: 0.86rem; font-weight: 700; color: #166534;">📝 شروع نظرسنجی (نظرسنجی فعال)</span>
+              <label style="display: flex; align-items: center; gap: 8px; background: #ffffff; border: 1.5px solid #fed7aa; border-radius: 10px; padding: 10px 12px; cursor: pointer;">
+                <input type="radio" name="cfgLifecycleState" id="cfgModePending" value="ENDED_PENDING_SURVEY">
+                <span style="font-size: 0.82rem; font-weight: 700; color: #c2410c;">🟠 پایان‌یافته (در انتظار نظرسنجی)</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; background: #ffffff; border: 1.5px solid #86efac; border-radius: 10px; padding: 10px 12px; cursor: pointer;">
+                <input type="radio" name="cfgLifecycleState" id="cfgModeSurvey" value="SURVEY_ACTIVE">
+                <span style="font-size: 0.82rem; font-weight: 700; color: #166534;">🔵 نظرسنجی فعال (SURVEY_ACTIVE)</span>
               </label>
             </div>
           </div>
@@ -2505,6 +2530,113 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
     let currentUploadedPoster = '';
     let currentParsedWhitelist = [];
 
+    // بررسی و نمایش اعلان‌های پایان رویداد و تایید فعالسازی نظرسنجی (بدون تکرار و یکتا)
+    async function checkAndRenderAdminNotifications() {
+      const area = document.getElementById('adminNotificationsArea');
+      if (!area) return;
+
+      const events = [
+        { id: 'sobh-hamdeli', num: 1, title: 'صبح همدلی' },
+        { id: 'kavir-varzaneh', num: 2, title: 'تور کویر ورزنه' },
+        { id: 'rafting-markadeh', num: 3, title: 'تور رفتینگ مارکده' }
+      ];
+
+      let allSettings = {};
+      try {
+        allSettings = await StorageService.getAllEventSettings();
+      } catch (e) {
+        try {
+          const raw = localStorage.getItem(StorageService.DEADLINES_KEY);
+          if (raw) allSettings = JSON.parse(raw);
+        } catch (err) {}
+      }
+
+      let bannersHtml = '';
+      let pendingCount = 0;
+
+      events.forEach(ev => {
+        const setting = allSettings[ev.id] || StorageService.getDefaultEventSettings(ev.id);
+        const lifecycle = (typeof StorageService !== 'undefined' && StorageService.getEventLifecycleState)
+          ? StorageService.getEventLifecycleState(ev.id, setting)
+          : 'ACTIVE';
+
+        const isDismissed = Boolean(setting.surveyActivationDismissed);
+
+        // نمایش اعلان اختصاصی فقط برای رویدادهای به پایان رسیده که هنوز تایید یا رد نشده‌اند
+        if (lifecycle === 'ENDED_PENDING_SURVEY' && !isDismissed) {
+          pendingCount++;
+          const title = (setting.customTexts && setting.customTexts.title) || ev.title;
+          bannersHtml += `
+            <div class="survey-prompt-banner" id="promptBanner_${ev.id}">
+              <div class="survey-prompt-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div class="survey-prompt-body">
+                <div class="survey-prompt-title">
+                  <span>اعلان سیستم: زمان برگزاری رویداد «${escapeHtml(title)}» به پایان رسیده است</span>
+                </div>
+                <p class="survey-prompt-text">
+                  رویداد <strong>«${escapeHtml(title)}»</strong> به پایان رسیده است. آیا نظرسنجی این رویداد برای همکاران فعال شود؟ در صورت تایید، صفحه رویداد به فرم ارزیابی و نظرسنجی کیفیت تبدیل شده و پیام مهلت ثبت‌نام مخفی می‌گردد.
+                </p>
+              </div>
+              <div class="survey-prompt-actions">
+                <button type="button" class="btn-approve-survey" onclick="handleApproveSurvey('${ev.id}', ${ev.num})">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  ✅ فعالسازی نظرسنجی
+                </button>
+                <button type="button" class="btn-dismiss-survey" onclick="handleDismissSurvey('${ev.id}', ${ev.num})">
+                  ❌ رد / انصراف
+                </button>
+                <button type="button" class="btn btn-outline" style="padding: 9px 12px; font-size: 0.82rem;" onclick="openEventSettingsModal('${ev.id}', ${ev.num})">
+                  ⚙️ تنظیمات رویداد
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      area.innerHTML = bannersHtml;
+      area.style.display = pendingCount > 0 ? 'flex' : 'none';
+    }
+
+    // تایید و فعالسازی فوری نظرسنجی توسط ادمین
+    async function handleApproveSurvey(eventId, num) {
+      try {
+        await StorageService.approveSurveyActivation(eventId);
+        await initDeadlineControls();
+        if (typeof loadSurveysData === 'function') await loadSurveysData();
+        alert(`نظرسنجی رویداد «${EVENT_NAMES[num] || eventId}» با موفقیت فعال شد و در سامانه منتشر گردید.`);
+      } catch (err) {
+        console.error(err);
+        alert("خطا در فعالسازی نظرسنجی: " + (err.message || err));
+      }
+    }
+
+    // رد یا به تعویق انداختن نظرسنجی توسط ادمین
+    async function handleDismissSurvey(eventId, num) {
+      try {
+        await StorageService.dismissSurveyActivation(eventId);
+        await initDeadlineControls();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // بازگردانی رویداد به حالت عادی ثبت‌نام
+    async function handleResetToEvent(eventId, num) {
+      if (!confirm(`آیا از بازگشت رویداد «${EVENT_NAMES[num] || eventId}» به حالت عادی ثبت‌نام اطمینان دارید؟`)) return;
+      try {
+        await StorageService.resetEventLifecycle(eventId, 'ACTIVE');
+        await initDeadlineControls();
+        if (typeof loadSurveysData === 'function') await loadSurveysData();
+        alert(`رویداد «${EVENT_NAMES[num] || eventId}» به حالت عادی ثبت‌نام بازگشت.`);
+      } catch (err) {
+        console.error(err);
+        alert("خطا: " + (err.message || err));
+      }
+    }
+
     // مقداردهی اولیه و بارگذاری مهلت‌ها، متون و آمار رویدادها در کارت‌های صفحه اصلی
     async function initDeadlineControls() {
       try {
@@ -2520,6 +2652,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           const setting = localSettings[eventId] || StorageService.getDefaultEventSettings(eventId);
           updateEventCardUI(num, setting);
         }
+        await checkAndRenderAdminNotifications();
 
         // ۲. دریافت جدیدترین تنظیمات از دیتابیس در پس‌زمینه
         const allSettings = await StorageService.getAllEventSettings();
@@ -2528,6 +2661,7 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
           const setting = allSettings[eventId] || StorageService.getDefaultEventSettings(eventId);
           updateEventCardUI(num, setting);
         }
+        await checkAndRenderAdminNotifications();
       } catch (e) {
         console.error("خطا در بارگذاری تنظیمات رویدادها:", e);
       }
@@ -2554,11 +2688,21 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
       if (dateEl) dateEl.textContent = `${custom.dateText || ''} ${custom.timeText || ''}`.trim();
       if (locEl && custom.locationText) locEl.textContent = custom.locationText;
 
-      // وضعیت مهلت ثبت‌نام
+      // وضعیت چرخه حیات و مهلت رویداد
       const statusBadge = document.getElementById('cardStatusBadge' + num);
       if (statusBadge) {
+        const lifecycle = (typeof StorageService !== 'undefined' && StorageService.getEventLifecycleState)
+          ? StorageService.getEventLifecycleState(eventId, { [eventId]: setting })
+          : 'ACTIVE';
         const isClosed = StorageService.isEventClosed(eventId, { [eventId]: setting });
-        if (setting.isClosed) {
+
+        if (lifecycle === 'SURVEY_ACTIVE') {
+          statusBadge.textContent = "🔵 نظرسنجی فعال است";
+          statusBadge.className = "event-badge-pill badge-status-survey-active";
+        } else if (lifecycle === 'ENDED_PENDING_SURVEY') {
+          statusBadge.textContent = "🟠 پایان رویداد (در انتظار نظرسنجی)";
+          statusBadge.className = "event-badge-pill badge-status-pending-survey";
+        } else if (setting.isClosed) {
           statusBadge.textContent = "بسته (دستی)";
           statusBadge.className = "event-badge-pill badge-status-closed";
         } else if (isClosed) {
@@ -2931,16 +3075,20 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
 
       setVal('cfgDeadlineDate', setting.deadlineDate || '');
       setVal('cfgDeadlineTime', setting.deadlineTime || '');
+      setVal('cfgEventEndDate', setting.eventEndDate || (def && def.eventEndDate) || '');
+      setVal('cfgEventEndTime', setting.eventEndTime || (def && def.eventEndTime) || '');
 
-      const cap = setting.capacity !== undefined ? setting.capacity : ((def && def.capacity) || 0);
-      setVal('cfgCapacity', cap > 0 ? cap : '');
+      const currentLifecycle = (typeof StorageService !== 'undefined' && StorageService.getEventLifecycleState)
+        ? StorageService.getEventLifecycleState(eventId, { [eventId]: setting })
+        : 'ACTIVE';
 
-      const isSurveyMode = (setting.activeMode === 'survey' || setting.isSurveyActive === true);
-      const modeEventRadio = document.getElementById('cfgModeEvent');
+      const modeActiveRadio = document.getElementById('cfgModeActive');
+      const modePendingRadio = document.getElementById('cfgModePending');
       const modeSurveyRadio = document.getElementById('cfgModeSurvey');
-      if (modeEventRadio && modeSurveyRadio) {
-        modeEventRadio.checked = !isSurveyMode;
-        modeSurveyRadio.checked = isSurveyMode;
+      if (modeActiveRadio && modePendingRadio && modeSurveyRadio) {
+        modeActiveRadio.checked = (currentLifecycle === 'ACTIVE');
+        modePendingRadio.checked = (currentLifecycle === 'ENDED_PENDING_SURVEY');
+        modeSurveyRadio.checked = (currentLifecycle === 'SURVEY_ACTIVE');
       }
 
       const attendingCount = currentRegistrations.filter(r => r.eventId === eventId && r.status === 'attending').length;
@@ -3085,17 +3233,32 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         deadlineDesc: (document.getElementById('cfgDeadlineDesc').value || '').trim()
       };
 
-      const modeSurveyRadio = document.getElementById('cfgModeSurvey');
-      const activeMode = (modeSurveyRadio && modeSurveyRadio.checked) ? 'survey' : 'event';
-      const isSurveyActive = (activeMode === 'survey');
+      const rawEndDate = (document.getElementById('cfgEventEndDate')?.value || '').trim();
+      const rawEndTime = (document.getElementById('cfgEventEndTime')?.value || '').trim() || '23:59';
+      const endDateNorm = toStandardDigits(rawEndDate);
+      const endTimeNorm = toStandardDigits(rawEndTime);
+
+      let selectedLifecycle = 'ACTIVE';
+      const rPending = document.getElementById('cfgModePending');
+      const rSurvey = document.getElementById('cfgModeSurvey');
+      if (rSurvey && rSurvey.checked) selectedLifecycle = 'SURVEY_ACTIVE';
+      else if (rPending && rPending.checked) selectedLifecycle = 'ENDED_PENDING_SURVEY';
+
+      const isSurveyActive = (selectedLifecycle === 'SURVEY_ACTIVE');
+      const activeMode = isSurveyActive ? 'survey' : 'event';
 
       try {
         const res = await StorageService.saveEventSettings(activeSettingsEventId, {
           deadlineDate: dateNorm,
           deadlineTime: timeNorm,
+          eventEndDate: endDateNorm,
+          eventEndTime: endTimeNorm,
+          lifecycleState: selectedLifecycle,
           capacity: capacity,
           activeMode: activeMode,
           isSurveyActive: isSurveyActive,
+          surveyActivationRequested: (selectedLifecycle === 'SURVEY_ACTIVE'),
+          surveyActivationDismissed: false,
           customTexts: customTexts
         });
 
@@ -3103,8 +3266,10 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         updateEventCardUI(activeSettingsNum, setting);
         updateModalDeadlineBadge(activeSettingsEventId, setting);
         renderLivePreview();
+        await checkAndRenderAdminNotifications();
+        if (typeof updateEventSurveyBoxes === 'function') updateEventSurveyBoxes();
 
-        alert(`مشخصات، متون، تصویر و مهلت رویداد «${EVENT_NAMES[activeSettingsNum]}» با موفقیت ذخیره و در سامانه منتشر شد.`);
+        alert(`مشخصات، متون، تصویر و وضعیت رویداد «${EVENT_NAMES[activeSettingsNum]}» با موفقیت ذخیره و در سامانه منتشر شد.`);
         closeEventSettingsModal();
       } catch (err) {
         console.error(err);
@@ -4462,9 +4627,43 @@ CREATE POLICY "Allow public delete" ON registrations FOR DELETE USING (true);</p
         const respCount = (cachedSurveysResponseCounts && (cachedSurveysResponseCounts[surveyId] || cachedSurveysResponseCounts[ev.id])) || 0;
         const publicUrl = getSurveyPublicUrl(ev.id);
 
+        let lifecycle = 'ACTIVE';
+        if (typeof StorageService !== 'undefined' && StorageService.getEventLifecycleState) {
+          lifecycle = StorageService.getEventLifecycleState(ev.id);
+        }
+
+        let lifecycleNoticeHtml = '';
+        if (lifecycle === 'ENDED_PENDING_SURVEY') {
+          lifecycleNoticeHtml = `
+            <div style="background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 0.8rem; font-weight: 800; color: #b45309;">⚠️ رویداد به پایان رسیده است</span>
+                <span style="font-size: 0.72rem; background: #fef3c7; color: #92400e; padding: 1px 6px; border-radius: 4px; font-weight: 700;">در انتظار تایید</span>
+              </div>
+              <div style="font-size: 0.76rem; color: #78350f; margin-bottom: 8px;">آیا نظرسنجی این رویداد در سامانه برای همکاران فعال شود؟</div>
+              <div style="display: flex; gap: 6px;">
+                <button type="button" class="btn-approve-survey" style="flex: 1; justify-content: center; padding: 6px;" onclick="handleApproveSurvey('${ev.id}', ${ev.num})">
+                  ✅ فعالسازی نظرسنجی
+                </button>
+                <button type="button" class="btn-dismiss-survey" style="padding: 6px 10px; font-size: 0.76rem;" onclick="handleDismissSurvey('${ev.id}', ${ev.num})">
+                  بعداً
+                </button>
+              </div>
+            </div>
+          `;
+        } else if (lifecycle === 'SURVEY_ACTIVE') {
+          lifecycleNoticeHtml = `
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 6px 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.76rem; font-weight: 700; color: #1e40af;">🔵 نظرسنجی فعال است</span>
+              <button type="button" style="background: none; border: none; color: #b91c1c; font-size: 0.74rem; cursor: pointer; text-decoration: underline;" onclick="handleResetToEvent('${ev.id}', ${ev.num})">بازگشت به ثبت‌نام</button>
+            </div>
+          `;
+        }
+
         box.innerHTML = `
           <div style="margin-top: 12px; padding-top: 10px; border-top: 1.5px dashed #86efac;">
             <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+              ${lifecycleNoticeHtml}
               <!-- هدر وضعیت نظرسنجی رویداد -->
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <span style="font-size: 0.8rem; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
