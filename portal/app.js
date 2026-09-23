@@ -1271,12 +1271,79 @@
   const PortalUI = {
     activeTab: 'home',
     activeFilter: 'all',
+    portalMode: 'employee',
+    myEventsFilter: 'all',
+    eventsSearchQuery: '',
 
     init: function () {
       this.bindTabNavigation();
       this.bindAuthControls();
       this.bindInquiryForm();
+      this.bindGlobalEvents();
       this.handleAuthChange();
+    },
+
+    bindGlobalEvents: function () {
+      document.addEventListener('click', (e) => {
+        const userMenuWrapper = document.getElementById('userMenuWrapper');
+        if (userMenuWrapper && !userMenuWrapper.contains(e.target)) {
+          this.closeUserDropdown();
+        }
+      });
+    },
+
+    toggleUserDropdown: function () {
+      const menu = document.getElementById('userDropdownMenu');
+      if (menu) menu.classList.toggle('open');
+    },
+
+    closeUserDropdown: function () {
+      const menu = document.getElementById('userDropdownMenu');
+      if (menu) menu.classList.remove('open');
+    },
+
+    setPortalMode: function (mode) {
+      const user = PortalAuth.getCurrentUser();
+      if (!user || !user.isAdmin) {
+        this.portalMode = 'employee';
+        return;
+      }
+
+      this.portalMode = mode;
+      const btnEmp = document.getElementById('btnModeEmployee');
+      const btnAdm = document.getElementById('btnModeAdmin');
+      const toggleText = document.getElementById('dropdownModeToggleText');
+
+      if (mode === 'admin') {
+        if (btnEmp) btnEmp.classList.remove('active');
+        if (btnAdm) btnAdm.classList.add('active');
+        if (toggleText) toggleText.textContent = 'مشاهده پرتال پرسنلی';
+        document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.add('admin-visible'));
+        if (this.activeTab === 'home' || this.activeTab === 'my-events') {
+          this.switchTab('dashboard');
+        }
+      } else {
+        if (btnEmp) btnEmp.classList.add('active');
+        if (btnAdm) btnAdm.classList.remove('active');
+        if (toggleText) toggleText.textContent = 'ورود به پنل مدیریت';
+        if (this.activeTab === 'dashboard' || this.activeTab === 'settings' || this.activeTab === 'access') {
+          this.switchTab('home');
+        }
+      }
+    },
+
+    togglePortalMode: function () {
+      this.setPortalMode(this.portalMode === 'admin' ? 'employee' : 'admin');
+    },
+
+    toggleGuidelinesAccordion: function () {
+      const content = document.getElementById('guidelinesContent');
+      const chevron = document.getElementById('guidelinesChevron');
+      if (!content) return;
+      const isCollapsed = content.classList.toggle('collapsed');
+      if (chevron) {
+        chevron.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(180deg)';
+      }
     },
 
     handleAuthChange: function () {
@@ -1306,6 +1373,19 @@
       if (appMain) appMain.style.display = 'block';
 
       if (userNameEl) userNameEl.textContent = user.name || `پرسنل ${user.code}`;
+      const avatarInitialEl = document.getElementById('userAvatarInitial');
+      if (avatarInitialEl) {
+        const firstChar = (user.name || 'ک').trim().charAt(0);
+        avatarInitialEl.textContent = firstChar;
+        if (user.isAdmin) avatarInitialEl.classList.add('admin');
+        else avatarInitialEl.classList.remove('admin');
+      }
+
+      const dropNameEl = document.getElementById('dropdownUserName');
+      if (dropNameEl) dropNameEl.textContent = user.name || `پرسنل ${user.code}`;
+      const dropMetaEl = document.getElementById('dropdownUserMeta');
+      if (dropMetaEl) dropMetaEl.textContent = `شماره پرسنلی: ${user.code}${user.nationalId ? ' | کد ملی: ' + user.nationalId : ''}`;
+
       if (userBadgeEl) {
         if (user.isAdmin) {
           userBadgeEl.textContent = 'مدیر سیستم';
@@ -1314,6 +1394,16 @@
           userBadgeEl.textContent = 'همکار گرامی';
           userBadgeEl.classList.remove('admin-badge');
         }
+      }
+
+      const modeSwitcher = document.getElementById('portalModeSwitcher');
+      const dropModeBtn = document.getElementById('dropdownModeToggleBtn');
+      if (user.isAdmin) {
+        if (modeSwitcher) modeSwitcher.style.display = 'inline-flex';
+        if (dropModeBtn) dropModeBtn.style.display = 'flex';
+      } else {
+        if (modeSwitcher) modeSwitcher.style.display = 'none';
+        if (dropModeBtn) dropModeBtn.style.display = 'none';
       }
 
       this.updateAdminVisibility();
@@ -1326,6 +1416,7 @@
 
       this.renderHomeOverview();
       this.renderEventsGrid();
+      this.renderMyEvents();
       this.renderNotificationsList();
       if (user.isAdmin) {
         this.renderAdminDashboard();
@@ -1365,6 +1456,8 @@
 
       if (tabName === 'events') {
         this.renderEventsGrid();
+      } else if (tabName === 'my-events') {
+        this.renderMyEvents();
       } else if (tabName === 'dashboard') {
         if (user && user.isAdmin) this.renderAdminDashboard();
       } else if (tabName === 'access') {
@@ -1378,6 +1471,192 @@
       }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    filterMyEvents: function (filter) {
+      this.myEventsFilter = filter || 'all';
+      document.querySelectorAll('#myEventsFilters .filter-chip').forEach(chip => {
+        if (chip.dataset.myfilter === this.myEventsFilter) chip.classList.add('active');
+        else chip.classList.remove('active');
+      });
+      this.renderMyEvents();
+    },
+
+    renderMyEvents: function () {
+      const container = document.getElementById('myEventsListContainer');
+      if (!container) return;
+
+      const user = PortalAuth.getCurrentUser();
+      if (!user) return;
+
+      const events = PortalEvents.getAll();
+      const relevantEvents = events.filter(ev => this.isEventRelevantToUser(ev, user));
+      const userRegs = RegistrationService.getUserAllRegistrations(user.code);
+
+      // Statistics calculations
+      let attendingCount = 0;
+      let pendingCount = 0;
+      let surveyCount = 0;
+
+      relevantEvents.forEach(ev => {
+        const r = userRegs.find(reg => reg.eventId === ev.id);
+        const isSurveyActive = ev.status === 'survey';
+        const isClosed = ev.status === 'closed';
+
+        if (r && r.status === 'attending') {
+          attendingCount++;
+          if (isSurveyActive) surveyCount++;
+        } else if (!r && !isClosed) {
+          pendingCount++;
+        }
+      });
+
+      const elTotal = document.getElementById('myStatTotal');
+      const elAttending = document.getElementById('myStatAttending');
+      const elPending = document.getElementById('myStatPending');
+      const elSurvey = document.getElementById('myStatSurvey');
+
+      if (elTotal) elTotal.textContent = relevantEvents.length;
+      if (elAttending) elAttending.textContent = attendingCount;
+      if (elPending) elPending.textContent = pendingCount;
+      if (elSurvey) elSurvey.textContent = surveyCount;
+
+      const filter = this.myEventsFilter || 'all';
+      const filtered = relevantEvents.filter(ev => {
+        const r = userRegs.find(reg => reg.eventId === ev.id);
+        const isAttending = r && r.status === 'attending';
+        const isDeclined = r && r.status === 'declined';
+        const isSurveyActive = ev.status === 'survey';
+        const isClosed = ev.status === 'closed';
+
+        if (filter === 'all') return true;
+        if (filter === 'pending_action') return !r && !isClosed;
+        if (filter === 'attending') return isAttending;
+        if (filter === 'declined') return isDeclined;
+        if (filter === 'need_survey') return isSurveyActive && isAttending;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 48px; background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); color: var(--text-muted);">
+            رویدادی با فیلتر انتخابی برای شما یافت نشد.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(ev => {
+        const r = userRegs.find(reg => reg.eventId === ev.id);
+        const isAttending = r && r.status === 'attending';
+        const isDeclined = r && r.status === 'declined';
+        const isSurveyActive = ev.status === 'survey';
+        const isClosed = ev.status === 'closed';
+
+        let statusBoxHtml = '';
+        let actionBtnHtml = '';
+
+        if (isSurveyActive && isAttending) {
+          statusBoxHtml = `
+            <div class="my-event-status-box survey">
+              ${SVG.fileText}
+              <span>نظرسنجی کیفیت فعال است</span>
+            </div>
+          `;
+          actionBtnHtml = `
+            <button class="btn-action btn-primary" onclick="PortalUI.openSurveyModal('${ev.id}')">
+              ثبت نظرسنجی کیفیت
+            </button>
+          `;
+        } else if (isAttending) {
+          statusBoxHtml = `
+            <div class="my-event-status-box attending">
+              ${SVG.check}
+              <span>مایل به شرکت در رویداد</span>
+            </div>
+          `;
+          if (!isClosed) {
+            actionBtnHtml = `
+              <button class="btn-action btn-secondary" onclick="PortalUI.openEventDetail('${ev.id}')">
+                ویرایش وضعیت
+              </button>
+            `;
+          }
+        } else if (isDeclined) {
+          statusBoxHtml = `
+            <div class="my-event-status-box declined">
+              ${SVG.x}
+              <span>عدم تمایل به حضور</span>
+            </div>
+          `;
+          if (!isClosed) {
+            actionBtnHtml = `
+              <button class="btn-action btn-secondary" onclick="PortalUI.openEventDetail('${ev.id}')">
+                تغییر به شرکت
+              </button>
+            `;
+          }
+        } else {
+          statusBoxHtml = `
+            <div class="my-event-status-box pending">
+              ${SVG.clock}
+              <span>در انتظار اعلام نظر شما</span>
+            </div>
+          `;
+          if (!isClosed) {
+            actionBtnHtml = `
+              <button class="btn-action btn-primary" onclick="PortalUI.openEventDetail('${ev.id}')">
+                اعلام وضعیت حضور
+              </button>
+            `;
+          }
+        }
+
+        if (isClosed && !actionBtnHtml) {
+          actionBtnHtml = `
+            <button class="btn-action btn-secondary" onclick="PortalUI.openEventDetail('${ev.id}')">
+              مشاهده جزئیات
+            </button>
+          `;
+        }
+
+        return `
+          <div class="my-event-card">
+            <div class="my-event-main-info">
+              <div class="my-event-header-row">
+                <span class="event-category-tag">${ev.category || 'رویداد سازمانی'}</span>
+                <h3 class="my-event-title">${ev.title}</h3>
+                ${statusBoxHtml}
+              </div>
+              <div class="my-event-meta-row">
+                <span class="my-event-meta-col">${SVG.calendar} تاریخ: ${ev.dateText || '-'}</span>
+                <span class="my-event-meta-col">${SVG.clock} زمان: ${ev.timeText || '-'}</span>
+                <span class="my-event-meta-col">${SVG.mapPin} مکان: ${ev.locationText || '-'}</span>
+              </div>
+            </div>
+            <div class="my-event-action-bar">
+              ${actionBtnHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    },
+
+    onEventsSearch: function (query) {
+      this.eventsSearchQuery = (query || '').trim().toLowerCase();
+      this.renderEventsGrid();
+    },
+
+    switchSettingsPane: function (paneKey) {
+      document.querySelectorAll('.settings-sidebar-item').forEach(btn => {
+        if (btn.dataset.pane === paneKey) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+
+      document.querySelectorAll('.settings-content-pane').forEach(pane => {
+        if (pane.id === `settingsPane-${paneKey}`) pane.classList.add('active');
+        else pane.classList.remove('active');
+      });
     },
 
     bindTabNavigation: function () {
@@ -1661,6 +1940,17 @@
         filtered = relevantEvents.filter(e => e.status === 'survey');
       } else if (this.activeFilter === 'closed') {
         filtered = relevantEvents.filter(e => e.status === 'closed');
+      }
+
+      if (this.eventsSearchQuery) {
+        const q = this.eventsSearchQuery;
+        filtered = filtered.filter(ev => {
+          const matchTitle = (ev.title || '').toLowerCase().includes(q);
+          const matchSub = (ev.subtitle || '').toLowerCase().includes(q);
+          const matchCat = (ev.category || '').toLowerCase().includes(q);
+          const matchLoc = (ev.locationText || '').toLowerCase().includes(q);
+          return matchTitle || matchSub || matchCat || matchLoc;
+        });
       }
 
       if (filtered.length === 0) {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>سامانه مدیریت رویدادهای سازمانی | گروه توسعه سرمایه‌گذاری انتخاب</title>
-  <link rel="stylesheet" href="style.css?v=20260923_v3">
+  <link rel="stylesheet" href="style.css?v=20260923_v4">
   <link rel="icon" type="image/png" href="../assets/images/logo.png">
 </head>
 <body>
@@ -72,6 +72,12 @@
           </span>
           <span>رویدادها</span>
         </button>
+        <button class="nav-tab-btn" data-tab="my-events">
+          <span class="tab-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </span>
+          <span>رویدادهای من</span>
+        </button>
         <button class="nav-tab-btn" data-tab="notifications">
           <span class="tab-icon">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
@@ -98,22 +104,56 @@
         </button>
       </nav>
 
-      <!-- User Profile & Logout Controls -->
+      <!-- Header Actions: Mode Switcher, Bell, Profile Menu -->
       <div class="header-actions">
-        <button class="header-bell-btn" onclick="PortalUI.switchTab('notifications')" title="مشاهده اعلان‌ها">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
-        </button>
-
-        <div class="user-profile-chip" id="userProfileChip">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <span id="headerUserName">کاربر</span>
-          <span class="user-role-badge" id="headerUserBadge">نقش</span>
+        <!-- Admin Dual Experience Switcher -->
+        <div class="portal-mode-switcher admin-only-tab" id="portalModeSwitcher" style="display: none;">
+          <button type="button" class="portal-mode-btn active" id="btnModeEmployee" onclick="PortalUI.setPortalMode('employee')">
+            پرسنلی
+          </button>
+          <button type="button" class="portal-mode-btn" id="btnModeAdmin" onclick="PortalUI.setPortalMode('admin')">
+            مدیریت
+          </button>
         </div>
 
-        <button class="btn-action btn-secondary" onclick="PortalAuth.logout()" title="خروج از حساب کاربری" style="height: 34px; padding: 0 10px; font-size: 0.78rem;">
-          <span>خروج</span>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+        <button class="header-bell-btn" onclick="PortalUI.switchTab('notifications')" title="مشاهده اعلان‌ها">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span class="bell-badge-indicator" id="headerNotifDot" style="display: none;"></span>
         </button>
+
+        <!-- User Profile Avatar & Dropdown Menu -->
+        <div class="user-menu-wrapper" id="userMenuWrapper">
+          <div class="user-profile-chip" id="userProfileChip" onclick="PortalUI.toggleUserDropdown()" title="حساب کاربری">
+            <div class="user-avatar-initial" id="userAvatarInitial">ک</div>
+            <span id="headerUserName">کاربر</span>
+            <span class="user-role-badge" id="headerUserBadge">نقش</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+
+          <div class="user-dropdown-menu" id="userDropdownMenu">
+            <div class="dropdown-user-header">
+              <div class="dropdown-user-name" id="dropdownUserName">نام کاربر</div>
+              <div class="dropdown-user-meta" id="dropdownUserMeta">کد پرسنلی: -</div>
+            </div>
+            <button class="dropdown-item" onclick="PortalUI.switchTab('my-events'); PortalUI.closeUserDropdown();">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span>رویدادهای من</span>
+            </button>
+            <button class="dropdown-item" onclick="PortalUI.switchTab('notifications'); PortalUI.closeUserDropdown();">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+              <span>اعلان‌ها و اطلاعیه‌ها</span>
+            </button>
+            <button class="dropdown-item admin-only-tab" id="dropdownModeToggleBtn" onclick="PortalUI.togglePortalMode(); PortalUI.closeUserDropdown();" style="display: none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+              <span id="dropdownModeToggleText">ورود به پنل مدیریت</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item danger" onclick="PortalAuth.logout(); PortalUI.closeUserDropdown();">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+              <span>خروج از حساب کاربری</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </header>
@@ -141,7 +181,7 @@
             مشاهده رویدادها
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" x2="5" y1="12" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           </button>
-          <button class="btn-action btn-secondary" onclick="PortalUI.scrollToUserStatus()">
+          <button class="btn-action btn-secondary" onclick="PortalUI.switchTab('my-events')">
             رویدادهای من
           </button>
         </div>
@@ -169,9 +209,14 @@
 
       <!-- User Status & Quick Check Card -->
       <div class="inquiry-panel" id="userStatusSection">
-        <div class="inquiry-panel-header">
-          <h2 class="inquiry-panel-title" id="userStatusSectionTitle">وضعیت حضور و رویدادهای من</h2>
-          <p class="inquiry-panel-subtitle" id="userStatusSectionSubtitle">وضعیت اعلام حضور و پاسخ‌های ثبت‌شده برای شما در برنامه‌های سازمانی:</p>
+        <div class="inquiry-panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <h2 class="inquiry-panel-title" id="userStatusSectionTitle">وضعیت حضور و رویدادهای من</h2>
+            <p class="inquiry-panel-subtitle" id="userStatusSectionSubtitle">وضعیت اعلام حضور و پاسخ‌های ثبت‌شده برای شما در برنامه‌های سازمانی:</p>
+          </div>
+          <button class="btn-action btn-secondary" style="height: 32px; font-size: 0.78rem;" onclick="PortalUI.switchTab('my-events')">
+            مشاهده رویدادهای من
+          </button>
         </div>
 
         <!-- Result container populated automatically for the logged-in user -->
@@ -191,24 +236,34 @@
 
       <div class="events-grid" id="homeHighlightsGrid" style="margin-bottom: 36px;"></div>
 
-      <!-- General Guidelines & Organization Standards -->
-      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-xs);">
-        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 8px;">
-          ضوابط و انضباط سازمانی در رویدادها
-        </h3>
-        <p style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 12px;">
-          رعایت ضوابط ذیل جهت تسهیل در امور هماهنگی، ترابری و برگزاری هرچه منظم‌تر برنامه‌ها ضروری است:
-        </p>
-        <ul style="padding-right: 20px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.85;">
-          <li>حضور به موقع در محل گردهمایی پیش از ساعت اعلام‌شده حرکت سرویس‌ها الزامی است.</li>
-          <li>به همراه داشتن کارت شناسایی پرسنلی و وسایل شخصی ضروری طبق چک‌لیست برنامه الزامی می‌باشد.</li>
-          <li>در صورت انصراف، پیش از موعد مقرر وضعیت خود را به «عدم تمایل» تغییر دهید تا برنامه‌ریزی برای سایر همکاران میسر گردد.</li>
-        </ul>
+      <!-- General Guidelines & Organization Standards (Collapsible Enterprise Accordion) -->
+      <div class="guidelines-card">
+        <div class="guideline-accordion-header" onclick="PortalUI.toggleGuidelinesAccordion()">
+          <div>
+            <h3 style="font-size: 1.02rem; font-weight: 700; color: var(--primary); margin-bottom: 3px;">
+              ضوابط و انضباط سازمانی در رویدادها
+            </h3>
+            <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0;">
+              اصول و مقررات ضروری جهت هماهنگی، ترابری و برگزاری منظم برنامه‌های فرهنگی و ورزشی
+            </p>
+          </div>
+          <span id="guidelinesChevron" style="color: var(--text-muted); transition: transform 180ms ease;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
+        </div>
+        <div class="guideline-accordion-content collapsed" id="guidelinesContent">
+          <ul style="padding-right: 20px; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.9;">
+            <li>حضور به موقع در محل گردهمایی پیش از ساعت اعلام‌شده حرکت سرویس‌ها الزامی است.</li>
+            <li>به همراه داشتن کارت شناسایی پرسنلی و وسایل شخصی ضروری طبق چک‌لیست برنامه الزامی می‌باشد.</li>
+            <li>در صورت انصراف، پیش از موعد مقرر وضعیت خود را به «عدم تمایل» تغییر دهید تا برنامه‌ریزی برای سایر همکاران میسر گردد.</li>
+            <li>رعایت ضوابط اداری، اخلاق سازمانی و همکاری صمیمانه با تیم اجرایی، ضامن برگزاری هر چه باشکوه‌تر برنامه‌هاست.</li>
+          </ul>
+        </div>
       </div>
     </section>
 
     <!-- ----------------------------------------------------------------------
-         TAB 2: رویدادها (EVENTS)
+         TAB 2: رویدادها (EVENTS DISCOVERY)
          ---------------------------------------------------------------------- -->
     <section class="tab-content-view" id="tabView-events">
       <div class="section-headline" style="padding-top: 18px;">
@@ -218,16 +273,92 @@
         </div>
       </div>
 
-      <!-- Segmented Filter Controls -->
-      <div class="segmented-filters">
-        <button class="filter-chip active" data-filter="all">همه برنامه‌ها</button>
-        <button class="filter-chip" data-filter="active">در حال ثبت‌نام</button>
-        <button class="filter-chip" data-filter="survey">در حال نظرسنجی</button>
-        <button class="filter-chip" data-filter="closed">پایان‌یافته</button>
+      <!-- Live Search & Segmented Filter Controls -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+        <div class="events-search-bar" style="margin-bottom: 0;">
+          <span class="events-search-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" x2="16.65"/></svg>
+          </span>
+          <input type="text" class="events-search-input" id="eventsSearchInput" placeholder="جستجو در عنوان، دسته‌بندی یا مکان رویداد..." oninput="PortalUI.onEventsSearch(this.value)">
+        </div>
+
+        <div class="segmented-filters" style="margin-bottom: 0;">
+          <button class="filter-chip active" data-filter="all">همه برنامه‌ها</button>
+          <button class="filter-chip" data-filter="active">در حال ثبت‌نام</button>
+          <button class="filter-chip" data-filter="survey">در حال نظرسنجی</button>
+          <button class="filter-chip" data-filter="closed">پایان‌یافته</button>
+        </div>
       </div>
 
       <!-- Dynamic Events Grid -->
       <div class="events-grid" id="eventsGridContainer"></div>
+    </section>
+
+    <!-- ----------------------------------------------------------------------
+         TAB 3: رویدادهای من (MY EVENTS - FIRST-CLASS USER HUB)
+         ---------------------------------------------------------------------- -->
+    <section class="tab-content-view" id="tabView-my-events">
+      <div class="section-headline" style="padding-top: 18px;">
+        <div>
+          <h2 class="section-headline-title">رویدادهای من</h2>
+          <p class="section-headline-desc">پیگیری برنامه‌های مرتبط با شما، اعلام حضور، نظرسنجی‌های کیفیت و سوابق مشارکت</p>
+        </div>
+      </div>
+
+      <!-- My Events Stats Bar -->
+      <div class="my-events-stats-bar">
+        <div class="my-stat-pill">
+          <div class="my-stat-pill-icon" style="background: var(--primary-soft); color: var(--primary);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          </div>
+          <div>
+            <div class="my-stat-pill-label">کل رویدادهای شما</div>
+            <div class="my-stat-pill-value" id="myStatTotal">۰</div>
+          </div>
+        </div>
+
+        <div class="my-stat-pill">
+          <div class="my-stat-pill-icon" style="background: var(--success-soft); color: var(--success);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div class="my-stat-pill-label">حاضر قطعی (مایل به شرکت)</div>
+            <div class="my-stat-pill-value" id="myStatAttending" style="color: var(--success);">۰</div>
+          </div>
+        </div>
+
+        <div class="my-stat-pill">
+          <div class="my-stat-pill-icon" style="background: var(--warning-soft); color: var(--warning);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <div class="my-stat-pill-label">در انتظار اقدام / تصمیم</div>
+            <div class="my-stat-pill-value" id="myStatPending" style="color: var(--warning);">۰</div>
+          </div>
+        </div>
+
+        <div class="my-stat-pill">
+          <div class="my-stat-pill-icon" style="background: var(--accent-soft); color: var(--accent);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </div>
+          <div>
+            <div class="my-stat-pill-label">نیازمند نظرسنجی</div>
+            <div class="my-stat-pill-value" id="myStatSurvey" style="color: var(--accent);">۰</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Segmented State Filters for My Events -->
+      <div class="segmented-filters" id="myEventsFilters">
+        <button class="filter-chip active" data-myfilter="all" onclick="PortalUI.filterMyEvents('all')">همه رویدادها</button>
+        <button class="filter-chip" data-myfilter="pending_action" onclick="PortalUI.filterMyEvents('pending_action')">در انتظار اقدام</button>
+        <button class="filter-chip" data-myfilter="attending" onclick="PortalUI.filterMyEvents('attending')">ثبت‌نام‌شده (مایل به شرکت)</button>
+        <button class="filter-chip" data-myfilter="declined" onclick="PortalUI.filterMyEvents('declined')">عدم تمایل</button>
+        <button class="filter-chip" data-myfilter="need_survey" onclick="PortalUI.filterMyEvents('need_survey')">نیازمند نظرسنجی</button>
+      </div>
+
+      <!-- List of User's Events -->
+      <div class="my-events-list" id="myEventsListContainer"></div>
     </section>
 
     <!-- ----------------------------------------------------------------------
@@ -352,49 +483,6 @@
             </thead>
             <tbody id="dashboardTableBody"></tbody>
           </table>
-        </div>
-      </div>
-
-      <!-- SMS Generator Utility Panel -->
-      <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; box-shadow: var(--shadow-xs);">
-        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 4px;">
-          سامانه تولید خودکار پیامک سازمانی
-        </h3>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
-          تولید متن‌های رسمی و استاندارد همراه با پیوند پرتال جهت ارسال به همکاران:
-        </p>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
-          <div>
-            <label class="form-label">انتخاب رویداد:</label>
-            <select class="form-select" id="smsEventSelect" onchange="PortalUI.generateSMS()">
-              <option value="sobh-hamdeli">صبح همدلی (پیاده‌روی مدیران)</option>
-              <option value="kavir-varzaneh">تور کویر ورزنه</option>
-              <option value="rafting-markadeh">تور رفتینگ مارکده</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label">نوع پیامک:</label>
-            <select class="form-select" id="smsTypeSelect" onchange="PortalUI.generateSMS()">
-              <option value="invite">پیامک دعوت و پیوند ثبت‌نام</option>
-              <option value="reminder">پیامک یادآوری حرکت و ملزومات</option>
-              <option value="survey">پیامک دعوت به نظرسنجی کیفیت</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">متن آماده پیامک:</label>
-          <textarea class="form-textarea" id="smsOutputText" rows="3" style="font-size: 0.84rem; line-height: 1.7;"></textarea>
-        </div>
-
-        <div style="display: flex; gap: 8px; justify-content: flex-end;">
-          <button class="btn-action btn-secondary" onclick="PortalUI.generateSMS()">
-            تولید مجدد
-          </button>
-          <button class="btn-action btn-primary" onclick="PortalUI.copySMS()">
-            کپی متن پیامک
-          </button>
         </div>
       </div>
     </section>
@@ -536,47 +624,169 @@
           این رویداد در وضعیت <strong>عمومی</strong> قرار دارد و تمام پرسنل امکان ثبت‌نام دارند. جهت محدودسازی، فایل اکسل بارگذاری فرمایید یا همکار اضافه کنید.
         </div>
       </div>
+
+      <!-- Danger Zone: لغو انحصار و عمومی‌سازی رویداد -->
+      <div class="danger-zone-card">
+        <div class="danger-zone-info">
+          <div class="danger-zone-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+          </div>
+          <div>
+            <div class="danger-zone-title">منطقه حساس: لغو محدودیت و عمومی‌سازی رویداد</div>
+            <div class="danger-zone-desc">با فشردن این دکمه، لیست مجازین حذف شده و کلیه پرسنل سازمان مجاز به اعلام حضور در رویداد خواهند بود. این عملیات بلافاصله اعمال می‌گردد.</div>
+          </div>
+        </div>
+        <button type="button" class="btn-danger-outline" onclick="PortalAccess.clearCurrentWhitelist()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg>
+          لغو محدودیت و عمومی‌سازی
+        </button>
+      </div>
     </section>
 
     <!-- ----------------------------------------------------------------------
-         TAB 5: تنظیمات (SETTINGS) - مدیریت رویدادها (مخصوص ادمین)
+         TAB 5: تنظیمات (SETTINGS - 2-COLUMN ENTERPRISE ARCHITECTURE)
          ---------------------------------------------------------------------- -->
     <section class="tab-content-view" id="tabView-settings">
       <div class="section-headline" style="padding-top: 18px;">
         <div>
-          <h2 class="section-headline-title">تنظیمات و مدیریت پویای رویدادها</h2>
-          <p class="section-headline-desc">بدون نیاز به کدنویسی، مشخصات، زمان‌ها، ظرفیت‌ها و رویدادهای جدید را ویرایش فرمایید.</p>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-action btn-primary" onclick="PortalUI.openAddEventModal()">
-            افزودن رویداد جدید
-          </button>
-          <button class="btn-action btn-secondary" onclick="PortalUI.resetEventsToDefaults()">
-            بازنشانی به پیش‌فرض
-          </button>
+          <h2 class="section-headline-title">تنظیمات و مدیریت پویای سامانه</h2>
+          <p class="section-headline-desc">مدیریت پویای رویدادها، سطوح دسترسی مدیران و سامانه تولید خودکار پیامک‌های سازمانی</p>
         </div>
       </div>
 
-      <!-- Events Manager List -->
-      <div class="settings-panel-card">
-        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 4px;">
-          مدیریت رویدادهای سامانه
-        </h3>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
-          تغییرات در مشخصات رویدادها، بلافاصله روی پرتال کاربران اعمال می‌شود.
-        </p>
+      <!-- 2-Column Desktop Settings Layout -->
+      <div class="settings-2col-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="settings-sidebar-nav" aria-label="بخش‌های تنظیمات">
+          <button type="button" class="settings-sidebar-item active" data-pane="events" onclick="PortalUI.switchSettingsPane('events')">
+            <span class="item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            </span>
+            <span>مدیریت رویدادها</span>
+          </button>
+          <button type="button" class="settings-sidebar-item" data-pane="security" onclick="PortalUI.switchSettingsPane('security')">
+            <span class="item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            </span>
+            <span>امنیت و مدیران</span>
+          </button>
+          <button type="button" class="settings-sidebar-item" data-pane="sms" onclick="PortalUI.switchSettingsPane('sms')">
+            <span class="item-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </span>
+            <span>تولید پیامک سازمانی</span>
+          </button>
+        </aside>
 
-        <div id="eventsManagerList"></div>
-      </div>
+        <!-- Content Panels -->
+        <div class="settings-content-area">
+          <!-- Pane 1: Events Manager List -->
+          <div class="settings-content-pane active" id="settingsPane-events">
+            <div class="settings-panel-card" style="margin-bottom: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                <div>
+                  <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 4px;">
+                    مدیریت و ویرایش رویدادهای سامانه
+                  </h3>
+                  <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">
+                    مشخصات، زمان‌ها، ظرفیت‌ها و رویدادهای جدید را ویرایش فرمایید.
+                  </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn-action btn-primary" onclick="PortalUI.openAddEventModal()" style="font-size: 0.82rem; height: 34px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+                    افزودن رویداد جدید
+                  </button>
+                  <button type="button" class="btn-action btn-secondary" onclick="PortalUI.resetEventsToDefaults()" style="font-size: 0.82rem; height: 34px;">
+                    بازنشانی به پیش‌فرض
+                  </button>
+                </div>
+              </div>
 
-      <!-- Security Settings -->
-      <div class="settings-panel-card">
-        <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 14px;">
-          امنیت و دسترسی مدیران
-        </h3>
-        <p style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.7;">
-          دسترسی به بخش مدیریت پرتال (داشبورد، گزارشات اکسل و تنظیمات) به طور انحصاری برای شماره پرسنلی‌های <strong>992113</strong> و <strong>980253</strong> تعریف شده است.
-        </p>
+              <div id="eventsManagerList"></div>
+            </div>
+          </div>
+
+          <!-- Pane 2: Security & Admin PIN -->
+          <div class="settings-content-pane" id="settingsPane-security">
+            <div class="settings-panel-card" style="margin-bottom: 16px;">
+              <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 8px;">
+                امنیت و دسترسی مدیران ارشد
+              </h3>
+              <p style="font-size: 0.84rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 14px;">
+                دسترسی به بخش مدیریت پرتال (داشبورد تحلیلی، گزارشات اکسل، مدیریت دسترسی‌ها و تنظیمات) به طور انحصاری برای شماره پرسنلی‌های <strong>992113</strong> (مارال پورمند) و <strong>980253</strong> (حسن لندی اصفهانی) تعریف شده است.
+              </p>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <span class="status-badge" style="background: var(--surface-soft); border: 1px solid var(--border); color: var(--primary); font-size: 0.8rem; font-weight: 700;">
+                  مدیر ۱: 992113 — مارال پورمند
+                </span>
+                <span class="status-badge" style="background: var(--surface-soft); border: 1px solid var(--border); color: var(--primary); font-size: 0.8rem; font-weight: 700;">
+                  مدیر ۲: 980253 — حسن لندی اصفهانی
+                </span>
+              </div>
+            </div>
+
+            <div class="settings-panel-card" style="margin-bottom: 0;">
+              <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 8px;">
+                رمز عبور امنیتی پشتیبان مدیر
+              </h4>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px;">
+                جهت عملیات‌های خاص مدیریتی در سامانه محلی:
+              </p>
+              <div style="max-width: 320px; display: flex; gap: 8px;">
+                <input type="password" class="form-input" id="settingAdminPin" placeholder="رمز عبور مدیر">
+                <button type="button" class="btn-action btn-primary" onclick="PortalUI.saveAdminPin()" style="white-space: nowrap;">
+                  ذخیره رمز
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pane 3: Corporate SMS Generator -->
+          <div class="settings-content-pane" id="settingsPane-sms">
+            <div class="settings-panel-card" style="margin-bottom: 0;">
+              <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--primary); margin-bottom: 4px;">
+                سامانه تولید خودکار پیامک سازمانی
+              </h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+                تولید متن‌های رسمی و استاندارد همراه با پیوند پرتال جهت ارسال به همکاران:
+              </p>
+
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                <div>
+                  <label class="form-label">انتخاب رویداد:</label>
+                  <select class="form-select" id="smsEventSelect" onchange="PortalUI.generateSMS()">
+                    <option value="sobh-hamdeli">صبح همدلی (پیاده‌روی مدیران)</option>
+                    <option value="kavir-varzaneh">تور کویر ورزنه</option>
+                    <option value="rafting-markadeh">تور رفتینگ مارکده</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label">نوع پیامک:</label>
+                  <select class="form-select" id="smsTypeSelect" onchange="PortalUI.generateSMS()">
+                    <option value="invite">پیامک دعوت و پیوند ثبت‌نام</option>
+                    <option value="reminder">پیامک یادآوری حرکت و ملزومات</option>
+                    <option value="survey">پیامک دعوت به نظرسنجی کیفیت</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">متن آماده پیامک:</label>
+                <textarea class="form-textarea" id="smsOutputText" rows="3" style="font-size: 0.84rem; line-height: 1.7;"></textarea>
+              </div>
+
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button type="button" class="btn-action btn-secondary" onclick="PortalUI.generateSMS()">
+                  تولید مجدد
+                </button>
+                <button type="button" class="btn-action btn-primary" onclick="PortalUI.copySMS()">
+                  کپی متن پیامک
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -614,10 +824,13 @@
           ظرفیت و زمان‌بندی
         </button>
         <button type="button" class="modal-tab-btn" data-modaltab="lifecycle" onclick="PortalUI.switchModalTab('lifecycle')">
-          چرخه حیات و نظرسنجی
+          چرخه حیات
         </button>
         <button type="button" class="modal-tab-btn" data-modaltab="access" onclick="PortalUI.switchModalTab('access')">
           دسترسی و اکسل مجازین
+        </button>
+        <button type="button" class="modal-tab-btn" data-modaltab="survey" onclick="PortalUI.switchModalTab('survey')">
+          نظرسنجی
         </button>
       </div>
 
@@ -862,6 +1075,33 @@
             </div>
           </div>
 
+          <!-- ------------------------------------------------------------------
+               تب ۵: نظرسنجی کیفیت رویداد (SURVEY CONFIGURATION & PREVIEW)
+               ------------------------------------------------------------------ -->
+          <div class="event-modal-tab-pane" id="eventModalPane-survey" style="display: none;">
+            <div class="modal-form-section">
+              <h4 class="modal-section-title">تنظیمات و پیش‌نمایش فرم نظرسنجی کیفیت</h4>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 14px;">
+                پس از برگزاری برنامه و فعال‌سازی مرحله نظرسنجی، همکاران حاضر در برنامه فرم ارزیابی زیر را تکمیل خواهند کرد.
+              </p>
+
+              <div style="background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px; margin-bottom: 14px;">
+                <div style="font-weight: 700; font-size: 0.9rem; color: var(--primary); margin-bottom: 8px;">
+                  پیش‌نمایش پرسش‌های نظرسنجی:
+                </div>
+                <div style="margin-bottom: 12px; font-size: 0.82rem; color: var(--text-secondary);">
+                  ۱. میزان رضایت کلی از کیفیت، پذیرایی و ترابری رویداد (امتیاز ۱ تا ۵ ستاره)
+                </div>
+                <div style="margin-bottom: 12px; font-size: 0.82rem; color: var(--text-secondary);">
+                  ۲. نظرات، انتقادات و پیشنهادات سازنده شما جهت ارتقای رویدادهای آتی (متن آزاد)
+                </div>
+                <div style="padding: 10px 12px; background: var(--accent-soft); border-radius: var(--radius-xs); font-size: 0.76rem; color: var(--accent); font-weight: 600;">
+                  نکته: نتایج نظرسنجی به طور خودکار در پایگاه داده ذخیره شده و میانگین رضایت در سربرگ خانه به‌روزرسانی می‌شود.
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <!-- پاورقی ثابت مودال -->
@@ -934,6 +1174,6 @@
   <script src="../assets/js/config.js"></script>
   <script src="../assets/js/storage.js"></script>
   <script src="../assets/js/personnel-data.js?v=20260923_v3"></script>
-  <script src="app.js?v=20260923_v4"></script>
+  <script src="app.js?v=20260923_v5"></script>
 </body>
 </html>

@@ -1,0 +1,35 @@
+warning: in the working copy of '1/assets/js/personnel-data.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '2/assets/js/personnel-data.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '3/assets/js/personnel-data.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'admin/assets/js/personnel-data.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'assets/js/personnel-data.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'survey/assets/js/personnel-data.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'survey1/assets/js/personnel-data.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'survey2/assets/js/personnel-data.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'survey3/assets/js/personnel-data.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'clean_repo.bat', LF will be replaced by CRLF the next time Git touches it
+[Git Hook] Checking for Excel updates...
+====================================================
+  در حال پردازش فایل اکسل و به‌روزرسانی پروژه...
+  مسیر کاری: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main
+====================================================
+[*] فایل اکسل شناسایی شده: اطلاعات.xlsx
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\1\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\2\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\3\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\admin\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\survey\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\survey1\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\survey2\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\survey3\assets\js\personnel-data.js
+
+====================================================
+  موفقیت: تعداد 15542 پرسنل با موفقیت در پروژه ذخیره شدند!
+====================================================
+[main 9989feb] chore: cleanup temporary scripts
+ 4 files changed, 6 insertions(+), 30 deletions(-)
+ create mode 100644 clean_repo.bat
+ create mode 100644 git_clean.log
+ delete mode 100644 git_output.log
+ delete mode 100644 run_git_commit.bat
