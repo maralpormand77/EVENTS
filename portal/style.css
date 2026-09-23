@@ -225,6 +225,41 @@ button, input, select, textarea {
   display: inline-flex !important;
 }
 
+/* Dual Experience Portal Mode Control */
+body.portal-mode-employee .employee-nav-item {
+  display: inline-flex !important;
+}
+body.portal-mode-employee .admin-nav-item {
+  display: none !important;
+}
+
+body.portal-mode-admin .employee-nav-item {
+  display: none !important;
+}
+body.portal-mode-admin .admin-nav-item {
+  display: inline-flex !important;
+}
+
+/* Active Selection on Decision Buttons */
+.btn-action.active-selection {
+  position: relative;
+}
+.btn-attend.active-selection {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px rgba(22, 163, 74, 0.4) !important;
+}
+.btn-decline.active-selection {
+  background: var(--danger-soft) !important;
+  color: var(--danger) !important;
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px rgba(220, 38, 38, 0.25) !important;
+}
+
+.card-decision-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .user-event-status-badge {
   display: flex;
   align-items: center;

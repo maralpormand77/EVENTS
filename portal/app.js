@@ -1306,6 +1306,8 @@
       const user = PortalAuth.getCurrentUser();
       if (!user || !user.isAdmin) {
         this.portalMode = 'employee';
+        document.body.classList.remove('portal-mode-admin');
+        document.body.classList.add('portal-mode-employee');
         return;
       }
 
@@ -1315,18 +1317,21 @@
       const toggleText = document.getElementById('dropdownModeToggleText');
 
       if (mode === 'admin') {
+        document.body.classList.remove('portal-mode-employee');
+        document.body.classList.add('portal-mode-admin');
         if (btnEmp) btnEmp.classList.remove('active');
         if (btnAdm) btnAdm.classList.add('active');
         if (toggleText) toggleText.textContent = 'مشاهده پرتال پرسنلی';
-        document.querySelectorAll('.admin-only-tab').forEach(el => el.classList.add('admin-visible'));
-        if (this.activeTab === 'home' || this.activeTab === 'my-events') {
+        if (['home', 'events', 'my-events', 'notifications'].includes(this.activeTab)) {
           this.switchTab('dashboard');
         }
       } else {
+        document.body.classList.remove('portal-mode-admin');
+        document.body.classList.add('portal-mode-employee');
         if (btnEmp) btnEmp.classList.add('active');
         if (btnAdm) btnAdm.classList.remove('active');
         if (toggleText) toggleText.textContent = 'ورود به پنل مدیریت';
-        if (this.activeTab === 'dashboard' || this.activeTab === 'settings' || this.activeTab === 'access') {
+        if (['dashboard', 'settings', 'access'].includes(this.activeTab)) {
           this.switchTab('home');
         }
       }
@@ -1707,11 +1712,20 @@
     updateAdminVisibility: function () {
       const isAuth = PortalAuth.isAdmin();
       const adminTabs = document.querySelectorAll('.admin-only-tab');
+      const modeSwitcher = document.getElementById('portalModeSwitcher');
+      const dropModeBtn = document.getElementById('dropdownModeToggleBtn');
 
-      adminTabs.forEach(tab => {
-        if (isAuth) tab.classList.add('admin-visible');
-        else tab.classList.remove('admin-visible');
-      });
+      if (isAuth) {
+        adminTabs.forEach(tab => tab.classList.add('admin-visible'));
+        if (modeSwitcher) modeSwitcher.style.display = 'inline-flex';
+        if (dropModeBtn) dropModeBtn.style.display = 'flex';
+        this.setPortalMode(this.portalMode || 'employee');
+      } else {
+        adminTabs.forEach(tab => tab.classList.remove('admin-visible'));
+        if (modeSwitcher) modeSwitcher.style.display = 'none';
+        if (dropModeBtn) dropModeBtn.style.display = 'none';
+        this.setPortalMode('employee');
+      }
     },
 
     isEventRelevantToUser: function (ev, user) {
@@ -2096,41 +2110,41 @@
                     مهلت اعلام حضور در این رویداد به اتمام رسیده است.
                   </div>
                 ` : `
-                  <button class="register-accordion-toggle" onclick="PortalUI.toggleRegisterAccordion('${ev.id}')">
-                    <span>${SVG.edit}</span>
-                    <span>${userReg ? 'ویرایش اعلام وضعیت حضور' : 'اعلام وضعیت حضور در این برنامه'}</span>
-                  </button>
+                  <div class="card-decision-bar">
+                    <!-- Preserved required inputs for complete JS & submitRegistration compatibility -->
+                    <input type="hidden" id="inputPersonnelCode_${ev.id}" value="${user ? user.code : ''}">
+                    <input type="hidden" id="inputFullName_${ev.id}" value="${user ? user.name : ''}">
+                    <input type="hidden" id="inputNationalId_${ev.id}" value="${user ? user.nationalId : ''}">
 
-                  <div class="register-accordion-content" id="registerBox_${ev.id}">
-                    <div class="form-group">
-                      <label class="form-label">شماره پرسنلی:</label>
-                      <input type="text" class="form-input" id="inputPersonnelCode_${ev.id}" value="${user ? user.code : ''}" ${user && !user.isAdmin ? 'readonly style="background: var(--surface-soft);"' : 'oninput="PortalUI.handlePersonnelCodeInput(\'' + ev.id + '\', this.value)"'}>
-                      <div class="personnel-lookup-feedback ${user ? 'found' : ''}" id="feedback_${ev.id}" style="${user ? 'display: block;' : 'display: none;'}">${user ? 'همکار گرامی: ' + user.name : ''}</div>
+                    <div class="form-group" style="margin-bottom: 8px;">
+                      <input type="text" class="form-input" id="inputNote_${ev.id}" placeholder="توضیحات اختیاری (شماره همراه اضطراری یا ملاحظات)..." value="${userReg ? (userReg.note || '') : ''}" style="font-size: 0.8rem; height: 36px;">
                     </div>
 
-                    <div id="hiddenFields_${ev.id}" style="${user ? 'display: block;' : 'display: none;'}">
-                      <div class="form-group">
-                        <label class="form-label">نام و نام خانوادگی:</label>
-                        <input type="text" class="form-input" id="inputFullName_${ev.id}" value="${user ? user.name : ''}" readonly style="background: var(--surface-soft);">
-                      </div>
-                      <div class="form-group">
-                        <label class="form-label">کد ملی:</label>
-                        <input type="text" class="form-input" id="inputNationalId_${ev.id}" value="${user ? user.nationalId : ''}" readonly style="background: var(--surface-soft);">
-                      </div>
-                      <div class="form-group">
-                        <label class="form-label">توضیحات اختیاری (شماره همراه یا ملاحظات):</label>
-                        <input type="text" class="form-input" id="inputNote_${ev.id}" value="${userReg ? (userReg.note || '') : ''}">
-                      </div>
-
-                      <div class="btn-row-dual">
-                        <button class="btn-action btn-attend" onclick="PortalUI.submitRegistration('${ev.id}', 'attending')">
-                          ${SVG.check} مایل به شرکت هستم
-                        </button>
-                        <button class="btn-action btn-decline" onclick="PortalUI.submitRegistration('${ev.id}', 'declined')">
-                          ${SVG.x} تمایلی به حضور ندارم
-                        </button>
-                      </div>
+                    <div class="btn-row-dual">
+                      <button class="btn-action btn-attend ${isAttending ? 'active-selection' : ''}" onclick="PortalUI.submitRegistration('${ev.id}', 'attending')">
+                        ${SVG.check} ${isAttending ? 'ثبت‌شده: مایل به شرکت' : 'مایل به شرکت در برنامه'}
+                      </button>
+                      <button class="btn-action btn-decline ${isDeclined ? 'active-selection' : ''}" onclick="PortalUI.submitRegistration('${ev.id}', 'declined')">
+                        ${SVG.x} ${isDeclined ? 'ثبت‌شده: عدم تمایل' : 'عدم تمایل به حضور'}
+                      </button>
                     </div>
+
+                    ${user && user.isAdmin ? `
+                      <div style="margin-top: 6px; text-align: center;">
+                        <a href="javascript:void(0)" onclick="PortalUI.toggleAdminOverrideInput('${ev.id}')" style="font-size: 0.72rem; color: var(--text-muted); text-decoration: underline;">
+                          اقدام به نمایندگی از پرسنل دیگر (مخصوص مدیر)
+                        </a>
+                        <div id="adminOverrideBox_${ev.id}" style="display: none; margin-top: 8px; padding: 10px; background: var(--surface-soft); border: 1px dashed var(--border-strong); border-radius: var(--radius-sm); text-align: right;">
+                          <label class="form-label" style="font-size: 0.74rem;">شماره پرسنلی مورد نظر:</label>
+                          <input type="text" class="form-input" style="height: 32px; font-size: 0.8rem;" oninput="PortalUI.handlePersonnelCodeInput('${ev.id}', this.value)" placeholder="مثال: 992113">
+                          <div class="personnel-lookup-feedback" id="feedback_${ev.id}" style="display: none; font-size: 0.74rem; margin-top: 4px;"></div>
+                          <div id="hiddenFields_${ev.id}" style="display: none;"></div>
+                        </div>
+                      </div>
+                    ` : `
+                      <div id="feedback_${ev.id}" style="display: none;"></div>
+                      <div id="hiddenFields_${ev.id}" style="display: none;"></div>
+                    `}
                   </div>
                 `}
               </div>
@@ -2148,14 +2162,13 @@
     },
 
     toggleRegisterAccordion: function (eventId) {
-      const box = document.getElementById(`registerBox_${eventId}`);
-      if (box) {
-        box.classList.toggle('open');
-        if (box.classList.contains('open')) {
-          const input = document.getElementById(`inputPersonnelCode_${eventId}`);
-          if (input) input.focus();
-        }
-      }
+      const noteInput = document.getElementById(`inputNote_${eventId}`);
+      if (noteInput) noteInput.focus();
+    },
+
+    toggleAdminOverrideInput: function (eventId) {
+      const box = document.getElementById(`adminOverrideBox_${eventId}`);
+      if (box) box.style.display = box.style.display === 'block' ? 'none' : 'block';
     },
 
     handlePersonnelCodeInput: function (eventId, val) {
@@ -2164,34 +2177,41 @@
       const hiddenFields = document.getElementById(`hiddenFields_${eventId}`);
       const inputName = document.getElementById(`inputFullName_${eventId}`);
       const inputNat = document.getElementById(`inputNationalId_${eventId}`);
+      const inputCode = document.getElementById(`inputPersonnelCode_${eventId}`);
+
+      if (inputCode) inputCode.value = clean;
 
       if (!clean) {
-        feedback.className = 'personnel-lookup-feedback';
-        feedback.style.display = 'none';
-        hiddenFields.style.display = 'none';
+        if (feedback) {
+          feedback.className = 'personnel-lookup-feedback';
+          feedback.style.display = 'none';
+        }
+        if (hiddenFields) hiddenFields.style.display = 'none';
         return;
       }
 
       const person = PersonnelService.lookup(clean);
       if (person) {
-        feedback.className = 'personnel-lookup-feedback found';
-        feedback.textContent = `همکار گرامی: ${person.name}`;
-        inputName.value = person.name;
-        inputNat.value = person.nationalId || '';
-        hiddenFields.style.display = 'block';
+        if (feedback) {
+          feedback.className = 'personnel-lookup-feedback found';
+          feedback.textContent = `همکار گرامی: ${person.name}`;
+          feedback.style.display = 'block';
+        }
+        if (inputName) inputName.value = person.name;
+        if (inputNat) inputNat.value = person.nationalId || '';
+        if (hiddenFields) hiddenFields.style.display = 'block';
 
         const existing = RegistrationService.getUserRegistration(eventId, clean);
-        if (existing) {
+        if (existing && feedback) {
           feedback.textContent += ` (وضعیت فعلی: ${existing.status === 'attending' ? 'مایل به شرکت' : 'عدم تمایل'})`;
         }
       } else {
-        feedback.className = 'personnel-lookup-feedback not-found';
-        feedback.textContent = 'شماره پرسنلی در لیست یافت نشد؛ می‌توانید نام را دستی وارد نمایید.';
-        inputName.value = '';
-        inputNat.value = '';
-        inputName.removeAttribute('readonly');
-        inputNat.removeAttribute('readonly');
-        hiddenFields.style.display = 'block';
+        if (feedback) {
+          feedback.className = 'personnel-lookup-feedback not-found';
+          feedback.textContent = 'شماره پرسنلی در لیست یافت نشد.';
+          feedback.style.display = 'block';
+        }
+        if (inputName) inputName.value = clean;
       }
     },
 
