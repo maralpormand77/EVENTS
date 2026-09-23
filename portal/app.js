@@ -7,16 +7,25 @@
   'use strict';
 
   // ==========================================================================
-  // CONFIG & STORAGE KEYS (PRESERVED)
+  // CONFIG & STORAGE KEYS (PRESERVED & EXTENDED)
   // ==========================================================================
   const PORTAL_KEYS = {
     EVENTS: 'entekhab_portal_events_v2',
     REGISTRATIONS: 'entekhab_events_registrations',
     NOTIFICATIONS: 'entekhab_portal_notifications_v2',
     SURVEYS: 'entekhab_portal_surveys_v2',
+    AUTH_USER: 'entekhab_portal_auth_user',
     ADMIN_SESSION: 'entekhab_portal_admin_session',
     ADMIN_PIN: 'entekhab_portal_admin_pin',
     SETTINGS: 'entekhab_portal_general_settings'
+  };
+
+  const ADMIN_CODES = ['992113', '980253'];
+
+  // Hardcoded Admin Data for Immediate Offline/Pre-load Authentication
+  const ADMIN_FALLBACK = {
+    '992113': { name: 'مارال پورمند', nationalId: '1272744868' },
+    '980253': { name: 'حسن لندی اصفهانی', nationalId: '1272126803' }
   };
 
   const DEFAULT_ADMIN_PIN = '992113';
@@ -344,30 +353,120 @@
     }
   };
 
-  const AdminAuth = {
-    isAuthenticated: function () {
-      return sessionStorage.getItem(PORTAL_KEYS.ADMIN_SESSION) === 'true';
+  function normalizeDigits(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+      .replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+      .trim();
+  }
+
+  const PortalAuth = {
+    getCurrentUser: function () {
+      try {
+        const raw = localStorage.getItem(PORTAL_KEYS.AUTH_USER);
+        if (raw) {
+          const u = JSON.parse(raw);
+          if (u && u.code) {
+            u.isAdmin = ADMIN_CODES.includes(String(u.code).trim());
+            return u;
+          }
+        }
+      } catch (e) {}
+      return null;
     },
 
-    getPin: function () {
-      return localStorage.getItem(PORTAL_KEYS.ADMIN_PIN) || DEFAULT_ADMIN_PIN;
+    isAdmin: function () {
+      const user = this.getCurrentUser();
+      return !!(user && user.isAdmin);
     },
 
-    setPin: function (newPin) {
-      localStorage.setItem(PORTAL_KEYS.ADMIN_PIN, String(newPin).trim());
-    },
+    login: function (rawCode, rawNationalId) {
+      const code = normalizeDigits(rawCode);
+      const nationalId = normalizeDigits(rawNationalId);
 
-    login: function (enteredPin) {
-      const correctPin = this.getPin();
-      if (String(enteredPin).trim() === correctPin || String(enteredPin).trim() === DEFAULT_ADMIN_PIN) {
-        sessionStorage.setItem(PORTAL_KEYS.ADMIN_SESSION, 'true');
-        return true;
+      if (!code) {
+        return { success: false, message: 'لطفاً شماره پرسنلی را وارد نمایید.' };
       }
-      return false;
+      if (!nationalId) {
+        return { success: false, message: 'لطفاً کد ملی را وارد نمایید.' };
+      }
+
+      let matchedName = '';
+      let matchedNationalId = '';
+      let isValid = false;
+
+      // 1. Check Hardcoded Admin Fallback (Admins: 992113 & 980253)
+      if (ADMIN_FALLBACK[code]) {
+        matchedName = ADMIN_FALLBACK[code].name;
+        matchedNationalId = normalizeDigits(ADMIN_FALLBACK[code].nationalId);
+        if (nationalId === matchedNationalId) {
+          isValid = true;
+        } else {
+          return { success: false, message: 'کد ملی وارد شده با شماره پرسنلی مدیر مطابقت ندارد.' };
+        }
+      } else if (window.PERSONNEL_MAP && window.PERSONNEL_MAP[code]) {
+        // 2. Check full Personnel Database
+        const data = window.PERSONNEL_MAP[code];
+        matchedName = Array.isArray(data) ? data[0] : (data.name || code);
+        matchedNationalId = normalizeDigits(Array.isArray(data) ? data[1] : (data.nationalId || ''));
+
+        if (matchedNationalId && nationalId === matchedNationalId) {
+          isValid = true;
+        } else {
+          return { success: false, message: 'کد ملی وارد شده با شماره پرسنلی مطابقت ندارد.' };
+        }
+      } else {
+        return { success: false, message: 'شماره پرسنلی در سامانه یافت نشد.' };
+      }
+
+      if (isValid) {
+        const isAdmin = ADMIN_CODES.includes(code);
+        const userSession = {
+          code: code,
+          name: matchedName,
+          nationalId: nationalId,
+          isAdmin: isAdmin
+        };
+        try {
+          localStorage.setItem(PORTAL_KEYS.AUTH_USER, JSON.stringify(userSession));
+          if (isAdmin) {
+            sessionStorage.setItem(PORTAL_KEYS.ADMIN_SESSION, 'true');
+          } else {
+            sessionStorage.removeItem(PORTAL_KEYS.ADMIN_SESSION);
+          }
+        } catch (e) {}
+
+        return { success: true, user: userSession };
+      }
+
+      return { success: false, message: 'اطلاعات ورود نامعتبر است.' };
     },
 
     logout: function () {
-      sessionStorage.removeItem(PORTAL_KEYS.ADMIN_SESSION);
+      try {
+        localStorage.removeItem(PORTAL_KEYS.AUTH_USER);
+        sessionStorage.removeItem(PORTAL_KEYS.ADMIN_SESSION);
+      } catch (e) {}
+      if (window.PortalUI && typeof window.PortalUI.handleAuthChange === 'function') {
+        window.PortalUI.handleAuthChange();
+      }
+    }
+  };
+
+  const AdminAuth = {
+    isAuthenticated: function () {
+      return PortalAuth.isAdmin();
+    },
+    getPin: function () {
+      return DEFAULT_ADMIN_PIN;
+    },
+    setPin: function () {},
+    login: function () {
+      return PortalAuth.isAdmin();
+    },
+    logout: function () {
+      PortalAuth.logout();
     }
   };
 
@@ -422,20 +521,74 @@
 
     init: function () {
       this.bindTabNavigation();
-      this.bindAdminControls();
+      this.bindAuthControls();
       this.bindInquiryForm();
+      this.handleAuthChange();
+    },
+
+    handleAuthChange: function () {
+      const user = PortalAuth.getCurrentUser();
+      const loginScreen = document.getElementById('portalLoginScreen');
+      const appHeader = document.getElementById('mainAppHeader');
+      const appMain = document.getElementById('mainAppContainer');
+      const userNameEl = document.getElementById('headerUserName');
+      const userBadgeEl = document.getElementById('headerUserBadge');
+
+      if (!user) {
+        if (loginScreen) loginScreen.style.display = 'flex';
+        if (appHeader) appHeader.style.display = 'none';
+        if (appMain) appMain.style.display = 'none';
+        const codeInput = document.getElementById('loginPersonnelCode');
+        const natInput = document.getElementById('loginNationalId');
+        if (codeInput) codeInput.value = '';
+        if (natInput) natInput.value = '';
+        const errAlert = document.getElementById('loginErrorMessage');
+        if (errAlert) errAlert.style.display = 'none';
+        return;
+      }
+
+      // User authenticated
+      if (loginScreen) loginScreen.style.display = 'none';
+      if (appHeader) appHeader.style.display = 'block';
+      if (appMain) appMain.style.display = 'block';
+
+      if (userNameEl) userNameEl.textContent = user.name || `پرسنل ${user.code}`;
+      if (userBadgeEl) {
+        if (user.isAdmin) {
+          userBadgeEl.textContent = 'مدیر سیستم';
+          userBadgeEl.classList.add('admin-badge');
+        } else {
+          userBadgeEl.textContent = 'همکار گرامی';
+          userBadgeEl.classList.remove('admin-badge');
+        }
+      }
+
+      this.updateAdminVisibility();
+
+      if ((this.activeTab === 'dashboard' || this.activeTab === 'settings') && !user.isAdmin) {
+        this.switchTab('home');
+      } else {
+        this.switchTab(this.activeTab || 'home');
+      }
+
       this.renderHomeOverview();
       this.renderEventsGrid();
       this.renderNotificationsList();
-      this.updateAdminVisibility();
-
-      if (AdminAuth.isAuthenticated()) {
+      if (user.isAdmin) {
         this.renderAdminDashboard();
         this.renderAdminSettings();
       }
     },
 
     switchTab: function (tabName) {
+      const user = PortalAuth.getCurrentUser();
+
+      // Guard admin tabs strictly
+      if ((tabName === 'dashboard' || tabName === 'settings') && (!user || !user.isAdmin)) {
+        showToast('دسترسی به این بخش صرفاً برای مدیران سامانه مجاز است.', 'error');
+        tabName = 'home';
+      }
+
       this.activeTab = tabName;
 
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
@@ -457,17 +610,9 @@
       if (tabName === 'events') {
         this.renderEventsGrid();
       } else if (tabName === 'dashboard') {
-        if (AdminAuth.isAuthenticated()) {
-          this.renderAdminDashboard();
-        } else {
-          this.showAdminLoginModal('dashboard');
-        }
+        if (user && user.isAdmin) this.renderAdminDashboard();
       } else if (tabName === 'settings') {
-        if (AdminAuth.isAuthenticated()) {
-          this.renderAdminSettings();
-        } else {
-          this.showAdminLoginModal('settings');
-        }
+        if (user && user.isAdmin) this.renderAdminSettings();
       } else if (tabName === 'notifications') {
         this.renderNotificationsList();
       } else if (tabName === 'home') {
@@ -485,19 +630,28 @@
       });
     },
 
-    bindAdminControls: function () {
-      const adminBtn = document.getElementById('adminLoginChipBtn');
-      if (adminBtn) {
-        adminBtn.addEventListener('click', () => {
-          if (AdminAuth.isAuthenticated()) {
-            if (confirm('آیا مایل به خروج از وضعیت مدیریت (ادمین) هستید؟')) {
-              AdminAuth.logout();
-              this.updateAdminVisibility();
-              this.switchTab('home');
-              showToast('از پنل مدیریت خارج شدید.', 'info');
+    bindAuthControls: function () {
+      const loginForm = document.getElementById('globalLoginForm');
+      if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const codeInput = document.getElementById('loginPersonnelCode');
+          const natInput = document.getElementById('loginNationalId');
+          const errAlert = document.getElementById('loginErrorMessage');
+
+          const res = PortalAuth.login(codeInput ? codeInput.value : '', natInput ? natInput.value : '');
+          if (res.success) {
+            if (errAlert) {
+              errAlert.style.display = 'none';
+              errAlert.textContent = '';
             }
+            PortalUI.handleAuthChange();
+            showToast(`خوش آمدید، ${res.user.name}`, 'success');
           } else {
-            this.showAdminLoginModal();
+            if (errAlert) {
+              errAlert.textContent = res.message;
+              errAlert.style.display = 'block';
+            }
           }
         });
       }
@@ -511,81 +665,105 @@
           closeBtn.addEventListener('click', () => modal.classList.remove('open'));
         }
       });
-
-      const authForm = document.getElementById('adminLoginForm');
-      if (authForm) {
-        authForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const pinInput = document.getElementById('adminPinInput');
-          if (AdminAuth.login(pinInput.value)) {
-            document.getElementById('adminAuthModal').classList.remove('open');
-            pinInput.value = '';
-            this.updateAdminVisibility();
-            showToast('احراز هویت مدیر با موفقیت انجام شد.', 'success');
-            const returnTab = authForm.dataset.returnTab || 'dashboard';
-            this.switchTab(returnTab);
-          } else {
-            showToast('رمز عبور مدیر نادرست است.', 'error');
-            pinInput.focus();
-          }
-        });
-      }
-    },
-
-    showAdminLoginModal: function (returnTab = '') {
-      const modal = document.getElementById('adminAuthModal');
-      const form = document.getElementById('adminLoginForm');
-      if (form) form.dataset.returnTab = returnTab;
-      if (modal) {
-        modal.classList.add('open');
-        const input = document.getElementById('adminPinInput');
-        if (input) {
-          input.value = '';
-          input.focus();
-        }
-      }
     },
 
     updateAdminVisibility: function () {
-      const isAuth = AdminAuth.isAuthenticated();
+      const isAuth = PortalAuth.isAdmin();
       const adminTabs = document.querySelectorAll('.admin-only-tab');
-      const adminBtn = document.getElementById('adminLoginChipBtn');
 
       adminTabs.forEach(tab => {
         if (isAuth) tab.classList.add('admin-visible');
         else tab.classList.remove('admin-visible');
       });
+    },
 
-      if (adminBtn) {
-        if (isAuth) {
-          adminBtn.classList.add('is-admin');
-          adminBtn.innerHTML = `${SVG.shieldCheck} <span>مدیر سیستم</span>`;
-        } else {
-          adminBtn.classList.remove('is-admin');
-          adminBtn.innerHTML = `${SVG.lock} <span>ورود مدیر</span>`;
+    isEventRelevantToUser: function (ev, user) {
+      if (!user) return false;
+      if (user.isAdmin) return true; // Admins 992113 & 980253 see ALL events
+
+      // 1. User registered for it?
+      const userReg = RegistrationService.getUserRegistration(ev.id, user.code);
+      if (userReg) return true;
+
+      // 2. Check if event has restricted allowedPersonnel (whitelist)
+      let isRestricted = ev.isRestricted === true;
+      let allowedPersonnel = Array.isArray(ev.allowedPersonnel) ? ev.allowedPersonnel : [];
+
+      try {
+        const deadlinesRaw = localStorage.getItem('entekhab_events_deadlines');
+        if (deadlinesRaw) {
+          const deadlines = JSON.parse(deadlinesRaw);
+          if (deadlines && deadlines[ev.id]) {
+            if (deadlines[ev.id].isRestricted) {
+              isRestricted = true;
+              if (Array.isArray(deadlines[ev.id].allowedPersonnel) && deadlines[ev.id].allowedPersonnel.length > 0) {
+                allowedPersonnel = deadlines[ev.id].allowedPersonnel;
+              }
+            }
+          }
         }
+      } catch (e) {}
+
+      if (isRestricted && allowedPersonnel.length > 0) {
+        return allowedPersonnel.some(item => {
+          if (!item) return false;
+          let c = '', n = '';
+          if (typeof item === 'string' || typeof item === 'number') {
+            c = normalizeDigits(item);
+          } else if (typeof item === 'object') {
+            c = normalizeDigits(item.code || item.personnelCode || '');
+            n = normalizeDigits(item.nationalCode || item.nationalId || '');
+          }
+          if (c && (c === user.code || c.replace(/^0+/, '') === user.code.replace(/^0+/, ''))) return true;
+          if (n && user.nationalId && n === user.nationalId) return true;
+          return false;
+        });
       }
+
+      // 3. Open corporate event available to all personnel
+      return true;
     },
 
     // ------------------------------------------------------------------------
     // Home Overview Rendering
     // ------------------------------------------------------------------------
     renderHomeOverview: function () {
+      const user = PortalAuth.getCurrentUser();
       const events = PortalEvents.getAll();
       const regs = RegistrationService.getAll();
       const attendees = regs.filter(r => r.status === 'attending');
 
-      const activeEventsCount = events.filter(e => e.status === 'active').length;
       const elActiveCount = document.getElementById('heroActiveEventsCount');
-      if (elActiveCount) elActiveCount.textContent = activeEventsCount;
-
       const elTotalRegs = document.getElementById('heroTotalRegsCount');
-      if (elTotalRegs) elTotalRegs.textContent = attendees.length;
+
+      if (user && user.isAdmin) {
+        const activeEventsCount = events.filter(e => e.status === 'active').length;
+        if (elActiveCount) elActiveCount.textContent = activeEventsCount;
+        if (elTotalRegs) elTotalRegs.textContent = attendees.length;
+      } else if (user) {
+        const myRelevantEvents = events.filter(ev => this.isEventRelevantToUser(ev, user));
+        const myRegs = regs.filter(r => String(r.personnelCode).trim() === user.code && r.status === 'attending');
+        if (elActiveCount) elActiveCount.textContent = myRelevantEvents.filter(e => e.status === 'active').length;
+        if (elTotalRegs) elTotalRegs.textContent = myRegs.length;
+      }
+
+      this.renderUserStatusInquiry();
 
       const container = document.getElementById('homeHighlightsGrid');
       if (!container) return;
 
-      container.innerHTML = events.slice(0, 3).map(ev => {
+      const visibleEvents = events.filter(ev => this.isEventRelevantToUser(ev, user));
+
+      if (visibleEvents.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 36px; background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); color: var(--text-muted);">
+            در حال حاضر رویداد فعالی برای شما ثبت نشده است.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = visibleEvents.slice(0, 3).map(ev => {
         const evRegs = regs.filter(r => r.eventId === ev.id && r.status === 'attending');
         const capText = ev.capacity > 0 ? `${evRegs.length} / ${ev.capacity}` : `${evRegs.length} نفر`;
         const statusLabel = ev.status === 'active' ? 'در حال ثبت‌نام' : ev.status === 'survey' ? 'نظرسنجی فعال' : 'پایان‌یافته';
@@ -620,12 +798,71 @@
                 </div>
               </div>
               <button class="btn-action btn-secondary" style="width: 100%;" onclick="PortalUI.openEventDetail('${ev.id}')">
-                مشاهده جزئیات و ثبت‌نام
+                مشاهده جزئیات و اعلام وضعیت
               </button>
             </div>
           </div>
         `;
       }).join('');
+    },
+
+    renderUserStatusInquiry: function () {
+      const resultBox = document.getElementById('quickInquiryResult');
+      if (!resultBox) return;
+
+      const user = PortalAuth.getCurrentUser();
+      if (!user) {
+        resultBox.style.display = 'none';
+        return;
+      }
+
+      resultBox.style.display = 'block';
+      const userRegs = RegistrationService.getUserAllRegistrations(user.code);
+      const events = PortalEvents.getAll();
+
+      let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <strong style="color: var(--primary); font-size: 1rem; font-weight: 700;">${user.name}</strong>
+            <span style="font-size: 0.8rem; color: var(--text-muted); margin-right: 8px;">(کد پرسنلی: ${user.code})</span>
+          </div>
+          <span class="badge-status attending">${SVG.check} احراز هویت شده</span>
+        </div>
+      `;
+
+      if (userRegs.length === 0) {
+        html += `
+          <div style="font-size: 0.86rem; color: var(--text-secondary); text-align: center; padding: 14px 0;">
+            شما هنوز در هیچ رویدادی وضعیت حضور خود را اعلام ننموده‌اید.
+            <br><button class="btn-action btn-secondary" style="margin-top: 12px;" onclick="PortalUI.switchTab('events')">مشاهده رویدادها و اعلام وضعیت</button>
+          </div>
+        `;
+      } else {
+        html += `<div style="display: flex; flex-direction: column; gap: 8px;">`;
+        userRegs.forEach(reg => {
+          const ev = events.find(e => e.id === reg.eventId) || { title: reg.eventId, id: reg.eventId };
+          const isAttending = reg.status === 'attending';
+          html += `
+            <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); padding: 12px 14px; border-radius: var(--radius-sm); flex-wrap: wrap; gap: 10px;">
+              <div>
+                <strong style="font-size: 0.9rem; color: var(--primary);">${ev.title}</strong>
+                <div style="font-size: 0.76rem; color: var(--text-muted);">ثبت شده: ${reg.jalaliDate || '-'}</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge-status ${isAttending ? 'attending' : 'declining'}">
+                  ${isAttending ? `${SVG.check} مایل به شرکت` : `${SVG.x} عدم تمایل`}
+                </span>
+                <button class="btn-action btn-secondary" style="padding: 4px 12px; font-size: 0.78rem; height: 32px;" onclick="PortalUI.openEventDetail('${reg.eventId}')">
+                  تغییر وضعیت
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+      }
+
+      resultBox.innerHTML = html;
     },
 
     openEventDetail: function (eventId) {
@@ -640,79 +877,8 @@
       }, 150);
     },
 
-    // ------------------------------------------------------------------------
-    // Quick Inquiry Form (استعلام وضعیت من)
-    // ------------------------------------------------------------------------
     bindInquiryForm: function () {
-      const btn = document.getElementById('btnQuickInquiry');
-      const input = document.getElementById('quickInquiryCode');
-      const resultBox = document.getElementById('quickInquiryResult');
-
-      if (!btn || !input || !resultBox) return;
-
-      const doInquiry = () => {
-        const code = input.value.trim();
-        if (!code) {
-          showToast('لطفاً کد پرسنلی خود را وارد فرمایید.', 'error');
-          input.focus();
-          return;
-        }
-
-        const person = PersonnelService.lookup(code);
-        const userRegs = RegistrationService.getUserAllRegistrations(code);
-        const events = PortalEvents.getAll();
-
-        resultBox.style.display = 'block';
-
-        let html = `
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px;">
-            <div>
-              <strong style="color: var(--primary); font-size: 1rem; font-weight: 700;">${person ? person.name : 'پرسنل کد ' + code}</strong>
-              ${person && person.nationalId ? `<span style="font-size: 0.78rem; color: var(--text-muted); margin-right: 8px;">(کد ملی: ${person.nationalId})</span>` : ''}
-            </div>
-            <span class="badge-status attending">${SVG.check} استعلام موفق</span>
-          </div>
-        `;
-
-        if (userRegs.length === 0) {
-          html += `
-            <div style="font-size: 0.86rem; color: var(--text-secondary); text-align: center; padding: 14px 0;">
-              وضعیت حضوری برای شماره پرسنلی شما در هیچ رویدادی ثبت نشده است.
-              <br><button class="btn-action btn-secondary" style="margin-top: 12px;" onclick="PortalUI.switchTab('events')">مشاهده رویدادها و ثبت‌نام</button>
-            </div>
-          `;
-        } else {
-          html += `<div style="display: flex; flex-direction: column; gap: 8px;">`;
-          userRegs.forEach(reg => {
-            const ev = events.find(e => e.id === reg.eventId) || { title: reg.eventId };
-            const isAttending = reg.status === 'attending';
-            html += `
-              <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); padding: 10px 14px; border-radius: var(--radius-sm);">
-                <div>
-                  <strong style="font-size: 0.88rem; color: var(--primary);">${ev.title}</strong>
-                  <div style="font-size: 0.74rem; color: var(--text-muted);">ثبت شده: ${reg.jalaliDate || '-'}</div>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                  <span class="badge-status ${isAttending ? 'attending' : 'declining'}">
-                    ${isAttending ? `${SVG.check} مایل به شرکت` : `${SVG.x} عدم تمایل`}
-                  </span>
-                  <button class="btn-action btn-secondary" style="padding: 4px 10px; font-size: 0.76rem; height: 30px;" onclick="PortalUI.openEventDetail('${reg.eventId}')">
-                    تغییر وضعیت
-                  </button>
-                </div>
-              </div>
-            `;
-          });
-          html += `</div>`;
-        }
-
-        resultBox.innerHTML = html;
-      };
-
-      btn.addEventListener('click', doInquiry);
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') doInquiry();
-      });
+      this.renderUserStatusInquiry();
     },
 
     // ------------------------------------------------------------------------
@@ -722,22 +888,29 @@
       const container = document.getElementById('eventsGridContainer');
       if (!container) return;
 
+      const user = PortalAuth.getCurrentUser();
       const events = PortalEvents.getAll();
       const regs = RegistrationService.getAll();
 
-      let filtered = events;
+      // Filter events relevant to this specific employee (admins see all)
+      const relevantEvents = events.filter(ev => this.isEventRelevantToUser(ev, user));
+
+      let filtered = relevantEvents;
       if (this.activeFilter === 'active') {
-        filtered = events.filter(e => e.status === 'active');
+        filtered = relevantEvents.filter(e => e.status === 'active');
       } else if (this.activeFilter === 'survey') {
-        filtered = events.filter(e => e.status === 'survey');
+        filtered = relevantEvents.filter(e => e.status === 'survey');
       } else if (this.activeFilter === 'closed') {
-        filtered = events.filter(e => e.status === 'closed');
+        filtered = relevantEvents.filter(e => e.status === 'closed');
       }
 
       if (filtered.length === 0) {
+        const emptyMsg = (user && user.isAdmin)
+          ? 'هیچ رویدادی با این فیلتر یافت نشد.'
+          : 'در حال حاضر هیچ رویدادی برای شماره پرسنلی شما تعریف نشده است.';
         container.innerHTML = `
           <div style="grid-column: 1 / -1; text-align: center; padding: 48px; background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); color: var(--text-muted);">
-            هیچ رویدادی با این فیلتر یافت نشد.
+            ${emptyMsg}
           </div>
         `;
         return;
@@ -751,6 +924,37 @@
 
         const statusLabel = isSurvey ? 'نظرسنجی فعال' : isClosed ? 'مهلت پایان‌یافته' : 'در حال ثبت‌نام';
         const statusClass = isSurvey ? 'status-survey' : isClosed ? 'status-closed' : 'status-active';
+
+        const userReg = user ? RegistrationService.getUserRegistration(ev.id, user.code) : null;
+        const isAttending = userReg && userReg.status === 'attending';
+        const isDeclined = userReg && userReg.status === 'declined';
+
+        let userStatusHtml = '';
+        if (user) {
+          if (isAttending) {
+            userStatusHtml = `
+              <div class="user-event-status-badge attending">
+                ${SVG.check}
+                <span>وضعیت شما: <strong>مایل به شرکت در این رویداد</strong></span>
+                <span style="font-size: 0.72rem; opacity: 0.8; margin-right: auto;">(${userReg.jalaliDate || ''})</span>
+              </div>
+            `;
+          } else if (isDeclined) {
+            userStatusHtml = `
+              <div class="user-event-status-badge declined">
+                ${SVG.x}
+                <span>وضعیت شما: <strong>عدم تمایل به حضور</strong></span>
+                <span style="font-size: 0.72rem; opacity: 0.8; margin-right: auto;">(${userReg.jalaliDate || ''})</span>
+              </div>
+            `;
+          } else {
+            userStatusHtml = `
+              <div class="user-event-status-badge not-registered">
+                <span>وضعیت شما: <strong>هنوز پاسخی ثبت نکرده‌اید</strong></span>
+              </div>
+            `;
+          }
+        }
 
         return `
           <div class="event-card" id="eventCard_${ev.id}">
@@ -766,6 +970,8 @@
 
             <div class="event-card-body">
               <p class="event-card-subtitle">${ev.subtitle || ''}</p>
+
+              ${userStatusHtml}
 
               <div class="event-meta-list">
                 <div class="event-meta-item">
@@ -843,28 +1049,28 @@
                 ` : `
                   <button class="register-accordion-toggle" onclick="PortalUI.toggleRegisterAccordion('${ev.id}')">
                     <span>${SVG.edit}</span>
-                    <span>اعلام وضعیت حضور در این برنامه</span>
+                    <span>${userReg ? 'ویرایش اعلام وضعیت حضور' : 'اعلام وضعیت حضور در این برنامه'}</span>
                   </button>
 
                   <div class="register-accordion-content" id="registerBox_${ev.id}">
                     <div class="form-group">
                       <label class="form-label">شماره پرسنلی:</label>
-                      <input type="text" class="form-input" id="inputPersonnelCode_${ev.id}" placeholder="مثال: 992113" oninput="PortalUI.handlePersonnelCodeInput('${ev.id}', this.value)">
-                      <div class="personnel-lookup-feedback" id="feedback_${ev.id}"></div>
+                      <input type="text" class="form-input" id="inputPersonnelCode_${ev.id}" value="${user ? user.code : ''}" ${user && !user.isAdmin ? 'readonly style="background: var(--surface-soft);"' : 'oninput="PortalUI.handlePersonnelCodeInput(\'' + ev.id + '\', this.value)"'}>
+                      <div class="personnel-lookup-feedback ${user ? 'found' : ''}" id="feedback_${ev.id}" style="${user ? 'display: block;' : 'display: none;'}">${user ? 'همکار گرامی: ' + user.name : ''}</div>
                     </div>
 
-                    <div id="hiddenFields_${ev.id}" style="display: none;">
+                    <div id="hiddenFields_${ev.id}" style="${user ? 'display: block;' : 'display: none;'}">
                       <div class="form-group">
                         <label class="form-label">نام و نام خانوادگی:</label>
-                        <input type="text" class="form-input" id="inputFullName_${ev.id}" readonly style="background: var(--surface-soft);">
+                        <input type="text" class="form-input" id="inputFullName_${ev.id}" value="${user ? user.name : ''}" readonly style="background: var(--surface-soft);">
                       </div>
                       <div class="form-group">
                         <label class="form-label">کد ملی:</label>
-                        <input type="text" class="form-input" id="inputNationalId_${ev.id}" readonly style="background: var(--surface-soft);">
+                        <input type="text" class="form-input" id="inputNationalId_${ev.id}" value="${user ? user.nationalId : ''}" readonly style="background: var(--surface-soft);">
                       </div>
                       <div class="form-group">
                         <label class="form-label">توضیحات اختیاری (شماره همراه یا ملاحظات):</label>
-                        <input type="text" class="form-input" id="inputNote_${ev.id}" placeholder="در صورت نیاز وارد کنید">
+                        <input type="text" class="form-input" id="inputNote_${ev.id}" value="${userReg ? (userReg.note || '') : ''}">
                       </div>
 
                       <div class="btn-row-dual">
@@ -991,6 +1197,13 @@
         form.dataset.eventId = eventId;
         form.reset();
       }
+      const user = PortalAuth.getCurrentUser();
+      if (user) {
+        const codeInput = document.getElementById('surveyPersonnelCode');
+        const nameInput = document.getElementById('surveyFullName');
+        if (codeInput) codeInput.value = user.code;
+        if (nameInput) nameInput.value = user.name;
+      }
       this.setStarRating(5);
       if (modal) modal.classList.add('open');
     },
@@ -1057,7 +1270,7 @@
       if (!container) return;
 
       const notifs = NotificationService.getAll();
-      const isAdmin = AdminAuth.isAuthenticated();
+      const isAdmin = PortalAuth.isAdmin();
 
       if (notifs.length === 0) {
         container.innerHTML = `
@@ -1452,6 +1665,7 @@
   };
 
   window.PortalUI = PortalUI;
+  window.PortalAuth = PortalAuth;
 
   document.addEventListener('DOMContentLoaded', () => {
     PortalUI.init();
