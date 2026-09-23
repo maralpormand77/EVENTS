@@ -84,6 +84,12 @@
           </span>
           <span>داشبورد</span>
         </button>
+        <button class="nav-tab-btn admin-only-tab" data-tab="access">
+          <span class="tab-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <span>دسترسی‌ها</span>
+        </button>
         <button class="nav-tab-btn admin-only-tab" data-tab="settings">
           <span class="tab-icon">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -251,10 +257,20 @@
           <h2 class="section-headline-title">داشبورد تحلیلی و گزارشات</h2>
           <p class="section-headline-desc">پایش شاخص‌های ثبت‌نام، دریافت گزارش اکسل و تولید پیامک‌های سازمانی</p>
         </div>
-        <button class="btn-action btn-secondary" onclick="PortalUI.exportToExcel()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-          دانلود خروجی اکسل (CSV)
-        </button>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <div class="cloud-status-indicator" id="cloudSyncStatus" title="وضعیت همگام‌سازی ابری">
+            <span class="cloud-status-dot"></span>
+            <span id="cloudSyncText">متصل به پایگاه داده ابری</span>
+          </div>
+          <button class="btn-action btn-secondary" id="btnSyncCloudDb" onclick="PortalDB.syncFromSupabase(true)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+            همگام‌سازی ابری
+          </button>
+          <button class="btn-action btn-secondary" onclick="PortalUI.exportToExcel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            دانلود خروجی اکسل
+          </button>
+        </div>
       </div>
 
       <!-- KPI Summary Row -->
@@ -384,6 +400,145 @@
     </section>
 
     <!-- ----------------------------------------------------------------------
+         TAB: دسترسی‌ها (ACCESS CONTROL HUB) - مخصوص ادمین (992113 و 980253)
+         ---------------------------------------------------------------------- -->
+    <section class="tab-content-view" id="tabView-access">
+      <div class="section-headline" style="padding-top: 18px;">
+        <div>
+          <h2 class="section-headline-title">مدیریت دسترسی و لیست مجازین رویدادها</h2>
+          <p class="section-headline-desc">اعطای دسترسی انحصاری با اکسل (.xlsx, .xls)، استخراج فهرست و ثبت فردی همکاران مجاز</p>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button class="btn-action btn-secondary" id="btnExportAccessExcel" onclick="PortalAccess.exportCurrentWhitelistExcel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            دانلود خروجی اکسل مجازین
+          </button>
+          <button class="btn-action btn-secondary" style="color: var(--danger); border-color: rgba(220, 38, 38, 0.2);" onclick="PortalAccess.clearCurrentWhitelist()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg>
+            عمومی‌سازی و لغو محدودیت
+          </button>
+        </div>
+      </div>
+
+      <!-- انتخاب رویداد هدف و وضعیت جاری -->
+      <div class="settings-panel-card" style="margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: center;">
+          <div>
+            <label class="form-label" style="font-weight: 700;">انتخاب رویداد جهت مدیریت دسترسی:</label>
+            <select class="form-select" id="accessEventSelect" onchange="PortalAccess.onEventChange()" style="font-weight: 600;"></select>
+          </div>
+          <div>
+            <label class="form-label" style="font-weight: 700;">وضعیت دسترسی کنونی رویداد:</label>
+            <div id="accessStatusBadgeBox" style="display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: var(--radius-sm); font-size: 0.84rem; background: var(--surface-soft); border: 1px solid var(--border);">
+              <span id="accessStatusText">در حال بارگذاری...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- گرید دو ستونه: بارگذاری اکسل و ثبت تکی دسترسی -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;" class="access-hub-grid">
+        <!-- ستون ۱: بارگذاری گروهی اکسل -->
+        <div class="settings-panel-card" style="margin-bottom: 0;">
+          <h3 style="font-size: 0.98rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+            بارگذاری گروهی با فایل اکسل
+          </h3>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 14px;">
+            شناسایی هوشمند کد پرسنلی و تطبیق خودکار با بانک جامع پرسنلی گروه انتخاب
+          </p>
+
+          <div class="excel-drop-zone" id="accessExcelDropZone" onclick="document.getElementById('accessExcelFileInput').click()">
+            <input type="file" id="accessExcelFileInput" accept=".xlsx, .xls" style="display: none;" onchange="PortalAccess.handleExcelUpload(event)">
+            <div style="width: 44px; height: 44px; background: #DCFCE7; color: #16A34A; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <div style="font-weight: 700; font-size: 0.92rem; color: var(--primary); margin-bottom: 4px;">
+              فایل اکسل را اینجا رها کنید یا کلیک نمایید
+            </div>
+            <p style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 12px;">
+              پشتیبانی از فرمت‌های <strong>.xlsx</strong> و <strong>.xls</strong>
+            </p>
+            <div style="display: inline-flex; gap: 8px;">
+              <button type="button" class="btn-action btn-primary" style="padding: 6px 14px; font-size: 0.8rem; pointer-events: none;">
+                انتخاب فایل
+              </button>
+              <button type="button" class="btn-action btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="event.stopPropagation(); PortalAccess.downloadSampleExcel();">
+                دانلود فایل نمونه
+              </button>
+            </div>
+          </div>
+          <div id="accessExcelNotice" style="display: none; font-size: 0.8rem; text-align: center; margin-top: 10px; color: var(--accent); font-weight: 600;"></div>
+        </div>
+
+        <!-- ستون ۲: اعطای دسترسی فردی -->
+        <div class="settings-panel-card" style="margin-bottom: 0;">
+          <h3 style="font-size: 0.98rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            اعطای دسترسی فردی
+          </h3>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 14px;">
+            افزودن سریع یک همکار خاص به فهرست مجازین با شماره پرسنلی
+          </p>
+
+          <form id="accessSingleForm" onsubmit="PortalAccess.handleSingleAdd(event)">
+            <div class="form-group">
+              <label class="form-label">شماره پرسنلی همکار:</label>
+              <input type="text" class="form-input" id="accessSingleCode" oninput="PortalAccess.onSingleCodeInput(this.value)" placeholder="کد پرسنلی (مثال: 992113)" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">مشخصات شناسایی‌شده:</label>
+              <div id="accessSingleLookupPreview" style="padding: 9px 12px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.84rem; min-height: 40px; display: flex; align-items: center; color: var(--text-secondary);">
+                شماره پرسنلی را وارد نمایید...
+              </div>
+            </div>
+            <button type="submit" class="btn-action btn-primary" style="width: 100%; justify-content: center; height: 38px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+              افزودن به لیست مجازین این رویداد
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- جدول افراد مجاز -->
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <input type="text" class="table-search-input" id="accessTableSearch" oninput="PortalAccess.filterTable(this.value)" placeholder="جستجو نام یا پرسنلی در لیست مجازین...">
+            <span class="status-badge" id="accessWhitelistBadgeCount" style="background: var(--surface-soft); color: var(--primary); font-size: 0.8rem; font-weight: 700;">
+              تعداد مجازین: ۰ نفر
+            </span>
+          </div>
+
+          <button class="btn-action btn-primary" id="btnSaveWhitelistCloud" onclick="PortalAccess.saveWhitelistToCloud()" style="font-size: 0.82rem; height: 34px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            ذخیره و تثبیت در سرور ابری
+          </button>
+        </div>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 44px;">#</th>
+                <th>شماره پرسنلی</th>
+                <th>نام و نام خانوادگی</th>
+                <th>کد ملی</th>
+                <th>واحد سازمانی</th>
+                <th>وضعیت دیتابیس</th>
+                <th style="width: 80px;">عملیات</th>
+              </tr>
+            </thead>
+            <tbody id="accessWhitelistTableBody"></tbody>
+          </table>
+        </div>
+        <div id="accessEmptyWhitelistNotice" style="display: none; padding: 32px 16px; text-align: center; color: var(--text-muted); font-size: 0.86rem;">
+          این رویداد در وضعیت <strong>عمومی</strong> قرار دارد و تمام پرسنل امکان ثبت‌نام دارند. جهت محدودسازی، فایل اکسل بارگذاری فرمایید یا همکار اضافه کنید.
+        </div>
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------------------------
          TAB 5: تنظیمات (SETTINGS) - مدیریت رویدادها (مخصوص ادمین)
          ---------------------------------------------------------------------- -->
     <section class="tab-content-view" id="tabView-settings">
@@ -430,108 +585,292 @@
   <!-- ========================================================================
        MODAL: ADD / EDIT EVENT MODAL (STRUCTURED SECTIONS)
        ======================================================================== -->
+  <!-- ========================================================================
+       MODAL: ADD / EDIT EVENT MODAL (COMPREHENSIVE MULTI-TAB SETTINGS)
+       ======================================================================== -->
   <div class="modal-overlay" id="editEventModal">
-    <div class="modal-dialog" style="max-width: 640px;">
+    <div class="modal-dialog" style="max-width: 760px; max-height: 90vh; display: flex; flex-direction: column;">
       <div class="modal-header">
-        <h3 class="modal-title" id="editEventModalTitle">ویرایش مشخصات رویداد</h3>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
+          <div>
+            <h3 class="modal-title" id="editEventModalTitle" style="margin: 0; font-size: 1.05rem;">تنظیمات جامع رویداد</h3>
+            <p style="font-size: 0.76rem; color: var(--text-muted); margin: 2px 0 0 0;">ویرایش مشخصات، ظرفیت، زمان‌بندی، چرخه حیات و اختصاصی‌سازی اکسل</p>
+          </div>
+        </div>
         <button class="modal-close-btn" aria-label="بستن">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
         </button>
       </div>
 
-      <form id="editEventForm">
+      <!-- تب‌های ناوبری پنجره تنظیمات رویداد -->
+      <div class="modal-tabs" id="eventModalTabsHeader">
+        <button type="button" class="modal-tab-btn active" data-modaltab="texts" onclick="PortalUI.switchModalTab('texts')">
+          مشخصات و متون
+        </button>
+        <button type="button" class="modal-tab-btn" data-modaltab="timing" onclick="PortalUI.switchModalTab('timing')">
+          ظرفیت و زمان‌بندی
+        </button>
+        <button type="button" class="modal-tab-btn" data-modaltab="lifecycle" onclick="PortalUI.switchModalTab('lifecycle')">
+          چرخه حیات و نظرسنجی
+        </button>
+        <button type="button" class="modal-tab-btn" data-modaltab="access" onclick="PortalUI.switchModalTab('access')">
+          دسترسی و اکسل مجازین
+        </button>
+      </div>
+
+      <form id="editEventForm" style="display: flex; flex-direction: column; overflow: hidden; flex: 1;">
         <input type="hidden" id="formEventId">
+        <input type="hidden" id="formEventPosterUrl">
 
-        <!-- بخش ۱: اطلاعات اصلی -->
-        <div class="modal-form-section">
-          <h4 class="modal-section-title">اطلاعات اصلی رویداد</h4>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div class="form-group">
-              <label class="form-label">عنوان رویداد:</label>
-              <input type="text" class="form-input" id="formEventTitle" required>
+        <!-- اسکرول‌بار محتوا -->
+        <div style="overflow-y: auto; flex: 1; padding: 2px 4px 10px 4px;">
+
+          <!-- ------------------------------------------------------------------
+               تب ۱: مشخصات، متون و پوستر
+               ------------------------------------------------------------------ -->
+          <div class="event-modal-tab-pane" id="eventModalPane-texts">
+            <!-- سربرگ و عناوین -->
+            <div class="modal-form-section">
+              <h4 class="modal-section-title">اطلاعات سربرگ و عنوان‌ها</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label class="form-label">عنوان اصلی رویداد:</label>
+                  <input type="text" class="form-input" id="formEventTitle" required placeholder="مثال: تور کویر ورزنه">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">برچسب / دسته‌بندی بالای عنوان:</label>
+                  <input type="text" class="form-input" id="formEventTag" placeholder="مثال: رویداد علمی تفریحی">
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label class="form-label">دسته‌بندی پرتال:</label>
+                  <input type="text" class="form-input" id="formEventCategory" placeholder="مثال: ورزشی / تفریحی">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">زیرعنوان / شعار رویداد:</label>
+                  <input type="text" class="form-input" id="formEventSubtitle" placeholder="توضیحات کوتاه زیر عنوان">
+                </div>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">دسته‌بندی:</label>
-              <input type="text" class="form-input" id="formEventCategory">
+
+            <!-- پوستر رویداد -->
+            <div class="modal-form-section">
+              <h4 class="modal-section-title">تصویر و پوستر رسمی</h4>
+              <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+                <div id="formEventPosterPreviewBox" style="display: none; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); max-width: 200px; max-height: 120px; background: #000;">
+                  <img id="formEventPosterPreviewImg" src="" alt="پوستر" style="width: 100%; height: 120px; object-fit: cover; display: block;">
+                </div>
+                <div id="formEventPosterEmptyNotice" style="font-size: 0.8rem; color: var(--text-muted); padding: 12px 18px; border: 1.5px dashed var(--border); border-radius: var(--radius-sm); background: var(--surface-soft);">
+                  تصویری برای این رویداد تنظیم نشده است
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                  <input type="file" id="formEventPosterFileInput" accept="image/*" style="display: none;" onchange="PortalUI.handlePosterUpload(event)">
+                  <button type="button" class="btn-action btn-secondary" style="font-size: 0.8rem; height: 34px;" onclick="document.getElementById('formEventPosterFileInput').click()">
+                    انتخاب و آپلود تصویر
+                  </button>
+                  <button type="button" class="btn-action btn-secondary" id="formEventBtnRemovePoster" style="display: none; font-size: 0.78rem; height: 32px; color: var(--danger); border-color: rgba(220, 38, 38, 0.2);" onclick="PortalUI.removePoster()">
+                    حذف تصویر
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- زمان، مکان و حرکت -->
+            <div class="modal-form-section">
+              <h4 class="modal-section-title">مشخصات سه‌گانه زمان و مکان برگزاری</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label class="form-label">تاریخ برگزاری (شمسی):</label>
+                  <input type="text" class="form-input" id="formEventDate" placeholder="مثال: یکشنبه ۲۲/۰۶/۱۴۰۵">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">ساعت گردهمایی / حرکت:</label>
+                  <input type="text" class="form-input" id="formEventTime" placeholder="مثال: ساعت ۰۶:۳۰ صبح">
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label class="form-label">ساعت بازگشت (در صورت وجود):</label>
+                  <input type="text" class="form-input" id="formEventReturn" placeholder="مثال: ساعت ۰۹:۳۰ صبح">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">مکان گردهمایی و حرکت:</label>
+                  <input type="text" class="form-input" id="formEventLocation" placeholder="مثال: خیابان نشاط، کوچه ۲۰، عمارت ماهور">
+                </div>
+              </div>
+            </div>
+
+            <!-- ضوابط و نکات -->
+            <div class="modal-form-section">
+              <h4 class="modal-section-title">نکات مهم، ضوابط و چک‌لیست تجهیزات</h4>
+              <div class="form-group">
+                <label class="form-label">نکات و ضوابط حضور (هر مورد در یک خط):</label>
+                <textarea class="form-textarea" id="formEventNotes" rows="2" placeholder="قوانین حضور و نکات مهم..."></textarea>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">چک‌لیست وسایل و تجهیزات (هر مورد در یک خط):</label>
+                <textarea class="form-textarea" id="formEventChecklist" rows="2" placeholder="کفش ورزشی مناسب..."></textarea>
+              </div>
+            </div>
+
+            <!-- متون دکمه‌های فرم تصمیم‌گیری -->
+            <div class="modal-form-section">
+              <h4 class="modal-section-title">متون دکمه‌های تصمیم‌گیری</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label class="form-label">متن دکمه اعلام حضور:</label>
+                  <input type="text" class="form-input" id="formEventBtnAttendText" placeholder="مایل به شرکت در این برنامه هستم">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">متن دکمه عدم تمایل:</label>
+                  <input type="text" class="form-input" id="formEventBtnDeclineText" placeholder="تمایلی به حضور ندارم">
+                </div>
+              </div>
             </div>
           </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">زیرعنوان و شعار:</label>
-            <input type="text" class="form-input" id="formEventSubtitle">
+
+          <!-- ------------------------------------------------------------------
+               تب ۲: ظرفیت و زمان‌بندی
+               ------------------------------------------------------------------ -->
+          <div class="event-modal-tab-pane" id="eventModalPane-timing" style="display: none;">
+            <!-- ظرفیت و حد نصاب -->
+            <div class="modal-form-section">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h4 class="modal-section-title" style="margin-bottom: 0;">🎯 حد نصاب ظرفیت رویداد</h4>
+                <span id="formEventCapacityCurrentCount" class="status-badge" style="background: #DCFCE7; color: #166534; font-size: 0.78rem;">
+                  تعداد حاضرین فعلی: ۰ نفر
+                </span>
+              </div>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px;">
+                حد نصاب صرفاً بر مبنای تعداد انتخاب «مایل به شرکت» محاسبه می‌شود. افراد با انتخاب «عدم تمایل» ظرفیت را اشغال نخواهند کرد.
+              </p>
+              <div class="form-group">
+                <label class="form-label">سقف ظرفیت مجاز (۰ یا خالی = نامحدود):</label>
+                <input type="number" class="form-input" id="formEventCapacity" min="0" placeholder="مثال: ۵۰">
+              </div>
+            </div>
+
+            <!-- مهلت زمانی ثبت‌نام -->
+            <div class="modal-form-section">
+              <h4 class="modal-section-title">⏰ مهلت زمانی ثبت‌نام</h4>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label class="form-label">تاریخ پایان ثبت‌نام (شمسی):</label>
+                  <input type="text" class="form-input" id="formEventDeadlineDate" placeholder="مثال: 1405/06/22">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">ساعت پایان ثبت‌نام:</label>
+                  <input type="text" class="form-input" id="formEventDeadlineTime" placeholder="مثال: 13:00">
+                </div>
+              </div>
+            </div>
+
+            <!-- تاریخ و ساعت پایان برگزاری رویداد -->
+            <div class="modal-form-section">
+              <h4 class="modal-section-title">🏁 زمان پایان برگزاری رویداد</h4>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px;">
+                جهت تشخیص هوشمند اتمام برنامه و تغییر خودکار به وضعیت انتظار نظرسنجی
+              </p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label class="form-label">تاریخ پایان رویداد (شمسی):</label>
+                  <input type="text" class="form-input" id="formEventEndDate" placeholder="مثال: 1405/06/22">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">ساعت پایان رویداد:</label>
+                  <input type="text" class="form-input" id="formEventEndTime" placeholder="مثال: 11:00">
+                </div>
+              </div>
+              <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+                <button type="button" class="btn-action btn-secondary" id="formEventBtnToggleClose" onclick="PortalUI.toggleEventClosureInModal()" style="font-size: 0.8rem;">
+                  بستن فوری ثبت‌نام
+                </button>
+              </div>
+            </div>
           </div>
+
+          <!-- ------------------------------------------------------------------
+               تب ۳: چرخه حیات و نظرسنجی
+               ------------------------------------------------------------------ -->
+          <div class="event-modal-tab-pane" id="eventModalPane-lifecycle" style="display: none;">
+            <div class="modal-form-section">
+              <h4 class="modal-section-title">وضعیت چرخه حیات رویداد (Lifecycle State)</h4>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 14px;">
+                تعیین نحوه تعامل همکاران با رویداد بر اساس مراحل پیشرفت برنامه
+              </p>
+
+              <div class="form-group">
+                <label class="form-label">انتخاب وضعیت رویداد:</label>
+                <select class="form-select" id="formEventStatus">
+                  <option value="active">🟢 رویداد جاری و در حال ثبت‌نام (ACTIVE)</option>
+                  <option value="pending">🟠 پایان‌یافته — در انتظار نظرسنجی (ENDED_PENDING_SURVEY)</option>
+                  <option value="survey">🔵 مرحله نظرسنجی فعال (SURVEY_ACTIVE)</option>
+                  <option value="closed">⚪ بسته شده و بایگانی (CLOSED)</option>
+                </select>
+              </div>
+
+              <div style="padding: 12px 14px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; line-height: 1.7; color: var(--text-secondary);">
+                <strong>راهنمای وضعیت‌ها:</strong><br>
+                • <strong>ACTIVE:</strong> همکاران مجاز می‌توانند وضعیت حضور خود را اعلام کنند.<br>
+                • <strong>ENDED_PENDING_SURVEY:</strong> مهلت به اتمام رسیده و رویداد خاتمه یافته است.<br>
+                • <strong>SURVEY_ACTIVE:</strong> دکمه شرکت در نظرسنجی برای حاضرین نمایش داده می‌شود.<br>
+                • <strong>CLOSED:</strong> ثبت‌نام و نظرسنجی متوقف شده و تنها گزارشات در دسترس است.
+              </div>
+            </div>
+          </div>
+
+          <!-- ------------------------------------------------------------------
+               تب ۴: دسترسی و اکسل مجازین
+               ------------------------------------------------------------------ -->
+          <div class="event-modal-tab-pane" id="eventModalPane-access" style="display: none;">
+            <div class="modal-form-section">
+              <h4 class="modal-section-title">اختصاصی‌سازی دسترسی ثبت‌نام با اکسل</h4>
+              <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 14px;">
+                در صورت بارگذاری فایل اکسل، تنها پرسنل موجود در آن مجاز به ثبت‌نام خواهند بود. در غیر این صورت رویداد عمومی است.
+              </p>
+
+              <div id="modalWhitelistStatusBox" style="padding: 10px 14px; background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.82rem; margin-bottom: 14px;">
+                <span id="modalWhitelistStatusText">وضعیت: عمومی (تمام پرسنل مجاز به ثبت‌نام)</span>
+              </div>
+
+              <div class="excel-drop-zone" id="modalExcelDropZone" onclick="document.getElementById('modalExcelFileInput').click()">
+                <input type="file" id="modalExcelFileInput" accept=".xlsx, .xls" style="display: none;" onchange="PortalUI.handleModalExcelUpload(event)">
+                <div style="width: 40px; height: 40px; background: #DCFCE7; color: #16A34A; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <div style="font-weight: 700; font-size: 0.88rem; color: var(--primary); margin-bottom: 4px;">
+                  آپلود فایل اکسل اسامی مجاز (.xlsx, .xls)
+                </div>
+                <p style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 8px;">
+                  ستون شماره پرسنلی به طور خودکار تطبیق داده خواهد شد.
+                </p>
+                <button type="button" class="btn-action btn-secondary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="event.stopPropagation(); PortalAccess.downloadSampleExcel();">
+                  دانلود فایل نمونه اکسل
+                </button>
+              </div>
+
+              <div id="modalWhitelistStatsRow" style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 0.8rem;">
+                <span id="modalWhitelistCountLabel" style="color: var(--text-secondary);">تعداد اسامی در حافظه: ۰ نفر</span>
+                <button type="button" class="btn-action btn-secondary" style="color: var(--danger); font-size: 0.76rem; height: 30px;" onclick="PortalUI.clearModalWhitelist()">
+                  حذف محدودیت و عمومی‌سازی
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
 
-        <!-- بخش ۲: زمان و مکان -->
-        <div class="modal-form-section">
-          <h4 class="modal-section-title">زمان و محل برگزاری</h4>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div class="form-group">
-              <label class="form-label">تاریخ برگزاری:</label>
-              <input type="text" class="form-input" id="formEventDate">
-            </div>
-            <div class="form-group">
-              <label class="form-label">ساعت حرکت / شروع:</label>
-              <input type="text" class="form-input" id="formEventTime">
-            </div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 0;">
-            <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label">ساعت بازگشت (در صورت وجود):</label>
-              <input type="text" class="form-input" id="formEventReturn">
-            </div>
-            <div class="form-group" style="margin-bottom: 0;">
-              <label class="form-label">محل تجمع:</label>
-              <input type="text" class="form-input" id="formEventLocation">
-            </div>
-          </div>
-        </div>
-
-        <!-- بخش ۳: ظرفیت و ثبت‌نام -->
-        <div class="modal-form-section">
-          <h4 class="modal-section-title">ظرفیت و وضعیت ثبت‌نام</h4>
-          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
-            <div class="form-group">
-              <label class="form-label">ظرفیت (۰ = نامحدود):</label>
-              <input type="number" class="form-input" id="formEventCapacity" min="0">
-            </div>
-            <div class="form-group">
-              <label class="form-label">تاریخ مهلت:</label>
-              <input type="text" class="form-input" id="formEventDeadlineDate">
-            </div>
-            <div class="form-group">
-              <label class="form-label">ساعت مهلت:</label>
-              <input type="text" class="form-input" id="formEventDeadlineTime">
-            </div>
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">وضعیت چرخه حیات رویداد:</label>
-            <select class="form-select" id="formEventStatus">
-              <option value="active">در حال ثبت‌نام (Active)</option>
-              <option value="survey">فعال‌سازی مرحله نظرسنجی (Survey)</option>
-              <option value="closed">پایان‌یافته / بسته شده (Closed)</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- بخش ۴: جزئیات، نکات و چک‌لیست -->
-        <div class="modal-form-section">
-          <h4 class="modal-section-title">ضوابط و ملزومات ضروری</h4>
-          <div class="form-group">
-            <label class="form-label">نکات و ضوابط (هر نکته در یک خط):</label>
-            <textarea class="form-textarea" id="formEventNotes" rows="2"></textarea>
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">چک‌لیست وسایل و تجهیزات (هر مورد در یک خط):</label>
-            <textarea class="form-textarea" id="formEventChecklist" rows="2"></textarea>
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px;">
+        <!-- پاورقی ثابت مودال -->
+        <div style="display: flex; gap: 8px; justify-content: flex-end; padding-top: 14px; border-top: 1px solid var(--border); margin-top: auto;">
           <button type="button" class="btn-action btn-secondary" onclick="document.getElementById('editEventModal').classList.remove('open')">
             انصراف
           </button>
-          <button type="submit" class="btn-action btn-primary" style="padding: 0 20px;">
-            ذخیره تغییرات
+          <button type="submit" class="btn-action btn-primary" style="padding: 0 22px;">
+            ذخیره تغییرات رویداد
           </button>
         </div>
       </form>
@@ -591,7 +930,10 @@
   </div>
 
   <!-- Scripts -->
+  <script src="../assets/js/xlsx.full.min.js"></script>
+  <script src="../assets/js/config.js"></script>
+  <script src="../assets/js/storage.js"></script>
   <script src="../assets/js/personnel-data.js?v=20260923_v3"></script>
-  <script src="app.js?v=20260923_v3"></script>
+  <script src="app.js?v=20260923_v4"></script>
 </body>
 </html>

@@ -280,12 +280,33 @@
       }
 
       this.saveAll(list);
+
+      // همگام‌سازی ناهمگام در پس‌زمینه با سرور ابری Supabase
+      if (typeof StorageService !== 'undefined' && typeof StorageService.saveRegistration === 'function') {
+        const ev = PortalEvents.getById(finalRecord.eventId) || {};
+        StorageService.saveRegistration({
+          id: finalRecord.id,
+          eventId: finalRecord.eventId,
+          eventTitle: ev.title || finalRecord.eventId,
+          personnelCode: finalRecord.personnelCode,
+          fullName: finalRecord.fullName,
+          status: finalRecord.status,
+          statusText: finalRecord.status === 'attending' ? 'مایل به شرکت در این برنامه هستم' : 'تمایلی به حضور ندارم'
+        }).catch(err => console.warn('Supabase background registration save notice:', err));
+      }
+
       return { success: true, record: finalRecord, isUpdate: existingIdx >= 0 };
     },
 
     deleteRegistration: function (id) {
-      const list = this.getAll().filter(r => r.id !== id);
-      this.saveAll(list);
+      const list = this.getAll();
+      const target = list.find(r => r.id === id);
+      const remaining = list.filter(r => r.id !== id);
+      this.saveAll(remaining);
+
+      if (target && typeof StorageService !== 'undefined' && typeof StorageService.deleteRegistration === 'function') {
+        StorageService.deleteRegistration(target.id, target.eventId, target.personnelCode).catch(err => console.warn('Supabase delete notice:', err));
+      }
     },
 
     updateStatus: function (id, newStatus) {
@@ -295,6 +316,19 @@
         item.status = newStatus;
         item.updatedAt = new Date().toISOString();
         this.saveAll(list);
+
+        if (typeof StorageService !== 'undefined' && typeof StorageService.saveRegistration === 'function') {
+          const ev = PortalEvents.getById(item.eventId) || {};
+          StorageService.saveRegistration({
+            id: item.id,
+            eventId: item.eventId,
+            eventTitle: ev.title || item.eventId,
+            personnelCode: item.personnelCode,
+            fullName: item.fullName,
+            status: item.status,
+            statusText: item.status === 'attending' ? 'مایل به شرکت در این برنامه هستم' : 'تمایلی به حضور ندارم'
+          }).catch(err => console.warn('Supabase status update notice:', err));
+        }
       }
     }
   };
@@ -512,6 +546,725 @@
   }
 
   // ==========================================================================
+  // CLOUD DATABASE SYNC ENGINE (SUPABASE POSTGRESQL & LOCALSTORAGE)
+  // ==========================================================================
+
+  const PortalDB = {
+    isSyncing: false,
+
+    syncFromSupabase: async function (isManual = false) {
+      if (this.isSyncing) return;
+      this.isSyncing = true;
+      this.updateStatus('syncing', 'در حال اتصال به دیتابیس ابری...');
+
+      try {
+        let rows = [];
+
+        // ۱. واکشی مستقیم از REST API پایگاه داده Supabase
+        const spConfig = (typeof getActiveSupabaseConfig === 'function') 
+          ? getActiveSupabaseConfig() 
+          : (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.supabase ? APP_CONFIG.supabase : null);
+
+        if (spConfig && spConfig.url && spConfig.anonKey) {
+          try {
+            const fetchUrl = `${spConfig.url}/rest/v1/${spConfig.table || 'registrations'}?select=*&order=created_at.desc`;
+            const resp = await fetch(fetchUrl, {
+              headers: {
+                'apikey': spConfig.anonKey,
+                'Authorization': `Bearer ${spConfig.anonKey}`,
+                'Accept': 'application/json'
+              }
+            });
+            if (resp.ok) {
+              const resJson = await resp.json();
+              if (Array.isArray(resJson)) rows = resJson;
+            }
+          } catch (fetchErr) {
+            console.warn('Direct fetch failed, falling back to StorageService:', fetchErr);
+          }
+        }
+
+        // اگر از REST واکشی نشد، از موتور پیش‌ساخته StorageService استفاده می‌کنیم
+        if (!Array.isArray(rows) || rows.length === 0) {
+          if (typeof StorageService !== 'undefined' && typeof StorageService.fetchRegistrations === 'function') {
+            const res = await StorageService.fetchRegistrations();
+            if (res && res.data && Array.isArray(res.data)) rows = res.data;
+          }
+        }
+
+        // ۲. پاکسازی و نرمال‌سازی داده‌ها و تطبیق با بانک پرسنلی
+        if (Array.isArray(rows) && rows.length > 0) {
+          const validRows = rows.filter(r => {
+            const ev = r.event_id || r.eventId || '';
+            const pc = String(r.personnel_code || r.personnelCode || '').trim();
+            return ev && ev !== '__settings__' && ev !== '__master_personnel__' && pc !== '__CONFIG__' && pc !== '__BANK__';
+          });
+
+          const normalized = validRows.map(r => {
+            const ev = r.event_id || r.eventId || '';
+            const pc = normalizeDigits(r.personnel_code || r.personnelCode || '');
+            let name = (r.full_name || r.fullName || '').trim();
+            let nat = normalizeDigits(r.national_code || r.nationalCode || r.nationalId || '');
+            let dept = r.department || '';
+
+            // تطبیق هوشمند نام و کد ملی در صورت خالی بودن
+            if (window.PERSONNEL_MAP) {
+              const cleanNoZero = pc.replace(/^0+/, '');
+              const found = window.PERSONNEL_MAP[pc] || window.PERSONNEL_MAP[cleanNoZero];
+              if (found) {
+                if (!name || name === pc) name = Array.isArray(found) ? found[0] : (found.name || pc);
+                if (!nat) nat = normalizeDigits(Array.isArray(found) ? found[1] : (found.nationalId || ''));
+                if (!dept) dept = Array.isArray(found) ? (found[2] || '') : (found.department || '');
+              }
+            }
+
+            const isAttend = (r.status === 'attending' || r.status === 'yes' || r.status === 'present');
+            const status = isAttend ? 'attending' : 'declined';
+            const timestamp = r.created_at || r.timestamp || new Date().toISOString();
+            const jalali = r.jalali_date || r.jalaliDate || formatJalaliDateTime(new Date(timestamp));
+
+            return {
+              id: r.id || ('reg_' + pc + '_' + ev),
+              eventId: ev,
+              event_id: ev,
+              eventTitle: r.event_title || r.eventTitle || '',
+              personnelCode: pc,
+              personnel_code: pc,
+              fullName: name || pc,
+              full_name: name || pc,
+              nationalId: nat,
+              national_code: nat,
+              department: dept,
+              status: status,
+              statusText: status === 'attending' ? 'مایل به شرکت در این برنامه هستم' : 'تمایلی به حضور ندارم',
+              status_text: status === 'attending' ? 'مایل به شرکت در این برنامه هستم' : 'تمایلی به حضور ندارم',
+              timestamp: timestamp,
+              jalaliDate: jalali,
+              jalali_date: jalali
+            };
+          });
+
+          // ذخیره در RegistrationService و کش StorageService
+          RegistrationService.saveAll(normalized);
+          if (typeof StorageService !== 'undefined' && typeof StorageService.setLocalRegistrations === 'function') {
+            StorageService.setLocalRegistrations(normalized);
+          }
+
+          this.updateStatus('connected', `متصل به سرور ابری (${normalized.length.toLocaleString('fa-IR')} ثبت‌نام)`);
+          if (isManual) {
+            showToast(`همگام‌سازی ابری با موفقیت انجام شد (${normalized.length.toLocaleString('fa-IR')} رکورد ثبت‌نام دریافت شد).`, 'success');
+          }
+        } else {
+          this.updateStatus('connected', 'متصل به سرور ابری (دیتابیس آماده)');
+        }
+
+        // ۳. واکشی تنظیمات و وضعیت‌های چرخه حیات از سرور ابری
+        if (typeof StorageService !== 'undefined' && typeof StorageService.getAllEventSettings === 'function') {
+          try {
+            const remoteSettings = await StorageService.getAllEventSettings();
+            if (remoteSettings && typeof remoteSettings === 'object') {
+              const currentEvents = PortalEvents.getAll();
+              let hasChange = false;
+
+              Object.keys(remoteSettings).forEach(evId => {
+                const s = remoteSettings[evId];
+                if (!s) return;
+                const idx = currentEvents.findIndex(e => e.id === evId);
+                const custom = s.customTexts || {};
+
+                const updatedData = {
+                  capacity: (s.capacity !== undefined) ? s.capacity : undefined,
+                  deadlineDate: s.deadlineDate || undefined,
+                  deadlineTime: s.deadlineTime || undefined,
+                  eventEndDate: s.eventEndDate || undefined,
+                  eventEndTime: s.eventEndTime || undefined,
+                  isClosed: (s.isClosed !== undefined) ? !!s.isClosed : undefined,
+                  isRestricted: (s.isRestricted !== undefined) ? !!s.isRestricted : undefined,
+                  allowedPersonnel: Array.isArray(s.allowedPersonnel) ? s.allowedPersonnel : undefined,
+                  title: custom.title || undefined,
+                  subtitle: custom.subtitle || undefined,
+                  tag: custom.tag || undefined,
+                  dateText: custom.dateText || undefined,
+                  timeText: custom.timeText || undefined,
+                  locationText: custom.locationText || undefined,
+                  posterUrl: custom.posterUrl || undefined,
+                  status: s.lifecycleState ? (s.lifecycleState === 'ACTIVE' ? 'active' : s.lifecycleState === 'SURVEY_ACTIVE' ? 'survey' : s.lifecycleState === 'ENDED_PENDING_SURVEY' ? 'pending' : 'closed') : undefined
+                };
+
+                Object.keys(updatedData).forEach(k => updatedData[k] === undefined && delete updatedData[k]);
+
+                if (idx >= 0) {
+                  currentEvents[idx] = Object.assign({}, currentEvents[idx], updatedData);
+                  hasChange = true;
+                }
+              });
+
+              if (hasChange) {
+                PortalEvents.saveAll(currentEvents);
+              }
+            }
+          } catch (settingsErr) {
+            console.warn('Could not load remote event settings:', settingsErr);
+          }
+        }
+
+        // ۴. بازنشانی رابط کاربری
+        if (window.PortalUI) {
+          PortalUI.renderHomeOverview();
+          PortalUI.renderEventsGrid();
+          if (PortalAuth.isAdmin()) {
+            PortalUI.renderAdminDashboard();
+            PortalUI.renderEventsManagerList();
+            if (window.PortalAccess && typeof window.PortalAccess.refresh === 'function') {
+              window.PortalAccess.refresh();
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error syncing with Supabase:', err);
+        this.updateStatus('error', 'خطا در اتصال به سرور ابری');
+        if (isManual) {
+          showToast('خطا در ارتباط با پایگاه داده ابری. از داده‌های محلی استفاده شد.', 'error');
+        }
+      } finally {
+        this.isSyncing = false;
+      }
+    },
+
+    updateStatus: function (state, text) {
+      const elText = document.getElementById('cloudSyncText');
+      const elStatus = document.getElementById('cloudSyncStatus');
+      if (elText) elText.textContent = text;
+      if (elStatus) {
+        if (state === 'syncing') {
+          elStatus.style.background = '#FEF3C7';
+          elStatus.style.color = '#B45309';
+          elStatus.style.borderColor = '#FDE68A';
+        } else if (state === 'connected') {
+          elStatus.style.background = '#DCFCE7';
+          elStatus.style.color = '#166534';
+          elStatus.style.borderColor = '#BBF7D0';
+        } else {
+          elStatus.style.background = '#FEE2E2';
+          elStatus.style.color = '#991B1B';
+          elStatus.style.borderColor = '#FECACA';
+        }
+      }
+    }
+  };
+
+  // ==========================================================================
+  // ACCESS CONTROL HUB (WHITELIST, EXCEL UPLOAD & USER RESTRICTION ENGINE)
+  // ==========================================================================
+
+  const PortalAccess = {
+    activeEventId: null,
+    currentWhitelist: [],
+    searchQuery: '',
+
+    init: function () {
+      const events = PortalEvents.getAll();
+      const select = document.getElementById('accessEventSelect');
+      if (!select) return;
+
+      select.innerHTML = events.map(ev => `<option value="${ev.id}">${ev.title} (${ev.category || 'رویداد'})</option>`).join('');
+
+      if (!this.activeEventId && events.length > 0) {
+        this.activeEventId = events[0].id;
+      }
+      select.value = this.activeEventId;
+      this.loadEventWhitelist(this.activeEventId);
+      this.bindDropZone();
+    },
+
+    onEventChange: function () {
+      const select = document.getElementById('accessEventSelect');
+      if (!select) return;
+      this.activeEventId = select.value;
+      this.loadEventWhitelist(this.activeEventId);
+    },
+
+    refresh: function () {
+      if (this.activeEventId) {
+        this.loadEventWhitelist(this.activeEventId);
+      } else {
+        this.init();
+      }
+    },
+
+    loadEventWhitelist: function (eventId) {
+      this.activeEventId = eventId;
+      const ev = PortalEvents.getById(eventId);
+      let list = [];
+      let isRestricted = false;
+
+      if (ev) {
+        isRestricted = !!ev.isRestricted;
+        if (Array.isArray(ev.allowedPersonnel)) {
+          list = ev.allowedPersonnel;
+        }
+      }
+
+      // چک از کش StorageService
+      try {
+        const raw = localStorage.getItem('entekhab_events_deadlines_config') || localStorage.getItem('entekhab_events_deadlines');
+        if (raw) {
+          const all = JSON.parse(raw);
+          if (all && all[eventId]) {
+            if (all[eventId].isRestricted !== undefined) isRestricted = !!all[eventId].isRestricted;
+            if (Array.isArray(all[eventId].allowedPersonnel) && all[eventId].allowedPersonnel.length > 0) {
+              list = all[eventId].allowedPersonnel;
+            }
+          }
+        }
+      } catch (e) {}
+
+      // نرمال‌سازی آیتم‌ها
+      this.currentWhitelist = list.map(item => {
+        let code = '', name = '', nat = '', dept = '';
+        if (typeof item === 'string' || typeof item === 'number') {
+          code = normalizeDigits(item);
+        } else if (item && typeof item === 'object') {
+          code = normalizeDigits(item.code || item.personnelCode || '');
+          name = item.name || item.fullName || '';
+          nat = normalizeDigits(item.nationalCode || item.nationalId || '');
+          dept = item.department || '';
+        }
+
+        const cleanNoZero = code.replace(/^0+/, '');
+        let matched = false;
+        if (window.PERSONNEL_MAP && (window.PERSONNEL_MAP[code] || window.PERSONNEL_MAP[cleanNoZero])) {
+          const entry = window.PERSONNEL_MAP[code] || window.PERSONNEL_MAP[cleanNoZero];
+          matched = true;
+          if (!name || name === code) name = Array.isArray(entry) ? entry[0] : (entry.name || code);
+          if (!nat) nat = normalizeDigits(Array.isArray(entry) ? entry[1] : (entry.nationalId || ''));
+          if (!dept) dept = Array.isArray(entry) ? (entry[2] || '') : (entry.department || '');
+        }
+
+        return {
+          code: code,
+          name: name || 'نامشخص در سیستم',
+          nationalId: nat || '-',
+          department: dept || '-',
+          matched: matched
+        };
+      });
+
+      this.updateStatusBadge(isRestricted, this.currentWhitelist.length);
+      this.renderTable();
+    },
+
+    updateStatusBadge: function (isRestricted, count) {
+      const box = document.getElementById('accessStatusBadgeBox');
+      const text = document.getElementById('accessStatusText');
+      const countBadge = document.getElementById('accessWhitelistBadgeCount');
+
+      if (countBadge) {
+        countBadge.textContent = `تعداد مجازین: ${count.toLocaleString('fa-IR')} نفر`;
+      }
+
+      if (!box || !text) return;
+
+      if (isRestricted && count > 0) {
+        box.style.background = '#FEF3C7';
+        box.style.borderColor = '#FDE68A';
+        text.innerHTML = `<span style="color:#B45309; font-weight:700;">● دسترسی انحصاری و اختصاصی</span> — محدود به <strong>${count.toLocaleString('fa-IR')} نفر</strong> همکار مجاز`;
+      } else {
+        box.style.background = '#EFF6FF';
+        box.style.borderColor = '#BFDBFE';
+        text.innerHTML = `<span style="color:#1E40AF; font-weight:700;">● دسترسی عمومی</span> — کلیه پرسنل سازمان مجاز به ثبت‌نام در این رویداد هستند`;
+      }
+    },
+
+    renderTable: function () {
+      const tbody = document.getElementById('accessWhitelistTableBody');
+      const emptyNotice = document.getElementById('accessEmptyWhitelistNotice');
+      if (!tbody) return;
+
+      let items = this.currentWhitelist;
+      if (this.searchQuery) {
+        const q = this.searchQuery.toLowerCase();
+        items = items.filter(it => 
+          it.code.includes(q) || 
+          it.name.toLowerCase().includes(q) || 
+          it.nationalId.includes(q) ||
+          it.department.toLowerCase().includes(q)
+        );
+      }
+
+      if (this.currentWhitelist.length === 0) {
+        tbody.innerHTML = '';
+        if (emptyNotice) emptyNotice.style.display = 'block';
+        return;
+      }
+
+      if (emptyNotice) emptyNotice.style.display = 'none';
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:var(--text-muted);">موردی مطابق با جستجوی شما یافت نشد.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map((item, idx) => `
+        <tr>
+          <td style="text-align: center; color: var(--text-muted); font-size: 0.78rem;">${(idx + 1).toLocaleString('fa-IR')}</td>
+          <td><strong style="font-family: monospace; font-size: 0.9rem; color: var(--primary);">${item.code}</strong></td>
+          <td style="font-weight: 600; color: var(--text-primary);">${item.name}</td>
+          <td style="color: var(--text-secondary); font-size: 0.82rem;">${item.nationalId}</td>
+          <td style="color: var(--text-secondary); font-size: 0.82rem;">${item.department}</td>
+          <td>
+            ${item.matched 
+              ? '<span class="status-badge" style="background:#DCFCE7; color:#166534; font-size:0.74rem;">✓ تأیید دیتابیس</span>'
+              : '<span class="status-badge" style="background:#F1F5F9; color:#475569; font-size:0.74rem;">ثبت دستی</span>'
+            }
+          </td>
+          <td>
+            <button type="button" class="btn-action btn-ghost" style="color: var(--danger); height: 28px; padding: 0 8px; font-size: 0.76rem;" onclick="PortalAccess.removePersonnel('${item.code}')" title="حذف از لیست مجازین">
+              ${SVG.trash}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    },
+
+    filterTable: function (query) {
+      this.searchQuery = (query || '').trim();
+      this.renderTable();
+    },
+
+    onSingleCodeInput: function (val) {
+      const preview = document.getElementById('accessSingleLookupPreview');
+      if (!preview) return;
+      const code = normalizeDigits(val);
+      if (!code) {
+        preview.textContent = 'شماره پرسنلی را وارد نمایید...';
+        preview.style.color = 'var(--text-muted)';
+        return;
+      }
+
+      const lookup = PersonnelService.lookup(code);
+      if (lookup) {
+        preview.innerHTML = `<strong style="color: var(--primary);">${lookup.name}</strong> <span style="margin-right:8px; color:var(--text-muted); font-size:0.78rem;">(کد ملی: ${lookup.nationalId})</span>`;
+      } else {
+        preview.innerHTML = `<span style="color: var(--warning);">همکار با این شماره در بانک سازمانی شناسایی نشد (ثبت به صورت دستی انجام می‌شود).</span>`;
+      }
+    },
+
+    handleSingleAdd: function (e) {
+      e.preventDefault();
+      if (!this.activeEventId) {
+        showToast('لطفاً ابتدا رویداد مورد نظر را انتخاب فرمایید.', 'error');
+        return;
+      }
+
+      const input = document.getElementById('accessSingleCode');
+      if (!input) return;
+      const code = normalizeDigits(input.value);
+      if (!code) return;
+
+      if (this.currentWhitelist.some(it => it.code === code || it.code.replace(/^0+/, '') === code.replace(/^0+/, ''))) {
+        showToast(`شماره پرسنلی ${code} در حال حاضر در لیست مجازین وجود دارد.`, 'info');
+        return;
+      }
+
+      const lookup = PersonnelService.lookup(code);
+      const newItem = {
+        code: code,
+        name: lookup ? lookup.name : `پرسنل ${code}`,
+        nationalId: lookup ? lookup.nationalId : '-',
+        department: lookup ? (lookup.department || '-') : '-',
+        matched: !!lookup
+      };
+
+      this.currentWhitelist.push(newItem);
+      this.saveLocalAndRender(true);
+      input.value = '';
+      this.onSingleCodeInput('');
+      showToast(`${newItem.name} (${code}) با موفقیت به لیست مجازین اضافه شد.`, 'success');
+    },
+
+    removePersonnel: function (code) {
+      this.currentWhitelist = this.currentWhitelist.filter(it => it.code !== code && it.code.replace(/^0+/, '') !== code.replace(/^0+/, ''));
+      const isRestricted = this.currentWhitelist.length > 0;
+      this.saveLocalAndRender(isRestricted);
+      showToast(`شماره پرسنلی ${code} از لیست مجازین حذف گردید.`, 'info');
+    },
+
+    clearCurrentWhitelist: function () {
+      if (!this.activeEventId) return;
+      if (confirm('آیا از عمومی‌سازی رویداد و حذف کلیه محدودیت‌های دسترسی اطمینان دارید؟ با این کار تمامی پرسنل مجاز به ثبت‌نام خواهند بود.')) {
+        this.currentWhitelist = [];
+        this.saveLocalAndRender(false);
+
+        if (typeof StorageService !== 'undefined' && typeof StorageService.clearEventAllowedPersonnel === 'function') {
+          StorageService.clearEventAllowedPersonnel(this.activeEventId);
+        }
+        showToast('رویداد با موفقیت به حالت عمومی تغییر یافت.', 'success');
+      }
+    },
+
+    bindDropZone: function () {
+      const dropZone = document.getElementById('accessExcelDropZone');
+      if (!dropZone) return;
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.add('dragover');
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.classList.remove('dragover');
+        }, false);
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length > 0) {
+          this.parseExcelFile(files[0]);
+        }
+      });
+    },
+
+    handleExcelUpload: function (e) {
+      const files = e.target.files;
+      if (files && files.length > 0) {
+        this.parseExcelFile(files[0]);
+        e.target.value = '';
+      }
+    },
+
+    parseExcelFile: function (file) {
+      if (!this.activeEventId) {
+        showToast('لطفاً ابتدا یک رویداد را انتخاب نمایید.', 'error');
+        return;
+      }
+      if (typeof XLSX === 'undefined') {
+        showToast('کتابخانه اکسل لود نشده است.', 'error');
+        return;
+      }
+
+      const notice = document.getElementById('accessExcelNotice');
+      if (notice) {
+        notice.textContent = 'در حال خواندن و استخراج مشخصات از فایل اکسل...';
+        notice.style.display = 'block';
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[firstSheetName];
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+          if (!json || json.length === 0) {
+            showToast('فایل اکسل انتخاب‌شده خالی است.', 'error');
+            if (notice) notice.style.display = 'none';
+            return;
+          }
+
+          let codeColIdx = -1;
+          let nameColIdx = -1;
+          let natColIdx = -1;
+          let deptColIdx = -1;
+          let startRow = 0;
+
+          for (let r = 0; r < Math.min(json.length, 5); r++) {
+            const row = json[r];
+            for (let c = 0; c < row.length; c++) {
+              const cell = String(row[c] || '').trim().toLowerCase();
+              if (cell.includes('پرسنلی') || cell.includes('personnel') || cell === 'کد' || cell === 'code') {
+                codeColIdx = c;
+                startRow = r + 1;
+              }
+              if (cell.includes('نام') || cell.includes('name')) nameColIdx = c;
+              if (cell.includes('ملی') || cell.includes('national')) natColIdx = c;
+              if (cell.includes('واحد') || cell.includes('قسمت') || cell.includes('department')) deptColIdx = c;
+            }
+            if (codeColIdx >= 0) break;
+          }
+
+          if (codeColIdx === -1) {
+            for (let r = 0; r < Math.min(json.length, 10); r++) {
+              const row = json[r];
+              for (let c = 0; c < row.length; c++) {
+                const val = normalizeDigits(row[c]);
+                if (/^\d{5,7}$/.test(val)) {
+                  codeColIdx = c;
+                  startRow = r;
+                  break;
+                }
+              }
+              if (codeColIdx >= 0) break;
+            }
+          }
+
+          if (codeColIdx === -1) {
+            showToast('ستون شماره پرسنلی در فایل اکسل شناسایی نشد.', 'error');
+            if (notice) notice.style.display = 'none';
+            return;
+          }
+
+          const extractedList = [];
+          const seen = new Set();
+
+          for (let i = startRow; i < json.length; i++) {
+            const row = json[i];
+            if (!row) continue;
+            const rawCode = normalizeDigits(row[codeColIdx]);
+            if (!rawCode || !/^\d{4,8}$/.test(rawCode)) continue;
+            const cleanCode = rawCode.replace(/^0+/, '');
+
+            if (seen.has(rawCode) || seen.has(cleanCode)) continue;
+            seen.add(rawCode);
+            seen.add(cleanCode);
+
+            let name = nameColIdx >= 0 ? String(row[nameColIdx] || '').trim() : '';
+            let nat = natColIdx >= 0 ? normalizeDigits(row[natColIdx]) : '';
+            let dept = deptColIdx >= 0 ? String(row[deptColIdx] || '').trim() : '';
+
+            let matched = false;
+            if (window.PERSONNEL_MAP) {
+              const found = window.PERSONNEL_MAP[rawCode] || window.PERSONNEL_MAP[cleanCode];
+              if (found) {
+                matched = true;
+                if (!name) name = Array.isArray(found) ? found[0] : (found.name || rawCode);
+                if (!nat) nat = normalizeDigits(Array.isArray(found) ? found[1] : (found.nationalId || ''));
+                if (!dept) dept = Array.isArray(found) ? (found[2] || '') : (found.department || '');
+              }
+            }
+
+            extractedList.push({
+              code: rawCode,
+              name: name || `پرسنل ${rawCode}`,
+              nationalId: nat || '-',
+              department: dept || '-',
+              matched: matched
+            });
+          }
+
+          if (extractedList.length === 0) {
+            showToast('هیچ کد پرسنلی معتبری در فایل اکسل یافت نشد.', 'error');
+            if (notice) notice.style.display = 'none';
+            return;
+          }
+
+          this.currentWhitelist = extractedList;
+          this.saveLocalAndRender(true);
+
+          if (notice) notice.style.display = 'none';
+          showToast(`فایل اکسل با موفقیت پردازش شد. ${extractedList.length.toLocaleString('fa-IR')} همکار به لیست مجازین اضافه شدند.`, 'success');
+
+          // ثبت خودکار در سرور ابری
+          this.saveWhitelistToCloud(false);
+        } catch (err) {
+          console.error('Error parsing excel:', err);
+          showToast('خطا در خواندن فایل اکسل.', 'error');
+          if (notice) notice.style.display = 'none';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    },
+
+    saveLocalAndRender: function (isRestricted) {
+      if (!this.activeEventId) return;
+
+      const ev = PortalEvents.getById(this.activeEventId);
+      if (ev) {
+        ev.isRestricted = isRestricted;
+        ev.allowedPersonnel = this.currentWhitelist.map(it => it.code);
+        PortalEvents.saveEvent(ev);
+      }
+
+      try {
+        const raw = localStorage.getItem('entekhab_events_deadlines_config') || '{}';
+        const all = JSON.parse(raw);
+        if (!all[this.activeEventId]) all[this.activeEventId] = {};
+        all[this.activeEventId].isRestricted = isRestricted;
+        all[this.activeEventId].allowedPersonnel = this.currentWhitelist.map(it => it.code);
+        localStorage.setItem('entekhab_events_deadlines_config', JSON.stringify(all));
+      } catch (e) {}
+
+      this.updateStatusBadge(isRestricted, this.currentWhitelist.length);
+      this.renderTable();
+    },
+
+    saveWhitelistToCloud: async function (showFeedback = true) {
+      if (!this.activeEventId) return;
+      const isRestricted = this.currentWhitelist.length > 0;
+      const codes = this.currentWhitelist.map(it => it.code);
+
+      if (typeof StorageService !== 'undefined' && typeof StorageService.saveEventAllowedPersonnel === 'function') {
+        try {
+          await StorageService.saveEventAllowedPersonnel(this.activeEventId, codes, isRestricted);
+          if (showFeedback) {
+            showToast(`لیست مجازین (${codes.length.toLocaleString('fa-IR')} نفر) با موفقیت در پایگاه داده ابری ثبت شد.`, 'success');
+          }
+        } catch (err) {
+          console.warn('Cloud whitelist save error:', err);
+          if (showFeedback) {
+            showToast('خطا در ذخیره ابری لیست مجازین.', 'error');
+          }
+        }
+      }
+    },
+
+    exportCurrentWhitelistExcel: function () {
+      if (this.currentWhitelist.length === 0) {
+        showToast('لیست مجازین خالی است.', 'info');
+        return;
+      }
+      if (typeof XLSX === 'undefined') {
+        showToast('کتابخانه اکسل در دسترس نیست.', 'error');
+        return;
+      }
+
+      const rows = this.currentWhitelist.map((item, idx) => ({
+        'ردیف': idx + 1,
+        'شماره پرسنلی': item.code,
+        'نام و نام خانوادگی': item.name,
+        'کد ملی': item.nationalId,
+        'واحد سازمانی': item.department,
+        'وضعیت تطبیق': item.matched ? 'تأیید دیتابیس' : 'ثبت دستی'
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'لیست مجازین');
+      const filename = `مجازین_${this.activeEventId}_${formatJalaliDateTime().split(' ')[0].replace(/\//g, '-')}.xlsx`;
+      XLSX.writeFile(wb, filename);
+      showToast('خروجی اکسل با موفقیت ایجاد گردید.', 'success');
+    },
+
+    downloadSampleExcel: function () {
+      if (typeof XLSX === 'undefined') {
+        showToast('کتابخانه اکسل در دسترس نیست.', 'error');
+        return;
+      }
+
+      const sampleRows = [
+        { 'شماره پرسنلی': '992113', 'نام و نام خانوادگی': 'مارال پورمند', 'کد ملی': '1272744868', 'واحد سازمانی': 'فناوری اطلاعات' },
+        { 'شماره پرسنلی': '980253', 'نام و نام خانوادگی': 'حسن لندی اصفهانی', 'کد ملی': '1272126803', 'واحد سازمانی': 'مدیریت ارشد' },
+        { 'شماره پرسنلی': '990101', 'نام و نام خانوادگی': 'علی رضایی', 'کد ملی': '1280001122', 'واحد سازمانی': 'توسعه بازار' }
+      ];
+
+      const ws = XLSX.utils.json_to_sheet(sampleRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'نمونه پرسنل مجاز');
+      XLSX.writeFile(wb, 'نمونه_لیست_مجازین_رویداد.xlsx');
+      showToast('فایل نمونه اکسل دانلود شد.', 'success');
+    }
+  };
+
+  // ==========================================================================
   // UI RENDER ENGINE (ENTERPRISE MINIMALIST REDESIGN)
   // ==========================================================================
 
@@ -565,7 +1318,7 @@
 
       this.updateAdminVisibility();
 
-      if ((this.activeTab === 'dashboard' || this.activeTab === 'settings') && !user.isAdmin) {
+      if ((this.activeTab === 'dashboard' || this.activeTab === 'settings' || this.activeTab === 'access') && !user.isAdmin) {
         this.switchTab('home');
       } else {
         this.switchTab(this.activeTab || 'home');
@@ -577,14 +1330,17 @@
       if (user.isAdmin) {
         this.renderAdminDashboard();
         this.renderAdminSettings();
+        if (window.PortalAccess && typeof window.PortalAccess.refresh === 'function') {
+          window.PortalAccess.refresh();
+        }
       }
     },
 
     switchTab: function (tabName) {
       const user = PortalAuth.getCurrentUser();
 
-      // Guard admin tabs strictly
-      if ((tabName === 'dashboard' || tabName === 'settings') && (!user || !user.isAdmin)) {
+      // Guard admin tabs strictly (Only 992113 & 980253)
+      if ((tabName === 'dashboard' || tabName === 'settings' || tabName === 'access') && (!user || !user.isAdmin)) {
         showToast('دسترسی به این بخش صرفاً برای مدیران سامانه مجاز است.', 'error');
         tabName = 'home';
       }
@@ -611,6 +1367,8 @@
         this.renderEventsGrid();
       } else if (tabName === 'dashboard') {
         if (user && user.isAdmin) this.renderAdminDashboard();
+      } else if (tabName === 'access') {
+        if (user && user.isAdmin) PortalAccess.init();
       } else if (tabName === 'settings') {
         if (user && user.isAdmin) this.renderAdminSettings();
       } else if (tabName === 'notifications') {
@@ -690,21 +1448,22 @@
       let allowedPersonnel = Array.isArray(ev.allowedPersonnel) ? ev.allowedPersonnel : [];
 
       try {
-        const deadlinesRaw = localStorage.getItem('entekhab_events_deadlines');
-        if (deadlinesRaw) {
-          const deadlines = JSON.parse(deadlinesRaw);
+        const raw = localStorage.getItem('entekhab_events_deadlines_config') || localStorage.getItem('entekhab_events_deadlines');
+        if (raw) {
+          const deadlines = JSON.parse(raw);
           if (deadlines && deadlines[ev.id]) {
-            if (deadlines[ev.id].isRestricted) {
-              isRestricted = true;
-              if (Array.isArray(deadlines[ev.id].allowedPersonnel) && deadlines[ev.id].allowedPersonnel.length > 0) {
-                allowedPersonnel = deadlines[ev.id].allowedPersonnel;
-              }
+            if (deadlines[ev.id].isRestricted !== undefined) {
+              isRestricted = !!deadlines[ev.id].isRestricted;
+            }
+            if (Array.isArray(deadlines[ev.id].allowedPersonnel) && deadlines[ev.id].allowedPersonnel.length > 0) {
+              allowedPersonnel = deadlines[ev.id].allowedPersonnel;
             }
           }
         }
       } catch (e) {}
 
-      if (isRestricted && allowedPersonnel.length > 0) {
+      if (isRestricted) {
+        if (!allowedPersonnel || allowedPersonnel.length === 0) return false;
         return allowedPersonnel.some(item => {
           if (!item) return false;
           let c = '', n = '';
@@ -1439,6 +2198,32 @@
         return;
       }
 
+      if (typeof XLSX !== 'undefined') {
+        const rows = regs.map((r, idx) => {
+          const ev = events.find(e => e.id === r.eventId) || { title: r.eventId };
+          const statusText = r.status === 'attending' ? 'مایل به شرکت' : 'تمایلی به حضور ندارم';
+          return {
+            'ردیف': idx + 1,
+            'کد پرسنلی': r.personnelCode,
+            'نام و نام خانوادگی': r.fullName,
+            'کد ملی': r.nationalId || '',
+            'عنوان رویداد': ev.title,
+            'وضعیت حضور': statusText,
+            'تاریخ ثبت': r.jalaliDate || '',
+            'توضیحات': r.note || ''
+          };
+        });
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'ثبت‌نام‌ها');
+        const filename = `گزارش_جامع_ثبت_نام_${formatJalaliDateTime().split(' ')[0].replace(/\//g, '-')}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        showToast('گزارش اکسل با موفقیت دانلود شد.', 'success');
+        return;
+      }
+
+      // Fallback to CSV
       let csv = '\uFEFF';
       csv += 'ردیف,کد پرسنلی,نام و نام خانوادگی,کد ملی,عنوان رویداد,وضعیت حضور,تاریخ ثبت,توضیحات\n';
 
@@ -1458,7 +2243,7 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      showToast('گزارش اکسل با موفقیت دانلود شد.', 'success');
+      showToast('گزارش اکسل (CSV) با موفقیت دانلود شد.', 'success');
     },
 
     generateSMS: function () {
@@ -1519,7 +2304,7 @@
         <div class="event-manager-item">
           <div class="event-manager-info">
             <h4>${ev.title} <span class="event-category-tag" style="background: var(--primary-soft); color: var(--primary); font-size: 0.7rem;">${ev.category || ''}</span></h4>
-            <p>${ev.subtitle || ''} · وضعیت: <strong>${ev.status === 'active' ? 'در حال ثبت‌نام' : ev.status === 'survey' ? 'نظرسنجی فعال' : 'بسته شده'}</strong> · ظرفیت: ${ev.capacity > 0 ? ev.capacity : 'نامحدود'}</p>
+            <p>${ev.subtitle || ''} · وضعیت: <strong>${ev.status === 'active' ? 'در حال ثبت‌نام' : ev.status === 'survey' ? 'نظرسنجی فعال' : ev.status === 'pending' ? 'پایان‌یافته (در انتظار نظرسنجی)' : 'بسته شده'}</strong> · ظرفیت: ${ev.capacity > 0 ? ev.capacity : 'نامحدود'}</p>
           </div>
           <div style="display: flex; gap: 8px;">
             <button class="btn-action btn-secondary" style="height: 32px; padding: 0 10px; font-size: 0.78rem;" onclick="PortalUI.openEditEventModal('${ev.id}')">
@@ -1533,12 +2318,33 @@
       `).join('');
     },
 
+    switchModalTab: function (tabKey) {
+      document.querySelectorAll('#eventModalTabsHeader .modal-tab-btn').forEach(btn => {
+        if (btn.dataset.modaltab === tabKey) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      document.querySelectorAll('.event-modal-tab-pane').forEach(pane => {
+        if (pane.id === `eventModalPane-${tabKey}`) {
+          pane.style.display = 'block';
+        } else {
+          pane.style.display = 'none';
+        }
+      });
+    },
+
     openAddEventModal: function () {
       const modal = document.getElementById('editEventModal');
       const form = document.getElementById('editEventForm');
       document.getElementById('editEventModalTitle').textContent = 'افزودن رویداد جدید به سامانه';
       form.reset();
       document.getElementById('formEventId').value = '';
+      document.getElementById('formEventPosterUrl').value = '';
+      this.updateModalPosterUI('');
+      this.switchModalTab('texts');
       modal.classList.add('open');
     },
 
@@ -1547,30 +2353,245 @@
       if (!ev) return;
 
       const modal = document.getElementById('editEventModal');
-      document.getElementById('editEventModalTitle').textContent = `ویرایش رویداد: ${ev.title}`;
+      document.getElementById('editEventModalTitle').textContent = `ویرایش مشخصات: ${ev.title}`;
 
+      // تب ۱: مشخصات و متون
       document.getElementById('formEventId').value = ev.id;
       document.getElementById('formEventTitle').value = ev.title || '';
+      document.getElementById('formEventTag').value = ev.tag || '';
       document.getElementById('formEventCategory').value = ev.category || '';
       document.getElementById('formEventSubtitle').value = ev.subtitle || '';
       document.getElementById('formEventDate').value = ev.dateText || '';
       document.getElementById('formEventTime').value = ev.timeText || '';
       document.getElementById('formEventReturn').value = ev.returnText || '';
       document.getElementById('formEventLocation').value = ev.locationText || '';
+      document.getElementById('formEventNotes').value = (ev.notes || []).join('\n');
+      document.getElementById('formEventChecklist').value = (ev.checklist || []).join('\n');
+      document.getElementById('formEventBtnAttendText').value = ev.btnAttendText || 'مایل به شرکت در این برنامه هستم';
+      document.getElementById('formEventBtnDeclineText').value = ev.btnDeclineText || 'تمایلی به حضور ندارم';
+
+      // پوستر
+      document.getElementById('formEventPosterUrl').value = ev.posterUrl || '';
+      this.updateModalPosterUI(ev.posterUrl || '');
+
+      // تب ۲: ظرفیت و زمان‌بندی
       document.getElementById('formEventCapacity').value = ev.capacity || 0;
       document.getElementById('formEventDeadlineDate').value = ev.deadlineDate || '';
       document.getElementById('formEventDeadlineTime').value = ev.deadlineTime || '';
-      document.getElementById('formEventStatus').value = ev.status || 'active';
-      document.getElementById('formEventNotes').value = (ev.notes || []).join('\n');
-      document.getElementById('formEventChecklist').value = (ev.checklist || []).join('\n');
+      document.getElementById('formEventEndDate').value = ev.eventEndDate || '';
+      document.getElementById('formEventEndTime').value = ev.eventEndTime || '';
 
+      const attendingCount = RegistrationService.getAll().filter(r => r.eventId === ev.id && r.status === 'attending').length;
+      const countEl = document.getElementById('formEventCapacityCurrentCount');
+      if (countEl) countEl.textContent = `تعداد حاضرین فعلی: ${attendingCount.toLocaleString('fa-IR')} نفر`;
+
+      const closeBtn = document.getElementById('formEventBtnToggleClose');
+      if (closeBtn) closeBtn.textContent = ev.isClosed ? 'بازگشایی ثبت‌نام' : 'بستن فوری ثبت‌نام';
+
+      // تب ۳: چرخه حیات
+      document.getElementById('formEventStatus').value = ev.status || 'active';
+
+      // تب ۴: دسترسی و اکسل
+      const isRestricted = !!ev.isRestricted;
+      const allowed = Array.isArray(ev.allowedPersonnel) ? ev.allowedPersonnel : [];
+      const wlCountLabel = document.getElementById('modalWhitelistCountLabel');
+      const wlStatusBox = document.getElementById('modalWhitelistStatusBox');
+      const wlStatusText = document.getElementById('modalWhitelistStatusText');
+
+      if (wlCountLabel) wlCountLabel.textContent = `تعداد اسامی در حافظه: ${allowed.length.toLocaleString('fa-IR')} نفر`;
+      if (isRestricted && allowed.length > 0) {
+        if (wlStatusBox) {
+          wlStatusBox.style.background = '#FEF3C7';
+          wlStatusBox.style.borderColor = '#FDE68A';
+        }
+        if (wlStatusText) wlStatusText.innerHTML = `<span style="color:#B45309; font-weight:700;">وضعیت دسترسی:</span> محدود به <strong>${allowed.length.toLocaleString('fa-IR')} نفر</strong> همکار مجاز`;
+      } else {
+        if (wlStatusBox) {
+          wlStatusBox.style.background = '#EFF6FF';
+          wlStatusBox.style.borderColor = '#BFDBFE';
+        }
+        if (wlStatusText) wlStatusText.innerHTML = `<span style="color:#1E40AF; font-weight:700;">وضعیت دسترسی:</span> عمومی — کلیه پرسنل سازمان مجاز به ثبت‌نام هستند`;
+      }
+
+      this.switchModalTab('texts');
       modal.classList.add('open');
+    },
+
+    updateModalPosterUI: function (url) {
+      const box = document.getElementById('formEventPosterPreviewBox');
+      const img = document.getElementById('formEventPosterPreviewImg');
+      const notice = document.getElementById('formEventPosterEmptyNotice');
+      const removeBtn = document.getElementById('formEventBtnRemovePoster');
+
+      if (url) {
+        if (box) box.style.display = 'block';
+        if (img) img.src = url;
+        if (notice) notice.style.display = 'none';
+        if (removeBtn) removeBtn.style.display = 'inline-flex';
+      } else {
+        if (box) box.style.display = 'none';
+        if (img) img.src = '';
+        if (notice) notice.style.display = 'block';
+        if (removeBtn) removeBtn.style.display = 'none';
+      }
+    },
+
+    handlePosterUpload: function (e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target.result;
+        document.getElementById('formEventPosterUrl').value = dataUrl;
+        this.updateModalPosterUI(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    },
+
+    removePoster: function () {
+      document.getElementById('formEventPosterUrl').value = '';
+      this.updateModalPosterUI('');
+      const fileInput = document.getElementById('formEventPosterFileInput');
+      if (fileInput) fileInput.value = '';
+    },
+
+    toggleEventClosureInModal: function () {
+      const id = document.getElementById('formEventId').value.trim();
+      const ev = PortalEvents.getById(id);
+      if (!ev) return;
+      ev.isClosed = !ev.isClosed;
+      PortalEvents.saveEvent(ev);
+
+      const closeBtn = document.getElementById('formEventBtnToggleClose');
+      if (closeBtn) closeBtn.textContent = ev.isClosed ? 'بازگشایی ثبت‌نام' : 'بستن فوری ثبت‌نام';
+      showToast(ev.isClosed ? 'ثبت‌نام این رویداد بسته شد.' : 'ثبت‌نام این رویداد بازگشایی شد.', 'info');
+    },
+
+    handleModalExcelUpload: function (e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const id = document.getElementById('formEventId').value.trim();
+      if (!id) {
+        showToast('ابتدا عنوان رویداد را ذخیره نمایید.', 'error');
+        return;
+      }
+
+      if (typeof XLSX === 'undefined') {
+        showToast('کتابخانه اکسل لود نشده است.', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = new Uint8Array(event.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+          let codeColIdx = -1;
+          let startRow = 0;
+          for (let r = 0; r < Math.min(json.length, 5); r++) {
+            const row = json[r];
+            for (let c = 0; c < row.length; c++) {
+              const cell = String(row[c] || '').trim().toLowerCase();
+              if (cell.includes('پرسنلی') || cell.includes('personnel') || cell === 'کد' || cell === 'code') {
+                codeColIdx = c;
+                startRow = r + 1;
+                break;
+              }
+            }
+            if (codeColIdx >= 0) break;
+          }
+
+          if (codeColIdx === -1) {
+            for (let r = 0; r < Math.min(json.length, 10); r++) {
+              const row = json[r];
+              for (let c = 0; c < row.length; c++) {
+                const val = normalizeDigits(row[c]);
+                if (/^\d{5,7}$/.test(val)) {
+                  codeColIdx = c;
+                  startRow = r;
+                  break;
+                }
+              }
+              if (codeColIdx >= 0) break;
+            }
+          }
+
+          const codes = [];
+          for (let i = startRow; i < json.length; i++) {
+            const val = normalizeDigits(json[i][codeColIdx]);
+            if (val && /^\d{4,8}$/.test(val) && !codes.includes(val)) {
+              codes.push(val);
+            }
+          }
+
+          if (codes.length === 0) {
+            showToast('هیچ شماره پرسنلی معتبری در اکسل یافت نشد.', 'error');
+            return;
+          }
+
+          const ev = PortalEvents.getById(id);
+          if (ev) {
+            ev.allowedPersonnel = codes;
+            ev.isRestricted = true;
+            PortalEvents.saveEvent(ev);
+          }
+
+          if (typeof StorageService !== 'undefined' && typeof StorageService.saveEventAllowedPersonnel === 'function') {
+            StorageService.saveEventAllowedPersonnel(id, codes, true);
+          }
+
+          const wlCountLabel = document.getElementById('modalWhitelistCountLabel');
+          if (wlCountLabel) wlCountLabel.textContent = `تعداد اسامی در حافظه: ${codes.length.toLocaleString('fa-IR')} نفر`;
+
+          const wlStatusBox = document.getElementById('modalWhitelistStatusBox');
+          const wlStatusText = document.getElementById('modalWhitelistStatusText');
+          if (wlStatusBox) {
+            wlStatusBox.style.background = '#FEF3C7';
+            wlStatusBox.style.borderColor = '#FDE68A';
+          }
+          if (wlStatusText) wlStatusText.innerHTML = `<span style="color:#B45309; font-weight:700;">وضعیت دسترسی:</span> محدود به <strong>${codes.length.toLocaleString('fa-IR')} نفر</strong> همکار مجاز`;
+
+          showToast(`${codes.length.toLocaleString('fa-IR')} همکار به لیست مجازین رویداد اضافه شدند.`, 'success');
+        } catch (err) {
+          console.error(err);
+          showToast('خطا در خواندن فایل اکسل.', 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    },
+
+    clearModalWhitelist: function () {
+      const id = document.getElementById('formEventId').value.trim();
+      const ev = PortalEvents.getById(id);
+      if (ev) {
+        ev.allowedPersonnel = [];
+        ev.isRestricted = false;
+        PortalEvents.saveEvent(ev);
+      }
+      if (typeof StorageService !== 'undefined' && typeof StorageService.clearEventAllowedPersonnel === 'function') {
+        StorageService.clearEventAllowedPersonnel(id);
+      }
+
+      const wlCountLabel = document.getElementById('modalWhitelistCountLabel');
+      if (wlCountLabel) wlCountLabel.textContent = `تعداد اسامی در حافظه: ۰ نفر`;
+      const wlStatusBox = document.getElementById('modalWhitelistStatusBox');
+      const wlStatusText = document.getElementById('modalWhitelistStatusText');
+      if (wlStatusBox) {
+        wlStatusBox.style.background = '#EFF6FF';
+        wlStatusBox.style.borderColor = '#BFDBFE';
+      }
+      if (wlStatusText) wlStatusText.innerHTML = `<span style="color:#1E40AF; font-weight:700;">وضعیت دسترسی:</span> عمومی — کلیه پرسنل سازمان مجاز به ثبت‌نام هستند`;
+      showToast('محدودیت دسترسی حذف و رویداد عمومی گردید.', 'info');
     },
 
     saveEventFromModal: function (e) {
       e.preventDefault();
       const id = document.getElementById('formEventId').value.trim();
       const title = document.getElementById('formEventTitle').value.trim();
+      const tag = document.getElementById('formEventTag').value.trim();
       const category = document.getElementById('formEventCategory').value.trim();
       const subtitle = document.getElementById('formEventSubtitle').value.trim();
       const dateText = document.getElementById('formEventDate').value.trim();
@@ -1580,9 +2601,14 @@
       const capacity = parseInt(document.getElementById('formEventCapacity').value) || 0;
       const deadlineDate = document.getElementById('formEventDeadlineDate').value.trim();
       const deadlineTime = document.getElementById('formEventDeadlineTime').value.trim();
+      const eventEndDate = document.getElementById('formEventEndDate').value.trim();
+      const eventEndTime = document.getElementById('formEventEndTime').value.trim();
       const status = document.getElementById('formEventStatus').value;
       const notesRaw = document.getElementById('formEventNotes').value;
       const checklistRaw = document.getElementById('formEventChecklist').value;
+      const btnAttendText = document.getElementById('formEventBtnAttendText').value.trim();
+      const btnDeclineText = document.getElementById('formEventBtnDeclineText').value.trim();
+      const posterUrl = document.getElementById('formEventPosterUrl').value;
 
       if (!title) {
         showToast('عنوان رویداد الزامی است.', 'error');
@@ -1592,9 +2618,11 @@
       const notes = notesRaw.split('\n').map(s => s.trim()).filter(Boolean);
       const checklist = checklistRaw.split('\n').map(s => s.trim()).filter(Boolean);
 
-      PortalEvents.saveEvent({
+      const existing = id ? PortalEvents.getById(id) : null;
+      const eventObj = {
         id: id || ('ev_' + Date.now()),
         title,
+        tag,
         category,
         subtitle,
         dateText,
@@ -1604,16 +2632,54 @@
         capacity,
         deadlineDate,
         deadlineTime,
+        eventEndDate,
+        eventEndTime,
         status,
         notes,
-        checklist
-      });
+        checklist,
+        btnAttendText,
+        btnDeclineText,
+        posterUrl,
+        isClosed: existing ? !!existing.isClosed : false,
+        isRestricted: existing ? !!existing.isRestricted : false,
+        allowedPersonnel: existing && Array.isArray(existing.allowedPersonnel) ? existing.allowedPersonnel : []
+      };
+
+      PortalEvents.saveEvent(eventObj);
+
+      // همگام‌سازی ابری تنظیمات با پایگاه داده Supabase
+      if (typeof StorageService !== 'undefined' && typeof StorageService.saveEventSettings === 'function') {
+        StorageService.saveEventSettings(eventObj.id, {
+          capacity: eventObj.capacity,
+          deadlineDate: eventObj.deadlineDate,
+          deadlineTime: eventObj.deadlineTime,
+          eventEndDate: eventObj.eventEndDate,
+          eventEndTime: eventObj.eventEndTime,
+          isClosed: eventObj.isClosed,
+          isRestricted: eventObj.isRestricted,
+          allowedPersonnel: eventObj.allowedPersonnel,
+          lifecycleState: eventObj.status === 'active' ? 'ACTIVE' : eventObj.status === 'survey' ? 'SURVEY_ACTIVE' : eventObj.status === 'pending' ? 'ENDED_PENDING_SURVEY' : 'CLOSED',
+          customTexts: {
+            title: eventObj.title,
+            tag: eventObj.tag,
+            subtitle: eventObj.subtitle,
+            dateText: eventObj.dateText,
+            timeText: eventObj.timeText,
+            locationText: eventObj.locationText,
+            posterUrl: eventObj.posterUrl,
+            notesText: notes.join('\n'),
+            btnAttendText: eventObj.btnAttendText,
+            btnDeclineText: eventObj.btnDeclineText
+          }
+        }).catch(err => console.warn('Supabase saveEventSettings error:', err));
+      }
 
       document.getElementById('editEventModal').classList.remove('open');
       this.renderEventsManagerList();
       this.renderEventsGrid();
       this.renderHomeOverview();
-      showToast('مشخصات رویداد با موفقیت ذخیره شد.', 'success');
+      if (window.PortalAccess) PortalAccess.refresh();
+      showToast('مشخصات و تنظیمات رویداد با موفقیت ذخیره شد.', 'success');
     },
 
     deleteEvent: function (id) {
@@ -1622,6 +2688,7 @@
         this.renderEventsManagerList();
         this.renderEventsGrid();
         this.renderHomeOverview();
+        if (window.PortalAccess) PortalAccess.refresh();
         showToast('رویداد حذف شد.', 'info');
       }
     },
@@ -1632,6 +2699,7 @@
         this.renderEventsManagerList();
         this.renderEventsGrid();
         this.renderHomeOverview();
+        if (window.PortalAccess) PortalAccess.refresh();
         showToast('رویدادها به حالت پیش‌فرض بازنشانی شدند.', 'success');
       }
     },
@@ -1666,10 +2734,15 @@
 
   window.PortalUI = PortalUI;
   window.PortalAuth = PortalAuth;
+  window.PortalDB = PortalDB;
+  window.PortalAccess = PortalAccess;
 
   document.addEventListener('DOMContentLoaded', () => {
     PortalUI.init();
     PortalUI.bindSurveyForm();
+
+    // همگام‌سازی خودکار در ابتدای بارگذاری با دیتابیس ابری
+    PortalDB.syncFromSupabase();
 
     const editForm = document.getElementById('editEventForm');
     if (editForm) {
@@ -1694,3 +2767,4 @@
   });
 
 })();
+
