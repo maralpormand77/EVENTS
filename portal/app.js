@@ -1,13 +1,13 @@
 /**
- * سامانه جامع رویدادهای گروه توسعه سرمایه‌گذاری انتخاب
- * Unified Events Portal Logic & Dynamic UI Engine
+ * سامانه مدیریت رویدادهای سازمانی گروه توسعه سرمایه‌گذاری انتخاب
+ * Enterprise Event Management Portal Engine
  */
 
 (function () {
   'use strict';
 
   // ==========================================================================
-  // CONFIG & STORAGE KEYS
+  // CONFIG & STORAGE KEYS (PRESERVED)
   // ==========================================================================
   const PORTAL_KEYS = {
     EVENTS: 'entekhab_portal_events_v2',
@@ -21,7 +21,27 @@
 
   const DEFAULT_ADMIN_PIN = '992113';
 
-  // ۳ رویداد پیش‌فرض طبق الزامات پروژه
+  // SVG Icons System (Lucide / Feather enterprise standard)
+  const SVG = {
+    calendar: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>',
+    clock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    mapPin: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>',
+    users: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    x: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>',
+    chevronDown: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+    edit: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>',
+    trash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
+    refresh: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>',
+    plus: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>',
+    copy: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+    download: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>',
+    lock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+    shieldCheck: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
+    fileText: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>'
+  };
+
+  // ۳ رویداد سازمانی پیش‌فرض
   const DEFAULT_EVENTS = [
     {
       id: 'sobh-hamdeli',
@@ -34,8 +54,8 @@
       locationText: 'خیابان نشاط، کوچه ۲۰، عمارت ماهور',
       deadlineDate: '1405/06/21',
       deadlineTime: '20:00',
-      capacity: 0, // 0 یعنی نامحدود
-      status: 'active', // active | survey | closed
+      capacity: 0,
+      status: 'active',
       themeColor: 'accent-theme-1',
       notes: [
         'لطفاً با لباس و کفش مناسب جهت پیاده‌روی و نرمش صبحگاهی حضور به‌هم رسانید.',
@@ -50,12 +70,12 @@
     {
       id: 'kavir-varzaneh',
       title: 'تور کویر ورزنه',
-      category: 'ایونت علمی تفریحی',
+      category: 'علمی و تفریحی',
       subtitle: 'ایونت علمی تفریحی گروه توسعه سرمایه گذاری انتخاب',
       dateText: 'چهارشنبه ۲۵/۰۶/۱۴۰۵ الی پنجشنبه ۲۶/۰۶/۱۴۰۵',
       timeText: 'چهارشنبه ساعت ۱۴:۰۰ (حرکت)',
       returnText: 'پنجشنبه ساعت ۱۳:۰۰ (بازگشت)',
-      locationText: 'محل تجمع: ساختمان مرکزی (خیابان امام خمینی)',
+      locationText: 'ساختمان مرکزی (خیابان امام خمینی)',
       deadlineDate: '1405/06/22',
       deadlineTime: '13:00',
       capacity: 120,
@@ -74,25 +94,25 @@
     {
       id: 'rafting-markadeh',
       title: 'تور رفتینگ مارکده',
-      category: 'ایونت تفریحی و ورزشی',
+      category: 'تفریحی و ورزشی',
       subtitle: 'ایونت تفریحی گروه توسعه سرمایه گذاری انتخاب',
       dateText: 'پنجشنبه ۰۲/۰۷/۱۴۰۵',
       timeText: 'ساعت ۰۶:۰۰ صبح (حرکت)',
       returnText: 'ساعت ۱۸:۰۰ عصر (بازگشت)',
-      locationText: 'محل تجمع: ساختمان مرکزی',
+      locationText: 'ساختمان مرکزی',
       deadlineDate: '1405/06/28',
       deadlineTime: '15:00',
       capacity: 80,
       status: 'active',
       themeColor: 'accent-theme-3',
       notes: [
-        'جهت بهره‌مندی هرچه بیشتر از این سفر، موضوعات و ملزومات اعلام‌شده را دقیقاً مد نظر قرار دهید.',
+        'جهت بهره‌مندی هرچه بیشتر از این سفر، ملزومات اعلام‌شده را دقیقاً مد نظر قرار دهید.',
         'با توجه به حضور در رودخانه و مواجهه با آب، همراه داشتن لباس اضافی الزامی است.'
       ],
       checklist: [
         '۱- همراه داشتن لوازم شخصی (دارو و ضدآفتاب، کلاه، تیشرت آستین بلند، عینک آفتابی، دستمال مرطوب)',
         '۲- لباس اضافه و حوله (با توجه به مواجهه مستقیم با آب رودخانه)',
-        '۳- خودداری از آوردن زیورآلات، ساعت مچی و اکسسوری‌های غیرضروری و گران‌قیمت',
+        '۳- خودداری از آوردن زیورآلات، ساعت مچی و اکسسوری‌های گران‌قیمت',
         '۴- همراه داشتن صندل مناسب جهت تردد آسان در آب و بستر رودخانه',
         '۵- وسایل شخصی صرف غذا: لیوان شخصی، قاشق و چنگال'
       ]
@@ -105,7 +125,7 @@
       title: 'سامانه یکپارچه رویدادهای گروه انتخاب راه‌اندازی شد',
       category: 'سیستمی',
       date: '۱۴۰۵/۰۶/۲۰',
-      content: 'همکاران گرامی، من‌بعد تمامی مراحل اعلام حضور، مشاهده مشخصات و ثبت نظرسنجی رویدادهای سازمانی از طریق این پرتال یکپارچه انجام می‌پذیرد.'
+      content: 'همکاران گرامی، من‌بعد تمامی مراحل اعلام حضور، مشاهده مشخصات و ثبت نظرسنجی رویدادهای سازمانی از طریق این پرتال انجام می‌پذیرد.'
     },
     {
       id: 'notif_2',
@@ -119,12 +139,12 @@
       title: 'نکات بهداشتی و تجهیزات تور رفتینگ مارکده',
       category: 'رویداد ۳',
       date: '۱۴۰۵/۰۶/۲۲',
-      content: 'با توجه به ماهیت ورزشی رفتینگ، به همراه داشتن صندل ضدلغزش، لباس اضافه و عدم همراه داشتن وسایل قیمتی اکیداً توصیه می‌گردد.'
+      content: 'با توجه به ماهیت ورزشی رفتینگ، به همراه داشتن صندل ضدلغزش، لباس اضافه و خودداری از حمل وسایل قیمتی اکیداً توصیه می‌گردد.'
     }
   ];
 
   // ==========================================================================
-  // 1. DATA SERVICES (Events, Registrations, Personnel, Notifications)
+  // DATA SERVICES (100% PRESERVED BUSINESS LOGIC)
   // ==========================================================================
 
   const PortalEvents = {
@@ -181,7 +201,6 @@
       const cleanCode = String(code).trim();
       if (!cleanCode) return null;
 
-      // جستجو در PERSONNEL_MAP
       if (window.PERSONNEL_MAP && window.PERSONNEL_MAP[cleanCode]) {
         const data = window.PERSONNEL_MAP[cleanCode];
         return {
@@ -225,7 +244,6 @@
     },
 
     register: function (record) {
-      // record: { eventId, personnelCode, fullName, nationalId, status: 'attending'|'declined', note }
       const list = this.getAll();
       const cleanCode = String(record.personnelCode).trim();
       const existingIdx = list.findIndex(r => r.eventId === record.eventId && String(r.personnelCode).trim() === cleanCode);
@@ -239,7 +257,7 @@
         personnelCode: cleanCode,
         fullName: record.fullName || cleanCode,
         nationalId: record.nationalId || '',
-        status: record.status || 'attending', // 'attending' | 'declined'
+        status: record.status || 'attending',
         note: record.note || '',
         createdAt: existingIdx >= 0 ? (list[existingIdx].createdAt || timestamp) : timestamp,
         updatedAt: timestamp,
@@ -315,7 +333,6 @@
     },
 
     submit: function (surveyData) {
-      // { eventId, personnelCode, fullName, ratingQuality, ratingOrg, ratingCatering, comment }
       const list = this.getAll();
       surveyData.id = 'surv_' + Date.now();
       surveyData.submittedAt = formatJalaliDateTime(new Date());
@@ -354,7 +371,6 @@
     }
   };
 
-  // Helper date formatter
   function formatJalaliDateTime(date = new Date()) {
     try {
       const d = new Date(date);
@@ -373,7 +389,6 @@
     }
   }
 
-  // Toast notification helper
   function showToast(message, type = 'info') {
     let container = document.getElementById('portalToastContainer');
     if (!container) {
@@ -385,19 +400,20 @@
 
     const toast = document.createElement('div');
     toast.className = `toast ${type === 'success' ? 'toast-success' : type === 'error' ? 'toast-error' : ''}`;
-    toast.innerHTML = `<span>${message}</span>`;
+    const icon = type === 'success' ? SVG.check : type === 'error' ? SVG.x : SVG.fileText;
+    toast.innerHTML = `<span style="display:inline-flex; align-items:center;">${icon}</span><span>${message}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateY(10px)';
-      toast.style.transition = 'all 0.3s ease';
-      setTimeout(() => toast.remove(), 300);
+      toast.style.transform = 'translateY(8px)';
+      toast.style.transition = 'all 180ms ease';
+      setTimeout(() => toast.remove(), 200);
     }, 3800);
   }
 
   // ==========================================================================
-  // 2. UI RENDER ENGINE
+  // UI RENDER ENGINE (ENTERPRISE MINIMALIST REDESIGN)
   // ==========================================================================
 
   const PortalUI = {
@@ -413,18 +429,15 @@
       this.renderNotificationsList();
       this.updateAdminVisibility();
 
-      // Check if admin is logged in and render dashboard/settings
       if (AdminAuth.isAuthenticated()) {
         this.renderAdminDashboard();
         this.renderAdminSettings();
       }
     },
 
-    // Tab Navigation Switcher
     switchTab: function (tabName) {
       this.activeTab = tabName;
 
-      // Update Tab Button States
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         if (btn.dataset.tab === tabName) {
           btn.classList.add('active');
@@ -433,7 +446,6 @@
         }
       });
 
-      // Update Tab Content Views
       document.querySelectorAll('.tab-content-view').forEach(view => {
         if (view.id === `tabView-${tabName}`) {
           view.classList.add('active-view');
@@ -442,7 +454,6 @@
         }
       });
 
-      // Tab specific re-renders
       if (tabName === 'events') {
         this.renderEventsGrid();
       } else if (tabName === 'dashboard') {
@@ -468,9 +479,8 @@
 
     bindTabNavigation: function () {
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const tab = btn.dataset.tab;
-          this.switchTab(tab);
+        btn.addEventListener('click', () => {
+          this.switchTab(btn.dataset.tab);
         });
       });
     },
@@ -492,7 +502,6 @@
         });
       }
 
-      // Close modals on overlay or close button
       document.querySelectorAll('.modal-overlay').forEach(modal => {
         modal.addEventListener('click', (e) => {
           if (e.target === modal) modal.classList.remove('open');
@@ -503,7 +512,6 @@
         }
       });
 
-      // Admin Login Form
       const authForm = document.getElementById('adminLoginForm');
       if (authForm) {
         authForm.addEventListener('submit', (e) => {
@@ -551,10 +559,10 @@
       if (adminBtn) {
         if (isAuth) {
           adminBtn.classList.add('is-admin');
-          adminBtn.innerHTML = `<span>⚙️</span> مدیر سامانه (فعال)`;
+          adminBtn.innerHTML = `${SVG.shieldCheck} <span>مدیر سیستم</span>`;
         } else {
           adminBtn.classList.remove('is-admin');
-          adminBtn.innerHTML = `<span>🔒</span> ورود مدیر`;
+          adminBtn.innerHTML = `${SVG.lock} <span>ورود مدیر</span>`;
         }
       }
     },
@@ -567,7 +575,6 @@
       const regs = RegistrationService.getAll();
       const attendees = regs.filter(r => r.status === 'attending');
 
-      // Update counters in Hero
       const activeEventsCount = events.filter(e => e.status === 'active').length;
       const elActiveCount = document.getElementById('heroActiveEventsCount');
       if (elActiveCount) elActiveCount.textContent = activeEventsCount;
@@ -575,14 +582,13 @@
       const elTotalRegs = document.getElementById('heroTotalRegsCount');
       if (elTotalRegs) elTotalRegs.textContent = attendees.length;
 
-      // Render Home Mini Cards
       const container = document.getElementById('homeHighlightsGrid');
       if (!container) return;
 
       container.innerHTML = events.slice(0, 3).map(ev => {
         const evRegs = regs.filter(r => r.eventId === ev.id && r.status === 'attending');
-        const capText = ev.capacity > 0 ? `${evRegs.length} / ${ev.capacity}` : `${evRegs.length} ثبت‌نام`;
-        const statusLabel = ev.status === 'active' ? 'در حال ثبت‌نام' : ev.status === 'survey' ? 'مرحله نظرسنجی' : 'پایان‌یافته';
+        const capText = ev.capacity > 0 ? `${evRegs.length} / ${ev.capacity}` : `${evRegs.length} نفر`;
+        const statusLabel = ev.status === 'active' ? 'در حال ثبت‌نام' : ev.status === 'survey' ? 'نظرسنجی فعال' : 'پایان‌یافته';
         const statusClass = ev.status === 'active' ? 'status-active' : ev.status === 'survey' ? 'status-survey' : 'status-closed';
 
         return `
@@ -592,29 +598,29 @@
                 <span class="event-category-tag">${ev.category || 'رویداد سازمانی'}</span>
                 <span class="event-status-pill ${statusClass}">${statusLabel}</span>
               </div>
-              <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff;">${ev.title}</h3>
+              <h3 class="event-card-title" style="color: #fff; margin: 0;">${ev.title}</h3>
             </div>
             <div class="event-card-body">
               <p class="event-card-subtitle">${ev.subtitle || ''}</p>
               <div class="event-meta-list">
                 <div class="event-meta-item">
-                  <span class="event-meta-icon">📅</span>
+                  <span class="event-meta-icon">${SVG.calendar}</span>
                   <span class="event-meta-label">تاریخ:</span>
                   <span class="event-meta-val">${ev.dateText || '-'}</span>
                 </div>
                 <div class="event-meta-item">
-                  <span class="event-meta-icon">📍</span>
+                  <span class="event-meta-icon">${SVG.mapPin}</span>
                   <span class="event-meta-label">مکان:</span>
                   <span class="event-meta-val">${ev.locationText || '-'}</span>
                 </div>
                 <div class="event-meta-item">
-                  <span class="event-meta-icon">👥</span>
+                  <span class="event-meta-icon">${SVG.users}</span>
                   <span class="event-meta-label">مشارکت:</span>
                   <span class="event-meta-val">${capText}</span>
                 </div>
               </div>
-              <button class="btn-action btn-primary" onclick="PortalUI.openEventDetail('${ev.id}')">
-                مشاهده و ثبت‌نام در این رویداد
+              <button class="btn-action btn-secondary" style="width: 100%;" onclick="PortalUI.openEventDetail('${ev.id}')">
+                مشاهده جزئیات و ثبت‌نام
               </button>
             </div>
           </div>
@@ -659,20 +665,20 @@
         resultBox.style.display = 'block';
 
         let html = `
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 10px; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 12px;">
             <div>
-              <strong style="color: var(--navy-900); font-size: 1.05rem;">${person ? person.name : 'پرسنل کد ' + code}</strong>
-              ${person && person.nationalId ? `<span style="font-size: 0.8rem; color: var(--text-muted); margin-right: 8px;">(کد ملی: ${person.nationalId})</span>` : ''}
+              <strong style="color: var(--primary); font-size: 1rem; font-weight: 700;">${person ? person.name : 'پرسنل کد ' + code}</strong>
+              ${person && person.nationalId ? `<span style="font-size: 0.78rem; color: var(--text-muted); margin-right: 8px;">(کد ملی: ${person.nationalId})</span>` : ''}
             </div>
-            <span class="badge-status attending">استعلام موفق</span>
+            <span class="badge-status attending">${SVG.check} استعلام موفق</span>
           </div>
         `;
 
         if (userRegs.length === 0) {
           html += `
-            <div style="font-size: 0.88rem; color: var(--text-secondary); text-align: center; padding: 12px 0;">
-              تاکنون وضعیت حضوری برای کد پرسنلی شما در هیچ رویدادی ثبت نشده است.
-              <br><button class="btn-action btn-secondary" style="margin-top: 10px;" onclick="PortalUI.switchTab('events')">مشاهده رویدادها و ثبت‌نام</button>
+            <div style="font-size: 0.86rem; color: var(--text-secondary); text-align: center; padding: 14px 0;">
+              وضعیت حضوری برای شماره پرسنلی شما در هیچ رویدادی ثبت نشده است.
+              <br><button class="btn-action btn-secondary" style="margin-top: 12px;" onclick="PortalUI.switchTab('events')">مشاهده رویدادها و ثبت‌نام</button>
             </div>
           `;
         } else {
@@ -681,16 +687,16 @@
             const ev = events.find(e => e.id === reg.eventId) || { title: reg.eventId };
             const isAttending = reg.status === 'attending';
             html += `
-              <div style="display: flex; align-items: center; justify-content: space-between; background: #fff; border: 1px solid var(--border-light); padding: 10px 14px; border-radius: var(--radius-md);">
+              <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); padding: 10px 14px; border-radius: var(--radius-sm);">
                 <div>
-                  <strong style="font-size: 0.9rem; color: var(--navy-900);">${ev.title}</strong>
-                  <div style="font-size: 0.76rem; color: var(--text-muted);">ثبت شده در: ${reg.jalaliDate || '-'}</div>
+                  <strong style="font-size: 0.88rem; color: var(--primary);">${ev.title}</strong>
+                  <div style="font-size: 0.74rem; color: var(--text-muted);">ثبت شده: ${reg.jalaliDate || '-'}</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
                   <span class="badge-status ${isAttending ? 'attending' : 'declining'}">
-                    ${isAttending ? '✅ اعلام حضور (مایل به شرکت)' : '❌ عدم تمایل به حضور'}
+                    ${isAttending ? `${SVG.check} مایل به شرکت` : `${SVG.x} عدم تمایل`}
                   </span>
-                  <button class="btn-action btn-secondary" style="padding: 4px 10px; font-size: 0.78rem; height: 32px;" onclick="PortalUI.openEventDetail('${reg.eventId}')">
+                  <button class="btn-action btn-secondary" style="padding: 4px 10px; font-size: 0.76rem; height: 30px;" onclick="PortalUI.openEventDetail('${reg.eventId}')">
                     تغییر وضعیت
                   </button>
                 </div>
@@ -719,7 +725,6 @@
       const events = PortalEvents.getAll();
       const regs = RegistrationService.getAll();
 
-      // Filter events
       let filtered = events;
       if (this.activeFilter === 'active') {
         filtered = events.filter(e => e.status === 'active');
@@ -731,8 +736,8 @@
 
       if (filtered.length === 0) {
         container.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 48px; background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
-            <p style="color: var(--text-muted);">هیچ رویدادی با این فیلتر یافت نشد.</p>
+          <div style="grid-column: 1 / -1; text-align: center; padding: 48px; background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); color: var(--text-muted);">
+            هیچ رویدادی با این فیلتر یافت نشد.
           </div>
         `;
         return;
@@ -740,11 +745,11 @@
 
       container.innerHTML = filtered.map(ev => {
         const evRegs = regs.filter(r => r.eventId === ev.id && r.status === 'attending');
-        const capText = ev.capacity > 0 ? `${evRegs.length} از ${ev.capacity} نفر` : `${evRegs.length} نفر اعلام حضور`;
+        const capText = ev.capacity > 0 ? `${evRegs.length} از ${ev.capacity} نفر` : `${evRegs.length} نفر ثبت‌نام`;
         const isSurvey = ev.status === 'survey';
         const isClosed = ev.status === 'closed';
 
-        const statusLabel = isSurvey ? 'در حال نظرسنجی' : isClosed ? 'مهلت پایان یافته' : 'در حال ثبت‌نام';
+        const statusLabel = isSurvey ? 'نظرسنجی فعال' : isClosed ? 'مهلت پایان‌یافته' : 'در حال ثبت‌نام';
         const statusClass = isSurvey ? 'status-survey' : isClosed ? 'status-closed' : 'status-active';
 
         return `
@@ -764,51 +769,53 @@
 
               <div class="event-meta-list">
                 <div class="event-meta-item">
-                  <span class="event-meta-icon">📅</span>
+                  <span class="event-meta-icon">${SVG.calendar}</span>
                   <span class="event-meta-label">تاریخ رویداد:</span>
                   <span class="event-meta-val">${ev.dateText || '-'}</span>
                 </div>
                 <div class="event-meta-item">
-                  <span class="event-meta-icon">⏰</span>
+                  <span class="event-meta-icon">${SVG.clock}</span>
                   <span class="event-meta-label">ساعت حرکت:</span>
                   <span class="event-meta-val">${ev.timeText || '-'}</span>
                 </div>
                 ${ev.returnText ? `
                 <div class="event-meta-item">
-                  <span class="event-meta-icon">⌛</span>
+                  <span class="event-meta-icon">${SVG.clock}</span>
                   <span class="event-meta-label">ساعت بازگشت:</span>
                   <span class="event-meta-val">${ev.returnText}</span>
                 </div>` : ''}
                 <div class="event-meta-item">
-                  <span class="event-meta-icon">📍</span>
+                  <span class="event-meta-icon">${SVG.mapPin}</span>
                   <span class="event-meta-label">محل تجمع:</span>
                   <span class="event-meta-val">${ev.locationText || '-'}</span>
                 </div>
                 <div class="event-meta-item">
-                  <span class="event-meta-icon">👥</span>
+                  <span class="event-meta-icon">${SVG.users}</span>
                   <span class="event-meta-label">ظرفیت:</span>
                   <span class="event-meta-val">${capText}</span>
                 </div>
                 ${ev.deadlineDate ? `
                 <div class="event-meta-item">
-                  <span class="event-meta-icon">⏳</span>
+                  <span class="event-meta-icon">${SVG.clock}</span>
                   <span class="event-meta-label">مهلت ثبت‌نام:</span>
-                  <span class="event-meta-val" style="color: #b91c1c; font-weight: 700;">تا ${ev.deadlineDate} ساعت ${ev.deadlineTime || ''}</span>
+                  <span class="event-meta-val" style="color: var(--danger); font-weight: 600;">تا ${ev.deadlineDate} ساعت ${ev.deadlineTime || ''}</span>
                 </div>` : ''}
               </div>
 
               <!-- Rules & Checklist Drawer -->
               <div class="event-rules-preview">
                 <div class="rules-expander" onclick="PortalUI.toggleRulesDrawer('${ev.id}')">
-                  <span>📋</span> <span>مشاهده نکات، ضوابط و وسایل مورد نیاز</span> <span>▼</span>
+                  <span>${SVG.fileText}</span>
+                  <span>مشاهده ضوابط و ملزومات ضروری</span>
+                  <span>${SVG.chevronDown}</span>
                 </div>
                 <div class="rules-content-drawer" id="rulesDrawer_${ev.id}">
-                  <strong style="color: var(--navy-900); display: block; margin-bottom: 6px;">نکات مهم حضور:</strong>
+                  <strong style="color: var(--primary); display: block; margin-bottom: 6px;">نکات مهم حضور:</strong>
                   <ul>
                     ${(ev.notes || []).map(n => `<li>${n}</li>`).join('')}
                   </ul>
                   ${ev.checklist && ev.checklist.length > 0 ? `
-                  <strong style="color: var(--navy-900); display: block; margin: 10px 0 6px;">وسایل و ملزومات ضروری:</strong>
+                  <strong style="color: var(--primary); display: block; margin: 10px 0 6px;">وسایل و ملزومات ضروری:</strong>
                   <ul>
                     ${ev.checklist.map(c => `<li>${c}</li>`).join('')}
                   </ul>` : ''}
@@ -818,29 +825,30 @@
               <!-- Action Footer (In-place registration or survey) -->
               <div class="event-card-footer">
                 ${isSurvey ? `
-                  <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-md); padding: 14px; text-align: center;">
-                    <div style="font-weight: 800; color: var(--navy-900); margin-bottom: 6px;">
-                      🌟 این رویداد برگزار شد و نظرسنجی آن فعال است!
+                  <div style="background: var(--accent-soft); border: 1px solid rgba(37,99,235,0.15); border-radius: var(--radius-sm); padding: 14px; text-align: center;">
+                    <div style="font-weight: 700; color: var(--primary); margin-bottom: 4px;">
+                      نظرسنجی کیفیت این برنامه فعال است
                     </div>
-                    <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 12px;">
-                      همکار گرامی در صورت حضور در این برنامه، لطفاً دیدگاه ارزشمند خود را ثبت فرمایید.
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 10px;">
+                      در صورت حضور در این برنامه، لطفاً دیدگاه خود را ثبت فرمایید.
                     </p>
-                    <button class="btn-action btn-primary" onclick="PortalUI.openSurveyModal('${ev.id}')">
-                      ثبت فرم نظرسنجی و امتیازدهی
+                    <button class="btn-action btn-primary" style="width: 100%;" onclick="PortalUI.openSurveyModal('${ev.id}')">
+                      ثبت نظرسنجی و امتیازدهی
                     </button>
                   </div>
                 ` : isClosed ? `
-                  <div style="background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 12px; text-align: center; color: var(--text-muted); font-size: 0.88rem;">
+                  <div style="background: var(--surface-soft); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; text-align: center; color: var(--text-muted); font-size: 0.84rem;">
                     مهلت اعلام حضور در این رویداد به اتمام رسیده است.
                   </div>
                 ` : `
                   <button class="register-accordion-toggle" onclick="PortalUI.toggleRegisterAccordion('${ev.id}')">
-                    <span>✍️</span> <span>اعلام وضعیت حضور در این برنامه</span>
+                    <span>${SVG.edit}</span>
+                    <span>اعلام وضعیت حضور در این برنامه</span>
                   </button>
 
                   <div class="register-accordion-content" id="registerBox_${ev.id}">
                     <div class="form-group">
-                      <label class="form-label">شماره پرسنلی خود را وارد فرمایید:</label>
+                      <label class="form-label">شماره پرسنلی:</label>
                       <input type="text" class="form-input" id="inputPersonnelCode_${ev.id}" placeholder="مثال: 992113" oninput="PortalUI.handlePersonnelCodeInput('${ev.id}', this.value)">
                       <div class="personnel-lookup-feedback" id="feedback_${ev.id}"></div>
                     </div>
@@ -848,23 +856,23 @@
                     <div id="hiddenFields_${ev.id}" style="display: none;">
                       <div class="form-group">
                         <label class="form-label">نام و نام خانوادگی:</label>
-                        <input type="text" class="form-input" id="inputFullName_${ev.id}" readonly style="background: #f8fafc;">
+                        <input type="text" class="form-input" id="inputFullName_${ev.id}" readonly style="background: var(--surface-soft);">
                       </div>
                       <div class="form-group">
                         <label class="form-label">کد ملی:</label>
-                        <input type="text" class="form-input" id="inputNationalId_${ev.id}" readonly style="background: #f8fafc;">
+                        <input type="text" class="form-input" id="inputNationalId_${ev.id}" readonly style="background: var(--surface-soft);">
                       </div>
                       <div class="form-group">
-                        <label class="form-label">توضیحات اختیاری (شماره تماس یا همراه):</label>
+                        <label class="form-label">توضیحات اختیاری (شماره همراه یا ملاحظات):</label>
                         <input type="text" class="form-input" id="inputNote_${ev.id}" placeholder="در صورت نیاز وارد کنید">
                       </div>
 
                       <div class="btn-row-dual">
                         <button class="btn-action btn-attend" onclick="PortalUI.submitRegistration('${ev.id}', 'attending')">
-                          ✅ مایل به شرکت هستم
+                          ${SVG.check} مایل به شرکت هستم
                         </button>
                         <button class="btn-action btn-decline" onclick="PortalUI.submitRegistration('${ev.id}', 'declined')">
-                          ❌ تمایلی به حضور ندارم
+                          ${SVG.x} تمایلی به حضور ندارم
                         </button>
                       </div>
                     </div>
@@ -917,14 +925,13 @@
         inputNat.value = person.nationalId || '';
         hiddenFields.style.display = 'block';
 
-        // Check if already registered
         const existing = RegistrationService.getUserRegistration(eventId, clean);
         if (existing) {
-          feedback.textContent += ` (وضعیت فعلی شما: ${existing.status === 'attending' ? 'مایل به شرکت' : 'عدم تمایل'})`;
+          feedback.textContent += ` (وضعیت فعلی: ${existing.status === 'attending' ? 'مایل به شرکت' : 'عدم تمایل'})`;
         }
       } else {
         feedback.className = 'personnel-lookup-feedback not-found';
-        feedback.textContent = 'شماره پرسنلی در دیتابیس یافت نشد، اما امکان ثبت نام دستی فراهم است.';
+        feedback.textContent = 'شماره پرسنلی در لیست یافت نشد؛ می‌توانید نام را دستی وارد نمایید.';
         inputName.value = '';
         inputNat.value = '';
         inputName.removeAttribute('readonly');
@@ -945,7 +952,7 @@
       const note = noteInput ? noteInput.value.trim() : '';
 
       if (!code) {
-        showToast('لطفاً کد پرسنلی را وارد فرمایید.', 'error');
+        showToast('لطفاً شماره پرسنلی را وارد فرمایید.', 'error');
         return;
       }
 
@@ -959,18 +966,17 @@
       });
 
       if (status === 'attending') {
-        showToast(`اعلام حضور شما برای رویداد با موفقیت ${result.isUpdate ? 'به‌روزرسانی' : 'ثبت'} شد.`, 'success');
+        showToast(`اعلام حضور شما با موفقیت ${result.isUpdate ? 'به‌روزرسانی' : 'ثبت'} شد.`, 'success');
       } else {
         showToast('عدم تمایل شما به حضور در این برنامه ثبت گردید.', 'info');
       }
 
-      // Re-render
       this.renderEventsGrid();
       this.renderHomeOverview();
     },
 
     // ------------------------------------------------------------------------
-    // Survey Modal
+    // Survey Modal & Interactive Rating
     // ------------------------------------------------------------------------
     openSurveyModal: function (eventId) {
       const ev = PortalEvents.getById(eventId);
@@ -985,7 +991,23 @@
         form.dataset.eventId = eventId;
         form.reset();
       }
+      this.setStarRating(5);
       if (modal) modal.classList.add('open');
+    },
+
+    setStarRating: function (rating) {
+      const select = document.getElementById('surveyRatingQuality');
+      if (select) select.value = String(rating);
+
+      const stars = document.querySelectorAll('.star-interactive-btn');
+      stars.forEach(btn => {
+        const val = parseInt(btn.dataset.val);
+        if (val <= rating) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
     },
 
     bindSurveyForm: function () {
@@ -1001,7 +1023,7 @@
         const comment = document.getElementById('surveyComment').value.trim();
 
         if (!code) {
-          showToast('لطفاً کد پرسنلی را وارد فرمایید.', 'error');
+          showToast('لطفاً شماره پرسنلی را وارد فرمایید.', 'error');
           return;
         }
 
@@ -1014,12 +1036,21 @@
         });
 
         document.getElementById('surveyModal').classList.remove('open');
-        showToast('دیدگاه و نظرسنجی شما با سپاس فراوان ثبت گردید.', 'success');
+        showToast('دیدگاه و نظرسنجی شما با سپاس ثبت گردید.', 'success');
+      });
+
+      // Star click handlers
+      document.querySelectorAll('.star-interactive-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const val = parseInt(btn.dataset.val);
+          this.setStarRating(val);
+        });
       });
     },
 
     // ------------------------------------------------------------------------
-    // Notifications Rendering
+    // Notifications Rendering (Timeline Layout)
     // ------------------------------------------------------------------------
     renderNotificationsList: function () {
       const container = document.getElementById('notificationsListContainer');
@@ -1030,47 +1061,46 @@
 
       if (notifs.length === 0) {
         container.innerHTML = `
-          <div style="text-align: center; padding: 48px; background: #fff; border-radius: var(--radius-lg); border: 1px solid var(--border-light); color: var(--text-muted);">
-            در حال حاضر هیچ اعلان فعالی وجود ندارد.
+          <div style="text-align: center; padding: 48px; background: var(--surface); border-radius: var(--radius-md); border: 1px solid var(--border); color: var(--text-muted);">
+            در حال حاضر هیچ اطلاعیه‌ای منتشر نشده است.
           </div>
         `;
         return;
       }
 
       container.innerHTML = notifs.map(n => `
-        <div style="background: #ffffff; border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 14px; box-shadow: var(--shadow-subtle);">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; margin-bottom: 12px; box-shadow: var(--shadow-xs);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="event-category-tag" style="background: var(--navy-100); color: var(--navy-800);">${n.category || 'اطلاعیه'}</span>
-              <h4 style="font-size: 1.05rem; font-weight: 800; color: var(--navy-900); margin: 0;">${n.title}</h4>
+              <span class="event-category-tag" style="background: var(--primary-soft); color: var(--primary); font-size: 0.72rem;">${n.category || 'اطلاعیه'}</span>
+              <h4 style="font-size: 0.98rem; font-weight: 700; color: var(--primary); margin: 0;">${n.title}</h4>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 0.8rem; color: var(--text-muted);">${n.date || ''}</span>
+              <span style="font-size: 0.76rem; color: var(--text-muted);">${n.date || ''}</span>
               ${isAdmin ? `
-                <button class="btn-action btn-decline" style="padding: 2px 8px; font-size: 0.74rem; height: 26px;" onclick="PortalUI.deleteNotification('${n.id}')">
-                  حذف
+                <button class="btn-action btn-ghost" style="padding: 2px 8px; font-size: 0.74rem; height: 26px; color: var(--danger);" onclick="PortalUI.deleteNotification('${n.id}')">
+                  ${SVG.trash} حذف
                 </button>
               ` : ''}
             </div>
           </div>
-          <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; margin: 0;">${n.content}</p>
+          <p style="font-size: 0.86rem; color: var(--text-secondary); line-height: 1.65; margin: 0;">${n.content}</p>
         </div>
       `).join('');
     },
 
     deleteNotification: function (id) {
-      if (confirm('آیا از حذف این اعلان اطمینان دارید؟')) {
+      if (confirm('آیا از حذف این اطلاعیه اطمینان دارید؟')) {
         NotificationService.delete(id);
         this.renderNotificationsList();
-        showToast('اعلان حذف شد.', 'info');
+        showToast('اطلاعیه حذف شد.', 'info');
       }
     },
 
     // ------------------------------------------------------------------------
-    // 3. ADMIN DASHBOARD & REPORTS (فقط ادمین)
+    // ADMIN DASHBOARD & REPORTS (فقط ادمین)
     // ------------------------------------------------------------------------
     renderAdminDashboard: function () {
-      const container = document.getElementById('dashboardTableBody');
       const statsTotal = document.getElementById('dashStatTotal');
       const statsAttending = document.getElementById('dashStatAttending');
       const statsDeclined = document.getElementById('dashStatDeclined');
@@ -1089,7 +1119,6 @@
       if (statsDeclined) statsDeclined.textContent = declinedCount;
       if (statsRate) statsRate.textContent = rate + '%';
 
-      // Populate Event Filter in Dashboard toolbar
       const filterSelect = document.getElementById('dashFilterEvent');
       if (filterSelect && filterSelect.options.length <= 1) {
         events.forEach(ev => {
@@ -1130,7 +1159,7 @@
         container.innerHTML = `
           <tr>
             <td colspan="8" style="text-align: center; padding: 36px; color: var(--text-muted);">
-              هیچ رکوردی منطبق با جستجو یا فیلترهای انتخابی یافت نشد.
+              رکوردی منطبق با فیلترهای انتخابی یافت نشد.
             </td>
           </tr>
         `;
@@ -1143,24 +1172,24 @@
 
         return `
           <tr>
-            <td style="font-weight: 700; color: var(--navy-900);">${idx + 1}</td>
-            <td style="font-family: monospace; font-weight: 700;">${r.personnelCode}</td>
-            <td style="font-weight: 600; color: var(--navy-900);">${r.fullName}</td>
-            <td style="font-family: monospace;">${r.nationalId || '-'}</td>
-            <td><span class="event-category-tag" style="background: var(--navy-50); color: var(--navy-800); border: 1px solid var(--border-light);">${ev.title}</span></td>
+            <td style="font-weight: 600; color: var(--text-muted);">${idx + 1}</td>
+            <td style="font-family: monospace; font-weight: 700; color: var(--primary);">${r.personnelCode}</td>
+            <td style="font-weight: 600; color: var(--primary);">${r.fullName}</td>
+            <td style="font-family: monospace; color: var(--text-secondary);">${r.nationalId || '-'}</td>
+            <td><span class="event-category-tag" style="background: var(--surface-soft); color: var(--primary); border: 1px solid var(--border);">${ev.title}</span></td>
             <td>
               <span class="badge-status ${isAttending ? 'attending' : 'declining'}">
-                ${isAttending ? '✅ حاضر' : '❌ غایب / انصراف'}
+                ${isAttending ? `${SVG.check} حاضر` : `${SVG.x} عدم تمایل`}
               </span>
             </td>
-            <td style="font-size: 0.8rem; color: var(--text-muted);">${r.jalaliDate || '-'}</td>
+            <td style="font-size: 0.76rem; color: var(--text-muted);">${r.jalaliDate || '-'}</td>
             <td>
-              <div style="display: flex; gap: 6px;">
-                <button class="btn-action btn-secondary" style="height: 28px; padding: 0 8px; font-size: 0.72rem;" onclick="PortalUI.toggleParticipantStatus('${r.id}')" title="تغییر وضعیت حاضر/غایب">
-                  🔄
+              <div style="display: flex; gap: 4px;">
+                <button class="btn-action btn-ghost" style="height: 28px; width: 28px; padding: 0;" onclick="PortalUI.toggleParticipantStatus('${r.id}')" title="تغییر وضعیت">
+                  ${SVG.refresh}
                 </button>
-                <button class="btn-action btn-decline" style="height: 28px; padding: 0 8px; font-size: 0.72rem;" onclick="PortalUI.deleteParticipant('${r.id}')" title="حذف رکورد">
-                  🗑️
+                <button class="btn-action btn-ghost" style="height: 28px; width: 28px; padding: 0; color: var(--danger);" onclick="PortalUI.deleteParticipant('${r.id}')" title="حذف رکورد">
+                  ${SVG.trash}
                 </button>
               </div>
             </td>
@@ -1197,7 +1226,6 @@
         return;
       }
 
-      // ساخت فایل CSV سازگار با اکسل (با انکودینگ UTF-8 BOM)
       let csv = '\uFEFF';
       csv += 'ردیف,کد پرسنلی,نام و نام خانوادگی,کد ملی,عنوان رویداد,وضعیت حضور,تاریخ ثبت,توضیحات\n';
 
@@ -1261,7 +1289,7 @@
     },
 
     // ------------------------------------------------------------------------
-    // 4. SETTINGS & DYNAMIC EVENT MANAGER (مدیریت رویدادها بدون نیاز به کد)
+    // SETTINGS & DYNAMIC EVENT MANAGER
     // ------------------------------------------------------------------------
     renderAdminSettings: function () {
       this.renderEventsManagerList();
@@ -1277,15 +1305,15 @@
       container.innerHTML = events.map(ev => `
         <div class="event-manager-item">
           <div class="event-manager-info">
-            <h4>${ev.title} <span class="event-category-tag" style="background: var(--navy-100); color: var(--navy-800);">${ev.category || ''}</span></h4>
-            <p>${ev.subtitle || ''} | وضعیت: <strong>${ev.status === 'active' ? 'ثبت‌نام فعال' : ev.status === 'survey' ? 'نظرسنجی فعال' : 'بسته شده'}</strong> | ظرفیت: ${ev.capacity > 0 ? ev.capacity : 'نامحدود'}</p>
+            <h4>${ev.title} <span class="event-category-tag" style="background: var(--primary-soft); color: var(--primary); font-size: 0.7rem;">${ev.category || ''}</span></h4>
+            <p>${ev.subtitle || ''} · وضعیت: <strong>${ev.status === 'active' ? 'در حال ثبت‌نام' : ev.status === 'survey' ? 'نظرسنجی فعال' : 'بسته شده'}</strong> · ظرفیت: ${ev.capacity > 0 ? ev.capacity : 'نامحدود'}</p>
           </div>
           <div style="display: flex; gap: 8px;">
-            <button class="btn-action btn-secondary" style="height: 34px; padding: 0 12px; font-size: 0.8rem;" onclick="PortalUI.openEditEventModal('${ev.id}')">
-              ✏️ ویرایش مشخصات
+            <button class="btn-action btn-secondary" style="height: 32px; padding: 0 10px; font-size: 0.78rem;" onclick="PortalUI.openEditEventModal('${ev.id}')">
+              ${SVG.edit} ویرایش
             </button>
-            <button class="btn-action btn-decline" style="height: 34px; padding: 0 12px; font-size: 0.8rem;" onclick="PortalUI.deleteEvent('${ev.id}')">
-              🗑️ حذف
+            <button class="btn-action btn-ghost" style="height: 32px; padding: 0 10px; font-size: 0.78rem; color: var(--danger);" onclick="PortalUI.deleteEvent('${ev.id}')">
+              ${SVG.trash} حذف
             </button>
           </div>
         </div>
@@ -1295,7 +1323,7 @@
     openAddEventModal: function () {
       const modal = document.getElementById('editEventModal');
       const form = document.getElementById('editEventForm');
-      document.getElementById('editEventModalTitle').textContent = '➕ افزودن رویداد جدید به سامانه';
+      document.getElementById('editEventModalTitle').textContent = 'افزودن رویداد جدید به سامانه';
       form.reset();
       document.getElementById('formEventId').value = '';
       modal.classList.add('open');
@@ -1306,7 +1334,7 @@
       if (!ev) return;
 
       const modal = document.getElementById('editEventModal');
-      document.getElementById('editEventModalTitle').textContent = `✏️ ویرایش رویداد: ${ev.title}`;
+      document.getElementById('editEventModalTitle').textContent = `ویرایش رویداد: ${ev.title}`;
 
       document.getElementById('formEventId').value = ev.id;
       document.getElementById('formEventTitle').value = ev.title || '';
@@ -1402,11 +1430,11 @@
         return;
       }
       AdminAuth.setPin(pinInput.value.trim());
-      showToast('رمز عبور ادمین با موفقیت تغییر یافت.', 'success');
+      showToast('رمز عبور مدیر با موفقیت تغییر یافت.', 'success');
     },
 
     openAddNotificationModal: function () {
-      const title = prompt('عنوان اطلاعیه جدید را وارد فرمایید:');
+      const title = prompt('عنوان اطلاعیه جدید:');
       if (!title) return;
       const category = prompt('دسته‌بندی (مثلاً: عمومی، رویداد ۱):', 'عمومی') || 'عمومی';
       const content = prompt('متن اطلاعیه:');
@@ -1419,25 +1447,21 @@
       });
 
       this.renderNotificationsList();
-      showToast('اعلان جدید با موفقیت منتشر گردید.', 'success');
+      showToast('اطلاعیه جدید با موفقیت منتشر گردید.', 'success');
     }
   };
 
-  // Expose to window for inline onclick handlers
   window.PortalUI = PortalUI;
 
-  // Initial load
   document.addEventListener('DOMContentLoaded', () => {
     PortalUI.init();
     PortalUI.bindSurveyForm();
 
-    // Event listeners for Edit Event Form
     const editForm = document.getElementById('editEventForm');
     if (editForm) {
       editForm.addEventListener('submit', (e) => PortalUI.saveEventFromModal(e));
     }
 
-    // Filter chips
     document.querySelectorAll('.filter-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
@@ -1447,7 +1471,6 @@
       });
     });
 
-    // Dashboard search & filter inputs
     const dashSearch = document.getElementById('dashSearchInput');
     const dashFilterEv = document.getElementById('dashFilterEvent');
     const dashFilterSt = document.getElementById('dashFilterStatus');
