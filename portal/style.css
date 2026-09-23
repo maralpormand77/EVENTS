@@ -7,41 +7,56 @@
    ========================================================================== */
 
 :root {
-  /* Color Palette - Premium White & Executive Navy */
-  --primary: #0B1F3A;
-  --primary-hover: #071527;
-  --primary-soft: #EEF3F8;
-  --secondary-navy: #132A4A;
+  /* New Architecture Palette */
+  --navy: #10233f;
+  --navy-2: #183557;
+  --blue: #2f6fed;
+  --cyan: #28b8c9;
+  --bg: #f4f7fb;
+  --surface: #ffffff;
+  --line: #e7edf5;
+  --text: #172235;
+  --muted: #718096;
+  --green: #16a574;
+  --orange: #e99432;
+  --red: #dc5a63;
+  --shadow: 0 12px 35px rgba(24, 53, 87, 0.08);
+  --r: 22px;
 
-  --accent: #2563EB;
-  --accent-hover: #1D4ED8;
-  --accent-soft: #EFF6FF;
+  /* Aliased Variables for Complete Legacy & Component Compatibility */
+  --primary: #10233f;
+  --primary-hover: #0c1a2f;
+  --primary-soft: #edf3fa;
+  --secondary-navy: #183557;
 
-  --background: #F6F8FB;
-  --surface: #FFFFFF;
-  --surface-soft: #F8FAFC;
-  --surface-muted: #F1F5F9;
+  --accent: #2f6fed;
+  --accent-hover: #2259c9;
+  --accent-soft: #eff6ff;
 
-  --text-primary: #101828;
-  --text-secondary: #475467;
-  --text-muted: #98A2B3;
-  --text-light: #CBD5E1;
+  --background: #f4f7fb;
+  --surface-soft: #f8fafc;
+  --surface-muted: #f1f5f9;
 
-  --border: rgba(15, 23, 42, 0.08);
-  --border-strong: rgba(15, 23, 42, 0.14);
-  --border-focus: #2563EB;
+  --text-primary: #172235;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  --text-light: #cbd5e1;
 
-  --success: #16A34A;
-  --success-soft: #ECFDF5;
-  --success-border: rgba(22, 163, 74, 0.2);
+  --border: #e7edf5;
+  --border-strong: #d2dde9;
+  --border-focus: #2f6fed;
 
-  --warning: #D97706;
-  --warning-soft: #FFFBEB;
-  --warning-border: rgba(217, 119, 6, 0.2);
+  --success: #16a574;
+  --success-soft: #eafaf3;
+  --success-border: rgba(22, 165, 116, 0.25);
 
-  --danger: #DC2626;
-  --danger-soft: #FEF2F2;
-  --danger-border: rgba(220, 38, 38, 0.2);
+  --warning: #e99432;
+  --warning-soft: #fff8ee;
+  --warning-border: rgba(233, 148, 50, 0.25);
+
+  --danger: #dc5a63;
+  --danger-soft: #fdf1f2;
+  --danger-border: rgba(220, 90, 99, 0.25);
 
   /* Geometry & Radius */
   --radius-xs: 6px;
@@ -60,7 +75,7 @@
 
   /* Micro-interactions & Typography */
   --transition: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  --font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family: Tahoma, 'Segoe UI', 'Vazirmatn', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 }
 
 /* Base Reset & Core Styles */

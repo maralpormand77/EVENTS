@@ -17,3 +17,34 @@ Changes not staged for commit:
 
 no changes added to commit (use "git add" and/or "git commit -a")
 Staging files... 
+warning: in the working copy of 'portal/app.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'portal/index.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'portal/style.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'sync_and_commit.bat', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'sync_and_commit.log', LF will be replaced by CRLF the next time Git touches it
+Committing changes... 
+[main 4db4dae] refactor(ux): architectural polish for navigation separation and streamlined decision flows
+ 5 files changed, 134 insertions(+), 73 deletions(-)
+Pushing to origin main... 
+[Git Hook] Syncing personnel database before push...
+====================================================
+  در حال پردازش فایل اکسل و به‌روزرسانی پروژه...
+  مسیر کاری: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main
+====================================================
+[*] فایل اکسل شناسایی شده: اطلاعات.xlsx
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\1\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\2\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\3\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\admin\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\survey\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\survey1\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\survey2\assets\js\personnel-data.js
+  [+] به روزرسانی شد: C:\Users\992113\Downloads\EVENTS-main\EVENTS-main\survey3\assets\js\personnel-data.js
+
+====================================================
+  موفقیت: تعداد 15542 پرسنل با موفقیت در پروژه ذخیره شدند!
+====================================================
+To https://github.com/maralpormand77/EVENTS.git
+   439b6a8..4db4dae  main -> main
+Finished sync and push. 
